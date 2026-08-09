@@ -1,0 +1,29 @@
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>{{ 'continueReading.title' | translate }}</h2>
+        <p>{{ 'continueReading.subtitle' | translate }}</p>
+      </div>
+      <button class="view-all">{{ 'continueReading.goToLibrary' | translate }}</button>
+    </div>
+
+    <div class="cr-row">
+      @for (item of items; track item.title) {
+        <div class="cr-card">
+          <div class="cr-cover" [ngClass]="item.colorClass">
+            <span>{{ item.initials }}</span>
+          </div>
+          <div class="cr-info">
+            <h4>{{ item.title }}</h4>
+            <div class="meta">{{ item.meta }}</div>
+            <div class="progress-track">
+              <div class="progress-fill" [style.width.%]="item.progress"></div>
+            </div>
+            <div class="progress-pct">{{ item.progress }}{{ 'continueReading.complete' | translate }}</div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,91 @@
+.competition {
+  background: var(--forest-deep);
+  border-radius: var(--radius-l);
+  padding: 44px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.competition::before {
+  content: "✦";
+  position: absolute;
+  font-size: 220px;
+  right: -30px;
+  top: -70px;
+  color: rgba(255, 255, 255, 0.05);
+  font-family: var(--display);
+  pointer-events: none;
+}
+
+.competition-left {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+}
+.competition .eyebrow {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  margin-bottom: 16px;
+}
+.competition h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 27px;
+  margin-bottom: 10px;
+}
+.competition p {
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.6;
+}
+
+.competition-cta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.countdown div {
+  text-align: center;
+}
+.countdown b {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 700;
+  display: block;
+  min-width: 2ch;
+}
+.countdown span {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sep {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 14px;
+}
+
+.btn-light { background: #fff; color: var(--forest-deep); }
+.btn-light:hover { background: #F1EADC; }
+
+@media (max-width: 680px) {
+  .competition { flex-direction: column; align-items: flex-start; padding: 32px 26px; }
+  .competition-cta { align-items: flex-start; width: 100%; }
+}

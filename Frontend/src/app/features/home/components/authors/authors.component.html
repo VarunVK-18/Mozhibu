@@ -1,0 +1,29 @@
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <h2>{{ 'authors.title' | translate }}</h2>
+        <p>{{ 'authors.subtitle' | translate }}</p>
+      </div>
+      <button class="view-all">{{ 'authors.seeAll' | translate }}</button>
+    </div>
+
+    <div class="authors-row">
+      @for (author of authors(); track author.name; let i = $index) {
+        <div class="author-card">
+          <div class="author-avatar" [style.background]="author.color">
+            {{ author.initials }}
+          </div>
+          <h4>{{ author.name }}</h4>
+          <div class="followers">{{ author.followers }} {{ 'authors.followers' | translate }}</div>
+          <button
+            class="follow-btn"
+            [class.following]="author.following"
+            (click)="toggleFollow(i)">
+            {{ author.following ? '✓ Following' : ('authors.follow' | translate) }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</section>

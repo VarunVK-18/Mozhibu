@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "discover": "Discover",
+    "library": "Library",
+    "write": "Write",
+    "community": "Community",
+    "competitions": "Competitions"
+  },
+  "header": {
+    "startWriting": "Start writing",
+    "langLabel": "EN"
+  },
+  "hero": {
+    "eyebrow": "12 languages, one library",
+    "title1": "Stories worth",
+    "title2": "staying up",
+    "title3": "for.",
+    "subtitle": "Read and publish fiction in Tamil, Hindi, Bengali, Telugu and nine more languages — with your progress saved across every device, in the words you were meant to read them in.",
+    "cta1": "Start reading — it's free",
+    "cta2": "Explore as a writer",
+    "stat1Value": "48K+",
+    "stat1Label": "Published stories",
+    "stat2Value": "12",
+    "stat2Label": "Languages supported",
+    "stat3Value": "9.2K",
+    "stat3Label": "Active writers"
+  },
+  "langStrip": {
+    "label": "Read in"
+  },
+  "continueReading": {
+    "title": "Pick up where you left off",
+    "subtitle": "Your reading, synced across every device",
+    "goToLibrary": "Go to library →",
+    "complete": "% complete"
+  },
+  "trending": {
+    "title": "Trending this week",
+    "subtitle": "What readers across all 12 languages can't put down",
+    "browseAll": "Browse all genres →",
+    "tabs": {
+      "all": "All",
+      "romance": "Romance",
+      "mythology": "Mythology",
+      "thriller": "Thriller",
+      "fantasy": "Fantasy",
+      "drama": "Drama",
+      "poetry": "Poetry"
+    },
+    "reads": "reads"
+  },
+  "authors": {
+    "title": "Writers to follow",
+    "subtitle": "Voices building an audience across languages",
+    "seeAll": "See all writers →",
+    "follow": "Follow",
+    "followers": "followers"
+  },
+  "competition": {
+    "eyebrow": "Writing competition",
+    "title": "The Twelve Tongues Prize 2026",
+    "description": "One theme, twelve languages. Submit an original short story in your mother tongue for a shot at ₹1,00,000 and a featured spot on the homepage.",
+    "days": "Days",
+    "hours": "Hours",
+    "mins": "Mins",
+    "cta": "Submit your story"
+  },
+  "footer": {
+    "tagline": "A digital publishing home for stories in twelve languages — read, write and discover in the words you think in.",
+    "emailPlaceholder": "Your email address",
+    "joinBtn": "Join",
+    "explore": "Explore",
+    "write": "Write",
+    "company": "Company",
+    "readIn": "Read in",
+    "exploreLinks": ["Discover", "Trending", "New releases", "Competitions"],
+    "writeLinks": ["Start a story", "Writer dashboard", "Editor guide", "Analytics"],
+    "companyLinks": ["About Mozhibu", "Community guidelines", "Support", "Careers"],
+    "copyright": "© 2026 Mozhibu. All rights reserved.",
+    "instagram": "Instagram",
+    "x": "X",
+    "youtube": "YouTube"
+  }
+}
