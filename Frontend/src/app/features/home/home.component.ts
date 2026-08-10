@@ -1,29 +1,227 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HeroComponent } from './components/hero/hero.component';
-import { LangStripComponent } from './components/lang-strip/lang-strip.component';
-import { ContinueReadingComponent } from './components/continue-reading/continue-reading.component';
-import { TrendingComponent } from './components/trending/trending.component';
-import { AuthorsComponent } from './components/authors/authors.component';
+import { StorySectionComponent } from '../../shared/components/story-section/story-section.component';
 import { CompetitionBannerComponent } from './components/competition-banner/competition-banner.component';
+import { AuthService } from '../../core/services/auth.service';
+import { UserCardComponent, UserProfile } from '../../shared/components/user-card/user-card.component';
+import { AnnouncementCardComponent, Announcement } from '../../shared/components/announcement-card/announcement-card.component';
+import { ContinueReadingComponent } from './components/continue-reading/continue-reading.component';
+import { BookService } from '../../core/services/book.service';
+import { OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
+    CommonModule,
     HeroComponent,
-    LangStripComponent,
-    ContinueReadingComponent,
-    TrendingComponent,
-    AuthorsComponent,
+    StorySectionComponent,
     CompetitionBannerComponent,
+    UserCardComponent,
+    AnnouncementCardComponent,
+    ContinueReadingComponent,
+    RouterModule
   ],
   template: `
-    <app-hero></app-hero>
-    <app-lang-strip></app-lang-strip>
-    <app-continue-reading></app-continue-reading>
-    <app-trending></app-trending>
-    <app-authors></app-authors>
-    <app-competition-banner></app-competition-banner>
+    <div class="page-wrapper">
+      @if (!authService.user()) {
+        <!-- GUEST VIEW -->
+        <app-hero></app-hero>
+        
+        <app-story-section title="Recommended for You" [stories]="recommendedStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Trending Today" [stories]="trendingStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Most Read" [stories]="mostReadStories" viewAllLink="/categories"></app-story-section>
+        
+        <app-competition-banner></app-competition-banner>
+        
+        <app-story-section title="Editor's Picks" [stories]="editorPicks" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Newly Published" [stories]="newlyPublished" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Completed Stories" [stories]="completedStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Ongoing Stories" [stories]="ongoingStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Audio Stories" [stories]="audioStories" viewAllLink="/categories"></app-story-section>
+      } @else {
+        <!-- LOGGED IN VIEW -->
+        <div class="logged-in-container">
+          <app-continue-reading></app-continue-reading>
+          
+          <app-story-section title="Recommended" [stories]="recommendedStories" viewAllLink="/categories"></app-story-section>
+          
+          <app-story-section title="Latest" [stories]="newlyPublished" viewAllLink="/categories"></app-story-section>
+          
+          <app-story-section title="Trending" [stories]="trendingStories" viewAllLink="/categories"></app-story-section>
+          
+          <!-- Following Users -->
+          <section class="user-section">
+            <div class="section-header">
+              <h2 class="section-title">Following</h2>
+              <a routerLink="/community" class="view-all">View All</a>
+            </div>
+            <div class="scroll-container">
+              <div class="users-track">
+                <app-user-card *ngFor="let user of followingUsers" [user]="user"></app-user-card>
+              </div>
+            </div>
+          </section>
+
+          <!-- Followers Users -->
+          <section class="user-section">
+            <div class="section-header">
+              <h2 class="section-title">Followers</h2>
+              <a routerLink="/community" class="view-all">View All</a>
+            </div>
+            <div class="scroll-container">
+              <div class="users-track">
+                <app-user-card *ngFor="let user of followerUsers" [user]="user"></app-user-card>
+              </div>
+            </div>
+          </section>
+
+          <app-competition-banner></app-competition-banner>
+
+          <!-- Announcements -->
+          <section class="announcement-section">
+            <div class="section-header">
+              <h2 class="section-title">Announcements</h2>
+            </div>
+            <div class="scroll-container">
+              <div class="announcements-track">
+                <app-announcement-card *ngFor="let ann of announcements" [announcement]="ann"></app-announcement-card>
+              </div>
+            </div>
+          </section>
+        </div>
+      }
+    </div>
   `,
+  styles: [`
+    .page-wrapper {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 32px 80px 32px;
+    }
+    .logged-in-container {
+      padding-top: 48px;
+    }
+    .user-section, .announcement-section {
+      margin-bottom: 64px;
+      width: 100%;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 0 4px;
+    }
+    .section-title {
+      font-family: var(--display);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .view-all {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--forest);
+      text-decoration: none;
+    }
+    .view-all:hover { text-decoration: underline; }
+    .scroll-container {
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 10px 4px 20px 4px;
+      margin: -10px -4px -20px -4px;
+    }
+    .scroll-container::-webkit-scrollbar { display: none; }
+    .users-track, .announcements-track {
+      display: flex;
+      gap: 24px;
+      width: max-content;
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        padding: 0 16px 48px 16px;
+      }
+    }
+  `]
 })
-export class HomeComponent {}
+export class HomeComponent implements OnInit {
+  authService = inject(AuthService);
+  bookService = inject(BookService);
+
+  recommendedStories: any[] = [];
+  trendingStories: any[] = [];
+  mostReadStories: any[] = [];
+  editorPicks: any[] = [];
+  newlyPublished: any[] = [];
+  completedStories: any[] = [];
+  ongoingStories: any[] = [];
+  audioStories: any[] = [];
+
+  ngOnInit() {
+    this.bookService.getPublishedBooks().subscribe({
+      next: (books) => {
+        // Map backend books to the frontend Story interface
+        const mappedStories = books.map(b => ({
+          id: b._id,
+          title: b.title,
+          author: b.author?.username || 'Unknown',
+          cover: b.cover || 'assets/placeholder.jpg',
+          genre: b.genre,
+          views: (b.views / 1000).toFixed(1) + 'K',
+          rating: b.rating || 0,
+          isAudio: !!b.isAudio
+        }));
+
+        // In a real app, you would filter these based on different criteria/endpoints.
+        // Since we are migrating from mock data, we will just slice the returned books
+        // to populate the various rows for demonstration purposes.
+        this.recommendedStories = mappedStories.slice(0, 5);
+        this.trendingStories = mappedStories.slice(0, 5);
+        this.mostReadStories = mappedStories.slice(0, 5);
+        this.editorPicks = mappedStories.slice(0, 5);
+        this.newlyPublished = mappedStories.slice(0, 5);
+        this.completedStories = mappedStories.slice(0, 5);
+        this.ongoingStories = mappedStories.slice(0, 5);
+        this.audioStories = mappedStories.filter(s => s.isAudio).slice(0, 5);
+      },
+      error: (err) => console.error('Failed to load published books:', err)
+    });
+  }
+
+  private createMockUsers(count: number): UserProfile[] {
+    const names = ['Arun Kumar', 'Priya Devi', 'James Wilson', 'Sarah Lee', 'Rahul Sharma', 'Anitha Suresh', 'Vijay', 'Kavya'];
+    const followers = ['12K', '4.5K', '890', '22K', '3.1K', '150', '6.8K', '9.2K'];
+    const avatars = [
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80',
+      '', // Test fallback initial
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
+    ];
+
+    return Array.from({ length: count }).map((_, i) => ({
+      id: String(i),
+      name: names[i % names.length],
+      followers: followers[i % followers.length],
+      avatar: avatars[i % avatars.length]
+    }));
+  }
+
+  private createMockAnnouncements(): Announcement[] {
+    return [
+      { id: '1', type: 'update', date: 'Oct 12, 2026', title: 'New Reading Experience', content: 'We just rolled out an entirely new immersive reading mode that saves your progress seamlessly across all devices.' },
+      { id: '2', type: 'event', date: 'Oct 15, 2026', title: 'Winter Writing Contest', content: 'Join thousands of authors in our annual Winter Writing Contest for a chance to win publishing contracts.' },
+      { id: '3', type: 'news', date: 'Oct 10, 2026', title: 'Platform Milestone', content: 'Mozhibu just crossed 1 million published stories in over 15 regional languages! Thank you to our incredible community.' },
+      { id: '4', type: 'update', date: 'Oct 8, 2026', title: 'Audio Stories Expansion', content: 'We have added text-to-speech integration for over 5 new languages including Malayalam and Kannada.' }
+    ];
+  }
+
+  followingUsers = this.createMockUsers(6);
+  followerUsers = this.createMockUsers(6);
+  announcements = this.createMockAnnouncements();
+}
