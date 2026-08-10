@@ -48,7 +48,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   <td>
                     <div class="title-cell">
                       <a [routerLink]="['/admin/books', book._id]" class="book-title">{{ book.title }}</a>
-                      <span class="book-author">by {{ book.author?.username }}</span>
+                      <span class="book-author">by {{ book.author.username }}</span>
                     </div>
                   </td>
                   <td>
