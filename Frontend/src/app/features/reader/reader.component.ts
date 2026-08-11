@@ -27,14 +27,32 @@ import { AuthService } from '../../core/services/auth.service';
           <span class="story-title">{{ storyTitle }}</span>
           <span class="chapter-title">{{ chapterTitle }}</span>
         </div>
+        <div class="header-actions">
+          <select (change)="onLangChange($event)" class="lang-select-reader" [value]="langService.currentLang()">
+            @for (lang of langService.languages; track lang.code) {
+              <option [value]="lang.code">{{ lang.native }}</option>
+            }
+          </select>
+        </div>
       </header>
 
       <!-- Reading Area -->
       <main class="reading-area" (click)="toggleControls()" [style.fontSize.px]="fontSize()">
-        <div class="content-wrapper" [innerHTML]="chapterContent()"></div>
-        <div class="loading-overlay" *ngIf="isTranslating()">
-          <div class="spinner"></div>
-          <p>Translating chapter with AI...</p>
+        <div class="content-wrapper" [innerHTML]="chapterContent()" [style.display]="isTranslating() ? 'none' : 'block'"></div>
+        
+        <div class="skeleton-buffer" *ngIf="isTranslating()">
+          <div class="skeleton-line" style="width: 80%"></div>
+          <div class="skeleton-line" style="width: 100%"></div>
+          <div class="skeleton-line" style="width: 90%"></div>
+          <div class="skeleton-line" style="width: 95%"></div>
+          <div class="skeleton-line" style="width: 60%"></div>
+          <br>
+          <div class="skeleton-line" style="width: 100%"></div>
+          <div class="skeleton-line" style="width: 85%"></div>
+          <div class="skeleton-line" style="width: 95%"></div>
+          <br>
+          <div class="skeleton-line" style="width: 90%"></div>
+          <div class="skeleton-line" style="width: 100%"></div>
         </div>
       </main>
 
@@ -170,26 +188,43 @@ import { AuthService } from '../../core/services/auth.service';
       font-size: 16px;
       font-weight: 600;
     }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+    
+    .lang-select-reader {
+      background: var(--reader-bg);
+      color: var(--reader-text);
+      border: 1px solid var(--reader-border);
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-family: var(--body);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+    }
 
-    .loading-overlay {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(var(--reader-bg), 0.8);
+    .skeleton-buffer {
+      max-width: 680px;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
+      gap: 12px;
+      padding: 20px 0;
     }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--reader-border);
-      border-top-color: var(--reader-accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 12px;
+    .skeleton-line {
+      height: 18px;
+      background: var(--reader-border);
+      border-radius: 4px;
+      animation: pulse 1.5s infinite ease-in-out;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+      100% { opacity: 0.4; }
+    }
 
     /* Reading Area */
     .reading-area {
@@ -474,5 +509,37 @@ export class ReaderComponent implements OnInit, OnDestroy {
       this.chapterTitle = `Chapter ${this.currentChapterNum}: The Previous`;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  onLangChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const targetLang = select.value as any;
+    
+    // Update global language service so header syncs
+    this.langService.setLanguage(targetLang);
+    
+    if (targetLang === 'en') {
+      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+      return;
+    }
+    
+    this.isTranslating.set(true);
+    this.http.post<{content: string}>('http://localhost:5000/api/books/translate-html', {
+      html: this.rawHtml,
+      targetLang: targetLang
+    }).subscribe({
+      next: (res) => {
+        this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(res.content));
+        this.isTranslating.set(false);
+      },
+      error: (err) => {
+        console.error('Translation failed', err);
+        this.isTranslating.set(false);
+        const fallbackHtml = `<div style="padding: 16px; margin-bottom: 24px; background: #FFF4E5; border-left: 4px solid #FFA000; color: #b27300; border-radius: 4px;">
+          <strong>API Rate Limit Reached:</strong> The Gemini API is currently receiving too many requests. Showing original English text. Please try again in about a minute.
+        </div>` + this.rawHtml;
+        this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(fallbackHtml));
+      }
+    });
   }
 }

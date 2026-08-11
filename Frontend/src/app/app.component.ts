@@ -4,12 +4,18 @@ import { filter } from 'rxjs/operators';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { CommonModule } from '@angular/common';
+import { LoadingService } from './core/services/loading.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, FooterComponent, CommonModule],
   template: `
+    @if (loadingService.loading()) {
+      <div class="global-loading-bar">
+        <div class="global-loading-progress"></div>
+      </div>
+    }
     @if (!isStandaloneRoute) {
       <app-header></app-header>
     }
@@ -26,6 +32,7 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent {
   private router = inject(Router);
+  public loadingService = inject(LoadingService);
   isStandaloneRoute = false;
 
   constructor() {

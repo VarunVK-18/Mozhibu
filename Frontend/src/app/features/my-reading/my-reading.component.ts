@@ -113,7 +113,7 @@ interface ReadingHistory {
     
     .hero-section h1 {
       font-family: var(--display);
-      font-size: 36px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 8px;
@@ -188,7 +188,7 @@ interface ReadingHistory {
     
     .active-info h2 {
       font-family: var(--display);
-      font-size: 42px;
+      font-size: 30px;
       font-weight: 700;
       margin-bottom: 8px;
       line-height: 1.1;

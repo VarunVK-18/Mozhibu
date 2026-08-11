@@ -144,6 +144,16 @@ import { CommonModule } from '@angular/common';
     
     .toast-text { font-size: 13px !important; margin-bottom: 0 !important; font-weight: 500; }
     .text-success { color: var(--forest); }
+
+    @media (max-width: 600px) {
+      .actions-container { gap: 8px; }
+      .btn-primary { padding: 10px 18px; font-size: 14px; }
+      .action-btn { padding: 8px 12px; font-size: 13px; }
+      .modal-content { margin: 0 16px; padding: 24px 20px; }
+      .share-box { flex-direction: column; }
+      .modal-actions { flex-direction: column; }
+      .modal-actions button { width: 100%; justify-content: center; }
+    }
   `]
 })
 export class StoryActionsComponent {

@@ -8,22 +8,31 @@ import { AuthService } from '../../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <!-- Featured + Trending Authors -->
     <div class="hero-grid">
+
       <!-- Featured Story Card -->
       <div class="featured-card">
+        <div class="featured-bg-glow"></div>
         <div class="featured-content">
-          <span class="featured-tag">Featured Story</span>
-          <h1 class="featured-title">The Last Ferry to Vaikuntam</h1>
+          <div class="featured-eyebrow">
+            <span class="live-dot"></span>
+            Featured Story
+          </div>
+          <h1 class="featured-title">The Last Ferry<br>to Vaikuntam</h1>
           <p class="featured-desc">An epic journey through mythology and time. Join the ferryman as he navigates the cosmic rivers, facing demons and gods alike.</p>
           <div class="featured-meta">
             <span class="genre-pill">Mythology</span>
-            <span class="author-text">by Anitha Suresh</span>
+            <span class="meta-sep">·</span>
+            <span class="author-text">Anitha Suresh</span>
           </div>
-          <button class="btn btn-primary start-btn" (click)="onStartReading()">Start Reading</button>
+          <button class="read-btn" (click)="onStartReading()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82z"/></svg>
+            Start Reading
+          </button>
         </div>
         <div class="featured-cover">
-          <img src="https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?auto=format&fit=crop&q=80&w=800" alt="Featured Story Cover">
+          <img src="https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?auto=format&fit=crop&q=80&w=800" alt="The Last Ferry to Vaikuntam">
+          <div class="cover-shine"></div>
         </div>
       </div>
 
@@ -97,7 +106,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 
     .featured-title {
       font-family: var(--display);
-      font-size: 38px;
+      font-size: 28px;
       font-weight: 800;
       line-height: 1.15;
       margin-bottom: 14px;

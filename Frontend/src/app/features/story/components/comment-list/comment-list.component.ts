@@ -181,15 +181,15 @@ import { StoryComment } from '../../../../core/services/story.service';
     }
     .btn-icon:hover { color: var(--ink); }
     .btn-icon svg { width: 16px; height: 16px; }
-    .btn-text {
-      background: transparent;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ink-soft);
-      cursor: pointer;
-    }
+    .btn-text { background: transparent; border: none; font-size: 13px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
     .btn-text:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      .avatar { width: 32px; height: 32px; }
+      .comment-input-area { gap: 10px; }
+      .comment-card { gap: 10px; }
+      h2 { font-size: 17px; }
+    }
   `]
 })
 export class CommentListComponent {

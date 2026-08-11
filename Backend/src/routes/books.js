@@ -7,7 +7,11 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { translateBooks, translateChapters } = require('../services/translationService');
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const getGenAI = () => {
+  const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
+  const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  return new GoogleGenerativeAI(randomKey);
+};
 
 // @route GET /api/books/categories
 // @desc Get all unique book genres
@@ -188,17 +192,19 @@ router.post('/:id/chapters', protect, author, async (req, res) => {
 // @route POST /api/books/translate-html
 // @desc Translate raw HTML to target language (for UI demo)
 router.post('/translate-html', async (req, res) => {
-  try {
-    const { html, targetLang } = req.body;
-    if (!html || !targetLang) return res.status(400).json({ msg: 'html and targetLang required' });
+  const { html, targetLang } = req.body;
+  if (!html || !targetLang) return res.status(400).json({ msg: 'html and targetLang required' });
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const langMap = {
-      'en': 'English', 'ta': 'Tamil', 'te': 'Telugu', 'ml': 'Malayalam',
-      'kn': 'Kannada', 'bn': 'Bengali', 'hi': 'Hindi', 'pa': 'Punjabi',
-      'mr': 'Marathi', 'ur': 'Urdu', 'gu': 'Gujarati', 'or': 'Odia'
-    };
-    const targetLangName = langMap[targetLang] || targetLang;
+  const langMap = {
+    'en': 'English', 'ta': 'Tamil', 'te': 'Telugu', 'ml': 'Malayalam',
+    'kn': 'Kannada', 'bn': 'Bengali', 'hi': 'Hindi', 'pa': 'Punjabi',
+    'mr': 'Marathi', 'ur': 'Urdu', 'gu': 'Gujarati', 'or': 'Odia'
+  };
+  const targetLangName = langMap[targetLang] || targetLang;
+
+  try {
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
     const prompt = `Translate the following HTML story content into ${targetLangName}. 
 Only return the translated HTML. Preserve all HTML tags and structure exactly as they are. 
@@ -218,7 +224,7 @@ ${html}`;
     res.json({ content: translatedContent });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: 'Server Error', error: err.message || err.toString() });
   }
 });
 
@@ -238,7 +244,8 @@ router.post('/:id/chapters/:chapterId/translate', async (req, res) => {
     }
 
     // Initialize Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const genAI = getGenAI();
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     
     // Create language map to give Gemini more context
     const langMap = {

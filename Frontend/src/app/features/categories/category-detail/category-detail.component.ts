@@ -82,7 +82,7 @@ import { StoryCardComponent, Story } from '../../../shared/components/story-card
     
     .hero-section h1 {
       font-family: var(--display);
-      font-size: 36px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 12px;
@@ -138,7 +138,7 @@ import { StoryCardComponent, Story } from '../../../shared/components/story-card
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
     .empty-icon {
-      font-size: 48px;
+      font-size: 36px;
       margin-bottom: 16px;
     }
     

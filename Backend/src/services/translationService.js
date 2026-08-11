@@ -11,8 +11,10 @@ const langMap = {
 async function translateBooks(books, targetLang) {
     if (!targetLang || targetLang === 'en' || !books || books.length === 0) return books;
     
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    const genAI = new GoogleGenerativeAI(randomKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const targetLangName = langMap[targetLang] || targetLang;
 
     // Filter books that need translation
@@ -66,8 +68,10 @@ ${JSON.stringify(titlesObj)}`;
 async function translateChapters(chapters, targetLang) {
     if (!targetLang || targetLang === 'en' || !chapters || chapters.length === 0) return chapters;
     
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    const genAI = new GoogleGenerativeAI(randomKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const targetLangName = langMap[targetLang] || targetLang;
 
     // Filter chapters that need title translation

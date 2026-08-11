@@ -429,6 +429,22 @@ import { Router } from '@angular/router';
       height: 12px;
       border-radius: 50%;
     }
+
+    /* ── Mobile Responsive ─────────────────── */
+    @media (max-width: 1024px) {
+      .dashboard-grid { gap: 16px; }
+    }
+    @media (max-width: 768px) {
+      .page-header { padding: 24px 0 16px; }
+      .page-header h1 { font-size: 22px; }
+      .metrics-row { grid-template-columns: repeat(2, 1fr); }
+      .analytics-metrics { flex-wrap: wrap; gap: 16px; }
+      .metric-divider { display: none; }
+      .analytics-chart-wrapper { height: 200px; }
+    }
+    @media (max-width: 480px) {
+      .metrics-row { grid-template-columns: 1fr; }
+    }
   `]
 })
 export class OverviewComponent implements OnInit {

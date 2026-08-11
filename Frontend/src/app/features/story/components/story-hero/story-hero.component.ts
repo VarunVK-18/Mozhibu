@@ -59,7 +59,7 @@ import { RouterModule } from '@angular/router';
     
     .title {
       font-family: var(--display);
-      font-size: 48px;
+      font-size: 30px;
       font-weight: 700;
       line-height: 1.1;
       margin-bottom: 12px;

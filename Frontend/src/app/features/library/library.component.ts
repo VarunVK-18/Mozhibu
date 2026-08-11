@@ -100,7 +100,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     
     .hero-section h1 {
       font-family: var(--display);
-      font-size: 36px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 8px;
@@ -264,6 +264,27 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     
     .btn-primary:hover {
       background: var(--forest-deep);
+    }
+
+    /* ── Mobile Responsive ─────────────────── */
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    @media (max-width: 768px) {
+      .wrap { padding: 0 16px; }
+      .hero-section { padding: 32px 0; }
+      .hero-section h1 { font-size: 26px; }
+      .tabs { gap: 20px; }
+      .tab-btn { font-size: 14px; }
+      .story-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+      .authors-list { grid-template-columns: 1fr; }
+      .author-card { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+    @media (max-width: 480px) {
+      .story-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .hero-section h1 { font-size: 22px; }
     }
   `]
 })

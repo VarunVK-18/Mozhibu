@@ -255,7 +255,7 @@ import { AuthService } from '../../../core/services/auth.service';
       line-height: 1.5;
     }
     .upgrade-icon {
-      font-size: 40px;
+      font-size: 28px;
       margin-bottom: 16px;
     }
     .upgrade-btn {

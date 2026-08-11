@@ -60,7 +60,7 @@ interface Category {
     
     .hero-section h1 {
       font-family: var(--display);
-      font-size: 42px;
+      font-size: 28px;
       font-weight: 700;
       color: var(--ink);
       margin-bottom: 12px;
