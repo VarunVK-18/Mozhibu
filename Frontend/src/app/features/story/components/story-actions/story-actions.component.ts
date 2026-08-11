@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
     <div class="actions-container">
       <button class="btn-primary" (click)="readClicked.emit()">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        {{ userProgress.hasStarted ? 'Continue Reading' : 'Start Reading' }}
+        {{ userProgress.hasStarted ? 'Resume Reading' : 'Start Reading' }}
       </button>
 
       <button class="action-btn" [class.active]="isBookmarked" (click)="bookmarkClicked.emit()">

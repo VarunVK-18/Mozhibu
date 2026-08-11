@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 
-export type Lang = 'en' | 'ta' | 'hi';
+export type Lang = 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn' | 'bn' | 'pa' | 'mr' | 'ur' | 'gu' | 'or';
 
 export interface LangOption {
   code: Lang;
@@ -16,6 +16,15 @@ export class LanguageService {
     { code: 'en', native: 'English', label: 'EN' },
     { code: 'ta', native: 'தமிழ்',  label: 'தமிழ்' },
     { code: 'hi', native: 'हिंदी',    label: 'हिंदी' },
+    { code: 'te', native: 'తెలుగు', label: 'తెలుగు' },
+    { code: 'ml', native: 'മലയാളം', label: 'മലയാളം' },
+    { code: 'kn', native: 'ಕನ್ನಡ', label: 'ಕನ್ನಡ' },
+    { code: 'bn', native: 'বাংলা', label: 'বাংলা' },
+    { code: 'pa', native: 'ਪੰਜਾਬੀ', label: 'ਪੰਜਾਬੀ' },
+    { code: 'mr', native: 'मराठी', label: 'मराठी' },
+    { code: 'ur', native: 'اردو', label: 'اردو' },
+    { code: 'gu', native: 'ગુજરાતી', label: 'ગુજરાતી' },
+    { code: 'or', native: 'ଓଡ଼ିଆ', label: 'ଓଡ଼ିଆ' }
   ];
 
   private _lang = signal<Lang>('en');
@@ -25,11 +34,17 @@ export class LanguageService {
   readonly translations$ = this._translations.asObservable();
 
   constructor(private http: HttpClient) {
-    this.loadTranslations('en');
+    const savedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('preferredLang') as Lang : null;
+    const initialLang = savedLang || 'en';
+    this._lang.set(initialLang);
+    this.loadTranslations(initialLang);
   }
 
   setLanguage(lang: Lang): void {
     this._lang.set(lang);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('preferredLang', lang);
+    }
     this.loadTranslations(lang);
   }
 

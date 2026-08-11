@@ -163,6 +163,14 @@ import { AuthService } from '../../../core/services/auth.service';
     .signup-link a:hover {
       text-decoration: underline;
     }
+    @media (max-width: 600px) {
+      .login-wrap {
+        padding: 24px 16px;
+      }
+      .login-card {
+        padding: 32px 24px;
+      }
+    }
   `]
 })
 export class LoginComponent {

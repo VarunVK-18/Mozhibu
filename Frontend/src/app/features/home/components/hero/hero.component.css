@@ -145,3 +145,16 @@
   .hero-stats { gap: 22px; }
   .hero-title { font-size: 30px; }
 }
+@media (max-width: 480px) {
+  .hero-inner { padding-left: 16px; padding-right: 16px; gap: 32px; padding-top: 32px; }
+  .hero-title { font-size: 24px; margin-bottom: 16px; font-weight: 600; }
+  .hero-sub { font-size: 15px; margin-bottom: 24px; }
+  .hero-stats { flex-direction: row; flex-wrap: wrap; gap: 18px; }
+  .hero-visual { height: 260px; overflow: hidden; margin: 0 -16px; }
+  .book-card { padding: 16px; }
+  .book-card h4 { font-size: 16px; }
+  .book-card .script-mark { font-size: 24px; bottom: 8px; right: 10px; }
+  .bc-1 { width: 160px; height: 220px; left: 10px; top: 10px; }
+  .bc-2 { width: 160px; height: 220px; left: 150px; top: 30px; }
+  .bc-3 { width: 140px; height: 190px; left: 50px; top: 80px; }
+}

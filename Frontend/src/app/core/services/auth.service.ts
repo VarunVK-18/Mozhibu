@@ -53,6 +53,36 @@ export class AuthService {
     localStorage.removeItem('token');
   }
 
+  getLibrary(): Observable<any[]> {
+    return this.api.get('/users/me/library');
+  }
+
+  getFollowing(): Observable<any[]> {
+    return this.api.get('/users/me/following');
+  }
+
+  getAuthors(): Observable<any[]> {
+    return this.api.get('/users/authors');
+  }
+
+  followAuthor(authorId: string): Observable<any> {
+    return this.api.post(`/users/follow/${authorId}`, {});
+  }
+
+  getReadingProgress(): Observable<any[]> {
+    return this.api.get('/users/me/progress');
+  }
+
+  uploadAvatar(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return this.api.post('/users/me/avatar', formData);
+  }
+
+  updateReadingProgress(bookId: string, chapterId?: string, progressPercentage?: number): Observable<any> {
+    return this.api.post('/users/me/progress', { bookId, chapterId, progressPercentage });
+  }
+
   private handleAuthResponse(res: any) {
     if (res && res.token && res.user) {
       this.user.set(res.user);

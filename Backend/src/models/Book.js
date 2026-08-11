@@ -12,7 +12,8 @@ const BookSchema = new mongoose.Schema({
   rejectionReason: { type: String },
   submittedAt: { type: Date, default: Date.now },
   reviewedAt: { type: Date },
-  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  titleTranslations: { type: Map, of: String, default: {} }
 }, {
   timestamps: true
 });

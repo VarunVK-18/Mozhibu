@@ -27,13 +27,26 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
             <div class="role-options">
               <label class="role-option" [class.selected]="signupForm.get('role')?.value === 'reader'">
                 <input type="radio" formControlName="role" value="reader" />
-                <span class="role-icon">📖</span>
+                <span class="role-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22 16.7402V4.67019C22 3.47019 21.02 2.58019 19.83 2.68019H19.77C17.67 2.86019 14.48 3.93019 12.7 5.05019L12.53 5.16019C12.24 5.34019 11.76 5.34019 11.47 5.16019L11.22 5.01019C9.44 3.90019 6.26 2.84019 4.16 2.67019C2.97 2.57019 2 3.47019 2 4.66019V16.7402C2 17.7002 2.78 18.6002 3.74 18.7202L4.03 18.7602C6.2 19.0502 9.55 20.1502 11.47 21.2002L11.51 21.2202C11.78 21.3702 12.21 21.3702 12.47 21.2202C14.39 20.1602 17.75 19.0502 19.93 18.7602L20.26 18.7202C21.22 18.6002 22 17.7002 22 16.7402Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path opacity="0.4" d="M12 5.49023V20.4902" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path opacity="0.4" d="M7.75 8.49023H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path opacity="0.4" d="M8.5 11.4902H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
                 <span class="role-title">I want to read</span>
                 <span class="role-desc">Discover and read amazing stories</span>
               </label>
               <label class="role-option" [class.selected]="signupForm.get('role')?.value === 'writer'">
                 <input type="radio" formControlName="role" value="writer" />
-                <span class="role-icon">✍️</span>
+                <span class="role-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.5502 3C6.69782 3.00694 4.6805 3.10152 3.39128 4.39073C2 5.78202 2 8.02125 2 12.4997C2 16.9782 2 19.2174 3.39128 20.6087C4.78257 22 7.0218 22 11.5003 22C15.9787 22 18.218 22 19.6093 20.6087C20.8985 19.3195 20.9931 17.3022 21 13.4498" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M11.0556 13C10.3322 3.86635 16.8023 1.27554 21.9805 2.16439C22.1896 5.19136 20.7085 6.32482 17.8879 6.84825C18.4326 7.41736 19.395 8.13354 19.2912 9.02879C19.2173 9.66586 18.7846 9.97843 17.9194 10.6036C16.0231 11.9736 13.8264 12.8375 11.0556 13Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 17C11 11.5 12.9604 9.63636 15 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
                 <span class="role-title">I want to publish</span>
                 <span class="role-desc">Write and share my own books</span>
               </label>
@@ -188,8 +201,14 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
       display: none;
     }
     .role-icon {
-      font-size: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       margin-bottom: 8px;
+      color: var(--ink-soft);
+    }
+    .role-option.selected .role-icon {
+      color: var(--forest-deep);
     }
     .role-title {
       font-family: var(--display);
@@ -292,9 +311,19 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
       text-decoration: underline;
     }
     @media (max-width: 600px) {
+      .signup-wrap {
+        padding: 24px 16px;
+      }
+      .signup-card {
+        padding: 32px 24px;
+      }
       .form-row {
         grid-template-columns: 1fr;
         gap: 0;
+      }
+      .role-options {
+        grid-template-columns: 1fr;
+        gap: 12px;
       }
     }
   `]

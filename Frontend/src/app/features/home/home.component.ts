@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { HeroComponent } from './components/hero/hero.component';
 import { StorySectionComponent } from '../../shared/components/story-section/story-section.component';
@@ -163,52 +164,65 @@ export class HomeComponent implements OnInit {
   audioStories: any[] = [];
 
   ngOnInit() {
-    this.bookService.getPublishedBooks().subscribe({
-      next: (books) => {
-        // Map backend books to the frontend Story interface
-        const mappedStories = books.map(b => ({
-          id: b._id,
-          title: b.title,
-          author: b.author?.username || 'Unknown',
-          cover: b.cover || 'assets/placeholder.jpg',
-          genre: b.genre,
-          views: (b.views / 1000).toFixed(1) + 'K',
-          rating: b.rating || 0,
-          isAudio: !!b.isAudio
-        }));
-
-        // In a real app, you would filter these based on different criteria/endpoints.
-        // Since we are migrating from mock data, we will just slice the returned books
-        // to populate the various rows for demonstration purposes.
-        this.recommendedStories = mappedStories.slice(0, 5);
-        this.trendingStories = mappedStories.slice(0, 5);
-        this.mostReadStories = mappedStories.slice(0, 5);
-        this.editorPicks = mappedStories.slice(0, 5);
-        this.newlyPublished = mappedStories.slice(0, 5);
-        this.completedStories = mappedStories.slice(0, 5);
-        this.ongoingStories = mappedStories.slice(0, 5);
-        this.audioStories = mappedStories.filter(s => s.isAudio).slice(0, 5);
+    forkJoin({
+      popular: this.bookService.getBooks('popular'),
+      trending: this.bookService.getBooks('trending'),
+      latest: this.bookService.getBooks('latest'),
+      audio: this.bookService.getBooks('', '', true)
+    }).subscribe({
+      next: (res) => {
+        this.recommendedStories = this.mapStories(res.popular).slice(0, 5);
+        this.trendingStories = this.mapStories(res.trending).slice(0, 5);
+        this.newlyPublished = this.mapStories(res.latest).slice(0, 5);
+        this.audioStories = this.mapStories(res.audio).slice(0, 5);
+        
+        // Some fallback slices for completed/ongoing/picks
+        this.mostReadStories = this.mapStories(res.popular).slice(5, 10);
+        this.editorPicks = this.mapStories(res.trending).slice(5, 10);
+        this.completedStories = this.mapStories(res.latest).slice(5, 10);
+        this.ongoingStories = this.mapStories(res.audio).slice(5, 10);
       },
-      error: (err) => console.error('Failed to load published books:', err)
+      error: (err) => console.error('Failed to load books:', err)
     });
+
+    if (this.authService.user()) {
+      this.authService.getFollowing().subscribe({
+        next: (authors) => {
+          this.followingUsers = authors.map((a: any) => ({
+            id: a._id,
+            name: a.username,
+            avatar: a.avatar,
+            followers: a.followersCount || 0,
+            isFollowing: true
+          }));
+        }
+      });
+      
+      // Also get all authors for the "Followers" track just to showcase other authors on the platform for now
+      // Alternatively this would be an endpoint to get users following the current user
+      this.authService.getAuthors().subscribe({
+        next: (authors) => {
+          this.followerUsers = authors.map((a: any) => ({
+            id: a._id,
+            name: a.username,
+            avatar: a.avatar,
+            followers: a.followersCount || 0
+          }));
+        }
+      });
+    }
   }
 
-  private createMockUsers(count: number): UserProfile[] {
-    const names = ['Arun Kumar', 'Priya Devi', 'James Wilson', 'Sarah Lee', 'Rahul Sharma', 'Anitha Suresh', 'Vijay', 'Kavya'];
-    const followers = ['12K', '4.5K', '890', '22K', '3.1K', '150', '6.8K', '9.2K'];
-    const avatars = [
-      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-      'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80',
-      '', // Test fallback initial
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
-    ];
-
-    return Array.from({ length: count }).map((_, i) => ({
-      id: String(i),
-      name: names[i % names.length],
-      followers: followers[i % followers.length],
-      avatar: avatars[i % avatars.length]
+  private mapStories(books: any[]) {
+    return books.map(b => ({
+      id: b._id,
+      title: b.title,
+      author: b.author?.username || 'Unknown',
+      cover: b.cover || 'assets/placeholder.jpg',
+      genre: b.genre,
+      views: (b.views / 1000).toFixed(1) + 'K',
+      rating: b.rating || 0,
+      isAudio: !!b.isAudio
     }));
   }
 
@@ -221,7 +235,7 @@ export class HomeComponent implements OnInit {
     ];
   }
 
-  followingUsers = this.createMockUsers(6);
-  followerUsers = this.createMockUsers(6);
+  followingUsers: UserProfile[] = [];
+  followerUsers: UserProfile[] = [];
   announcements = this.createMockAnnouncements();
 }

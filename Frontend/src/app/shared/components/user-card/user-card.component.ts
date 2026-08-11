@@ -1,12 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
 
 export interface UserProfile {
   id: string;
   name: string;
   avatar: string;
-  followers: string;
+  followers: string | number;
   bio?: string;
+  isFollowing?: boolean;
 }
 
 @Component({
@@ -19,8 +21,10 @@ export interface UserProfile {
         <span *ngIf="!user.avatar">{{ user.name.charAt(0) }}</span>
       </div>
       <h4 class="user-name">{{ user.name }}</h4>
-      <div class="user-followers">{{ user.followers }} followers</div>
-      <button class="follow-btn">Follow</button>
+      <div class="user-followers">{{ formatFollowers(user.followers) }} followers</div>
+      <button class="follow-btn" [class.following]="user.isFollowing" (click)="toggleFollow()">
+        {{ user.isFollowing ? 'Unfollow' : 'Follow' }}
+      </button>
     </div>
   `,
   styles: [`
@@ -86,6 +90,11 @@ export interface UserProfile {
       transition: all 0.2s ease;
       background: none;
     }
+    .follow-btn.following {
+      background: var(--forest);
+      color: #fff;
+      border-color: var(--forest);
+    }
     .follow-btn:hover {
       background: var(--forest);
       color: #fff;
@@ -95,4 +104,30 @@ export interface UserProfile {
 })
 export class UserCardComponent {
   @Input() user!: UserProfile;
+  private authService = inject(AuthService);
+
+  formatFollowers(num: string | number): string {
+    if (typeof num === 'string') return num;
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  }
+
+  toggleFollow() {
+    if (!this.authService.user()) {
+      alert('Please log in to follow authors.');
+      return;
+    }
+    this.authService.followAuthor(this.user.id).subscribe({
+      next: (res) => {
+        this.user.isFollowing = res.following;
+        // Optionally update follower count visually
+        if (typeof this.user.followers === 'number') {
+          this.user.followers += res.following ? 1 : -1;
+        }
+      },
+      error: (err) => {
+        console.error('Failed to toggle follow', err);
+      }
+    });
+  }
 }

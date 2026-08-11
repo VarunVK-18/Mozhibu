@@ -1,5 +1,5 @@
 .cr-section {
-  margin-bottom: 8px;
+  margin-bottom: 64px;
 }
 
 .section-head {
@@ -51,12 +51,23 @@
   display: flex;
   align-items: flex-end;
   padding: 8px;
+  position: relative;
+  overflow: hidden;
 }
 .cr-cover span {
   font-family: var(--display);
   font-weight: 700;
   color: rgba(255, 255, 255, 0.85);
   font-size: 13px;
+  z-index: 1;
+}
+.cr-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
 }
 
 .cr-info h4 {
@@ -92,3 +103,8 @@
 
 @media (max-width: 1080px) { .cr-row { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 680px)  { .cr-row { grid-template-columns: 1fr; } }
+@media (max-width: 480px)  {
+  .cr-card { padding: 12px; gap: 12px; }
+  .cr-cover { width: 50px; height: 72px; padding: 6px; }
+  .cr-info h4 { font-size: 13.5px; font-weight: 500; }
+}

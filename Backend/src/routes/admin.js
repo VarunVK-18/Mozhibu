@@ -2,6 +2,7 @@ const express = require('express');
 const { protect, superadmin } = require('../middleware/auth');
 const User = require('../models/User');
 const Book = require('../models/Book');
+const Notification = require('../models/Notification');
 
 const router = express.Router();
 
@@ -237,6 +238,58 @@ router.put('/pending-authors/:id/status', async (req, res) => {
     await user.save();
     res.json({ id: user.id, role: user.role, authorStatus: user.authorStatus });
   } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route POST /api/admin/broadcast
+// @desc Broadcast announcement to users
+router.post('/broadcast', async (req, res) => {
+  try {
+    const { title, message, audience } = req.body;
+    
+    if (!title || !message || !audience) {
+      return res.status(400).json({ msg: 'Please provide title, message, and audience' });
+    }
+
+    let query = {};
+    if (audience === 'readers') {
+      query.role = 'reader';
+    } else if (audience === 'writers') {
+      query.role = { $in: ['writer', 'superadmin'] };
+    }
+
+    const users = await User.find(query).select('_id');
+    
+    if (users.length === 0) {
+      return res.status(400).json({ msg: 'No users found for this audience' });
+    }
+
+    const notifications = users.map(user => ({
+      recipient: user._id,
+      type: 'announcement',
+      title: title,
+      message: message,
+      isRead: false
+    }));
+
+    await Notification.insertMany(notifications);
+
+    const io = req.app.get('io');
+    const userSockets = req.app.get('userSockets');
+    
+    if (io && userSockets) {
+      users.forEach(user => {
+        const socketId = userSockets.get(user._id.toString());
+        if (socketId) {
+          io.to(socketId).emit('incoming_notification');
+        }
+      });
+    }
+
+    res.json({ msg: `Announcement sent successfully to ${users.length} users.` });
+  } catch (err) {
+    console.error(err.message);
     res.status(500).json({ msg: 'Server Error' });
   }
 });

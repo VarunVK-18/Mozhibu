@@ -2,10 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-placeholder-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="placeholder-container">
       <div class="placeholder-content">
@@ -14,7 +16,18 @@ import { ActivatedRoute, Router } from '@angular/router';
         </div>
         <h1>{{ pageTitle() }}</h1>
         <p>We are currently building the {{ pageTitle() }} experience. Check back soon for exciting updates!</p>
-        <button class="btn-primary" (click)="goHome()">Back to Home</button>
+        
+        <div class="notify-form" *ngIf="!subscribed()">
+          <input type="email" placeholder="Enter your email address..." class="notify-input" [(ngModel)]="email">
+          <button class="btn-primary" (click)="subscribe()">Notify Me</button>
+        </div>
+        
+        <div class="success-msg" *ngIf="subscribed()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          You're on the list! We'll notify you when it's ready.
+        </div>
+
+        <button class="btn-text" (click)="goHome()" style="margin-top: 24px;">Back to Home</button>
       </div>
     </div>
   `,
@@ -64,12 +77,53 @@ import { ActivatedRoute, Router } from '@angular/router';
       line-height: 1.6;
       margin-bottom: 32px;
     }
+    .notify-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .notify-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-m);
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .notify-input:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+    .success-msg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #2e7d32;
+      background: #e8f5e9;
+      padding: 12px;
+      border-radius: var(--radius-m);
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--ink-soft);
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-text:hover {
+      color: var(--ink);
+      text-decoration: underline;
+    }
     .btn-primary {
       background: var(--forest);
       color: white;
       border: none;
-      padding: 12px 32px;
-      border-radius: 100px;
+      padding: 12px 24px;
+      border-radius: var(--radius-m);
       font-weight: 600;
       font-size: 15px;
       cursor: pointer;
@@ -83,6 +137,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class PlaceholderPageComponent implements OnInit {
   router = inject(Router);
   pageTitle = signal('');
+  subscribed = signal(false);
+  email = '';
 
   ngOnInit() {
     const url = this.router.url.split('/')[1] || '';
@@ -92,5 +148,11 @@ export class PlaceholderPageComponent implements OnInit {
 
   goHome() {
     this.router.navigate(['/']);
+  }
+
+  subscribe() {
+    if (this.email && this.email.includes('@')) {
+      this.subscribed.set(true);
+    }
   }
 }

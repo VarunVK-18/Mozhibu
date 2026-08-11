@@ -119,3 +119,10 @@
 /* Responsive */
 @media (max-width: 1080px) { .story-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 680px)  { .story-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+@media (max-width: 480px)  { 
+  .story-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .story-cover { padding: 12px; }
+  .cover-title { font-size: 14px; }
+  .story-card h4 { font-size: 13.5px; margin-top: 4px; }
+  .story-card .author { font-size: 11.5px; }
+}

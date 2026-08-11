@@ -4,14 +4,18 @@
       <h2>{{ 'continueReading.title' | translate }}</h2>
       <p>{{ 'continueReading.subtitle' | translate }}</p>
     </div>
-    <button class="view-all">{{ 'continueReading.goToLibrary' | translate }}</button>
+    <button class="view-all" routerLink="/library">{{ 'continueReading.goToLibrary' | translate }}</button>
   </div>
 
   <div class="cr-row">
     @for (item of items; track item.title) {
-      <div class="cr-card">
+      <div class="cr-card" [routerLink]="['/story', item.id]" [queryParams]="{resume: 'true'}" style="cursor: pointer;">
         <div class="cr-cover" [ngClass]="item.colorClass">
-          <span>{{ item.initials }}</span>
+          @if (item.cover) {
+            <img [src]="item.cover" [alt]="item.title" class="cr-cover-img" />
+          } @else {
+            <span>{{ item.initials }}</span>
+          }
         </div>
         <div class="cr-info">
           <h4>{{ item.title }}</h4>

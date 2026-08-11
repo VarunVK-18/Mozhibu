@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { BookService } from '../../core/services/book.service';
 
 interface Category {
   id: string;
@@ -160,86 +161,88 @@ interface Category {
     
     @media (max-width: 768px) {
       .hero-section {
-        padding: 48px 0;
-        margin-bottom: 32px;
+        padding: 40px 16px;
+        margin-bottom: 24px;
       }
       .hero-section h1 {
-        font-size: 32px;
+        font-size: 28px;
+      }
+      .hero-section p {
+        font-size: 14px;
       }
       .category-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
       .card-content {
-        padding: 16px 12px;
+        padding: 12px 10px;
       }
       .card-content h2 {
-        font-size: 18px;
+        font-size: 16px;
+        margin-bottom: 2px;
       }
       .card-content p {
-        font-size: 12px;
-        margin-bottom: 8px;
+        font-size: 11px;
+        margin-bottom: 6px;
+        -webkit-line-clamp: 1;
+      }
+      .count {
+        font-size: 10px;
+        padding: 4px 10px;
+      }
+    }
+    @media (max-width: 400px) {
+      .category-grid {
+        grid-template-columns: 1fr;
+      }
+      .category-card {
+        aspect-ratio: 21/9;
+      }
+      .card-content {
+        padding: 16px;
+      }
+      .card-content h2 {
+        font-size: 20px;
+      }
+      .card-content p {
+        font-size: 13px;
+        -webkit-line-clamp: 2;
       }
     }
   `]
 })
-export class CategoriesComponent {
-  categories: Category[] = [
-    {
-      id: 'romance',
-      name: 'Romance',
-      description: 'Stories of love, passion, and emotional journeys.',
-      image: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=600&q=80',
-      count: 1420
-    },
-    {
-      id: 'sci-fi',
-      name: 'Sci-Fi',
-      description: 'Explore the future, space, and advanced technology.',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80',
-      count: 895
-    },
-    {
-      id: 'fantasy',
-      name: 'Fantasy',
-      description: 'Magic, mythical creatures, and epic adventures.',
-      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80',
-      count: 2150
-    },
-    {
-      id: 'thriller',
-      name: 'Thriller',
-      description: 'Suspenseful tales that keep you on the edge of your seat.',
-      image: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=600&q=80',
-      count: 630
-    },
-    {
-      id: 'mystery',
-      name: 'Mystery',
-      description: 'Puzzles, crimes, and secrets waiting to be uncovered.',
-      image: 'https://images.unsplash.com/photo-1549488344-c6c748c15664?w=600&q=80',
-      count: 940
-    },
-    {
-      id: 'horror',
-      name: 'Horror',
-      description: 'Dark, terrifying, and bone-chilling stories.',
-      image: 'https://images.unsplash.com/photo-1505635552518-3448ff116af3?w=600&q=80',
-      count: 420
-    },
-    {
-      id: 'adventure',
-      name: 'Adventure',
-      description: 'Action-packed journeys across the world.',
-      image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=600&q=80',
-      count: 1120
-    },
-    {
-      id: 'historical',
-      name: 'Historical',
-      description: 'Step back in time to experience the past.',
-      image: 'https://images.unsplash.com/photo-1582298642055-6677461ab1d0?w=600&q=80',
-      count: 580
-    }
+export class CategoriesComponent implements OnInit {
+  bookService = inject(BookService);
+
+  categories: Category[] = [];
+
+  private allGenres = [
+    { name: 'Romance', desc: 'Stories of love, passion, and emotional journeys.', img: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=600&q=80' },
+    { name: 'Fantasy', desc: 'Magic, mythical creatures, and epic adventures.', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&q=80' },
+    { name: 'Thriller', desc: 'Suspenseful tales that keep you on the edge of your seat.', img: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=600&q=80' },
+    { name: 'Horror', desc: 'Dark, terrifying, and bone-chilling stories.', img: 'https://images.unsplash.com/photo-1505635552518-3448ff116af3?w=600&q=80' },
+    { name: 'Mystery', desc: 'Puzzles, crimes, and secrets waiting to be uncovered.', img: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&q=80' },
+    { name: 'Historical', desc: 'Step back in time to experience the past.', img: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80' },
+    { name: 'Drama', desc: 'Emotional, gripping character studies.', img: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=600&q=80' },
+    { name: 'Comedy', desc: 'Lighthearted, funny, and entertaining stories.', img: 'https://images.unsplash.com/photo-1543584756-8f40a802e14f?w=600&q=80' },
+    { name: 'Sci-Fi', desc: 'Explore the future, space, and advanced technology.', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80' },
+    { name: 'Children', desc: 'Fun and educational tales for kids.', img: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=600&q=80' },
+    { name: 'Poetry', desc: 'Beautiful verses and rhythmic expressions.', img: 'https://images.unsplash.com/photo-1505664173622-1816f58f7e1a?w=600&q=80' },
+    { name: 'Short Stories', desc: 'Quick reads for every mood.', img: 'https://images.unsplash.com/photo-1474366521946-c3d4b507abf2?w=600&q=80' },
+    { name: 'Fan Fiction', desc: 'Stories set in your favorite universes.', img: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=600&q=80' },
+    { name: 'Motivational', desc: 'Inspiring words to lift you up.', img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&q=80' },
+    { name: 'Biography', desc: 'True life stories of remarkable people.', img: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=600&q=80' }
   ];
+
+  ngOnInit() {
+    // Show the full robust list directly to match the user's requirements exactly.
+    // In a real app, you would fetch counts from the backend or let the backend dictate this list.
+    this.categories = this.allGenres.map(genre => ({
+      id: genre.name.toLowerCase().replace(/\s+/g, '-'),
+      name: genre.name,
+      description: genre.desc,
+      image: genre.img,
+      count: Math.floor(Math.random() * 500) + 100 // Mock count for UI
+    }));
+  }
 }

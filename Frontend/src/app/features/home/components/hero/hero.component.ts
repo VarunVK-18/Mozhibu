@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-hero',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <!-- Featured + Trending Authors -->
     <div class="hero-grid">
@@ -18,7 +20,7 @@ import { CommonModule } from '@angular/common';
             <span class="genre-pill">Mythology</span>
             <span class="author-text">by Anitha Suresh</span>
           </div>
-          <button class="btn btn-primary start-btn">Start Reading</button>
+          <button class="btn btn-primary start-btn" (click)="onStartReading()">Start Reading</button>
         </div>
         <div class="featured-cover">
           <img src="https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?auto=format&fit=crop&q=80&w=800" alt="Featured Story Cover">
@@ -27,10 +29,16 @@ import { CommonModule } from '@angular/common';
 
       <!-- Trending Authors -->
       <aside class="authors-panel">
-        <h3 class="panel-title">Trending Authors</h3>
+        <div class="panel-header">
+          <h3 class="panel-title">Trending Authors</h3>
+          <a routerLink="/login" class="view-all">View All</a>
+        </div>
         <div class="author-list">
           <div class="author-row" *ngFor="let author of authors">
-            <div class="author-avatar">{{ author.name.charAt(0) }}</div>
+            <div class="author-avatar">
+              <img *ngIf="author.avatar" [src]="author.avatar" [alt]="author.name">
+              <span *ngIf="!author.avatar">{{ author.name.charAt(0) }}</span>
+            </div>
             <div class="author-info">
               <span class="author-name">{{ author.name }}</span>
               <span class="author-followers">{{ author.followers }} followers</span>
@@ -158,12 +166,29 @@ import { CommonModule } from '@angular/common';
       flex-direction: column;
     }
 
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
     .panel-title {
       font-family: var(--display);
       font-size: 18px;
       font-weight: 700;
       color: var(--ink);
-      margin-bottom: 24px;
+      margin: 0;
+    }
+    
+    .view-all {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--forest);
+      text-decoration: none;
+    }
+    .view-all:hover {
+      text-decoration: underline;
     }
 
     .author-list {
@@ -191,6 +216,12 @@ import { CommonModule } from '@angular/common';
       font-size: 16px;
       color: var(--forest-deep);
       flex-shrink: 0;
+      overflow: hidden;
+    }
+    .author-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .author-info {
@@ -262,9 +293,20 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class HeroComponent {
+  authService = inject(AuthService);
+  router = inject(Router);
+
   authors = [
-    { name: 'Kalki Krishnamurthy', followers: '12.4K' },
-    { name: 'Sujatha Rangarajan', followers: '8.9K' },
-    { name: 'Jayakanthan', followers: '6.2K' },
+    { name: 'Kalki Krishnamurthy', followers: '12.4K', avatar: 'https://randomuser.me/api/portraits/men/47.jpg' },
+    { name: 'Sujatha Rangarajan', followers: '8.9K', avatar: 'https://randomuser.me/api/portraits/men/23.jpg' },
+    { name: 'Jayakanthan', followers: '6.2K', avatar: 'https://randomuser.me/api/portraits/men/64.jpg' },
   ];
+
+  onStartReading() {
+    if (this.authService.user()) {
+      this.router.navigate(['/library']);
+    } else {
+      this.router.navigate(['/login']);
+    }
+  }
 }

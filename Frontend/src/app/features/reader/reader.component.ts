@@ -1,6 +1,12 @@
-import { Component, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, OnInit, HostListener, OnDestroy, inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { LanguageService } from '../../core/services/language.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-reader',
@@ -21,54 +27,21 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
           <span class="story-title">{{ storyTitle }}</span>
           <span class="chapter-title">{{ chapterTitle }}</span>
         </div>
-        <div class="header-actions">
-          <!-- Placeholder for options -->
-        </div>
       </header>
 
       <!-- Reading Area -->
       <main class="reading-area" (click)="toggleControls()" [style.fontSize.px]="fontSize()">
-        <div class="content-wrapper">
-          <p>
-            The neon lights of Neo-Kyoto flickered, casting long, vibrant shadows across the rain-slicked pavement. Akira pulled up the collar of his trench coat, the synthetic fabric repelling the acidic drizzle. He checked his neural interface; the target's signal was weak, but definitely close. 
-          </p>
-          <p>
-            "You sure about this, kid?" barked the gruff voice of Captain Sato through the comms link. "This sector is crawling with Chrome Syndicate thugs."
-          </p>
-          <p>
-            "I'm sure," Akira muttered, his eyes scanning the alleyway. "The data drive is here. I can feel it." 
-          </p>
-          <p>
-            He stepped over a pile of discarded tech-junk, the remnants of a failed cybernetic augmentation clinic. The hum of a rogue generator vibrated in the soles of his boots. He reached for the heavy blaster holstered at his side, the cold metal a comforting weight.
-          </p>
-          <p>
-            Suddenly, a shadow detached itself from the gloom. A figure, clad head-to-toe in matte-black armor, stepped into the meager light of a flickering streetlamp. The figure held a sleek, humming vibro-blade.
-          </p>
-          <p>
-            "You're late, Akira," the figure hissed, its voice synthesized and devoid of emotion. 
-          </p>
-          <p>
-            Akira drew his blaster in a fluid motion, aiming it dead center at the figure's chest. "I didn't think you'd actually show up, Kael."
-          </p>
-          <p>
-            "I never miss a reunion," Kael replied, raising the vibro-blade. "Especially not when there's a score to settle."
-          </p>
-          <p>
-            The air crackled with tension, the rain seeming to freeze in the tense silence. Akira knew this was it. The culmination of months of tracking, of betrayals, and of close calls. He tightened his grip on the blaster.
-          </p>
-          <p>
-            "Give me the drive, Kael. It's over."
-          </p>
-          <p>
-            Kael chuckled, a harsh, metallic sound. "It's never over, Akira. Not in this city." And with that, he lunged.
-          </p>
+        <div class="content-wrapper" [innerHTML]="chapterContent()"></div>
+        <div class="loading-overlay" *ngIf="isTranslating()">
+          <div class="spinner"></div>
+          <p>Translating chapter with AI...</p>
         </div>
       </main>
 
       <!-- Bottom Toolbar -->
       <footer class="reader-footer" [class.hidden]="!showControls()">
         <div class="toolbar-content">
-          <button class="nav-btn">
+          <button class="nav-btn" (click)="prevChapter()" [disabled]="currentChapterNum === 1" [style.opacity]="currentChapterNum === 1 ? '0.3' : '1'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -99,7 +72,7 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
             </button>
           </div>
 
-          <button class="nav-btn">
+          <button class="nav-btn" (click)="nextChapter()">
             Next
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -192,9 +165,31 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
       font-weight: 600;
     }
     
-    .header-actions {
-      width: 70px; /* Balance the back button */
+    .chapter-title {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
     }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(var(--reader-bg), 0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--reader-border);
+      border-top-color: var(--reader-accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Reading Area */
     .reading-area {
@@ -316,15 +311,63 @@ import { RouterModule, ActivatedRoute, Router } from '@angular/router';
     }
   `]
 })
-export class ReaderComponent implements OnInit {
+export class ReaderComponent implements OnInit, OnDestroy {
   storyTitle = 'The Neon Shadows';
   chapterTitle = 'Chapter 1: The Drop';
+  currentChapterNum = 1;
   
   showControls = signal(true);
   isDarkMode = signal(false);
   fontSize = signal(18); // Default font size in px
   
   storyId: string = '';
+  chapterContent = signal<SafeHtml>('');
+  isTranslating = signal(false);
+
+  rawHtml = `
+          <p>
+            The neon lights of Neo-Kyoto flickered, casting long, vibrant shadows across the rain-slicked pavement. Akira pulled up the collar of his trench coat, the synthetic fabric repelling the acidic drizzle. He checked his neural interface; the target's signal was weak, but definitely close. 
+          </p>
+          <p>
+            "You sure about this, kid?" barked the gruff voice of Captain Sato through the comms link. "This sector is crawling with Chrome Syndicate thugs."
+          </p>
+          <p>
+            "I'm sure," Akira muttered, his eyes scanning the alleyway. "The data drive is here. I can feel it." 
+          </p>
+          <p>
+            He stepped over a pile of discarded tech-junk, the remnants of a failed cybernetic augmentation clinic. The hum of a rogue generator vibrated in the soles of his boots. He reached for the heavy blaster holstered at his side, the cold metal a comforting weight.
+          </p>
+          <p>
+            Suddenly, a shadow detached itself from the gloom. A figure, clad head-to-toe in matte-black armor, stepped into the meager light of a flickering streetlamp. The figure held a sleek, humming vibro-blade.
+          </p>
+          <p>
+            "You're late, Akira," the figure hissed, its voice synthesized and devoid of emotion. 
+          </p>
+          <p>
+            Akira drew his blaster in a fluid motion, aiming it dead center at the figure's chest. "I didn't think you'd actually show up, Kael."
+          </p>
+          <p>
+            "I never miss a reunion," Kael replied, raising the vibro-blade. "Especially not when there's a score to settle."
+          </p>
+          <p>
+            The air crackled with tension, the rain seeming to freeze in the tense silence. Akira knew this was it. The culmination of months of tracking, of betrayals, and of close calls. He tightened his grip on the blaster.
+          </p>
+          <p>
+            "Give me the drive, Kael. It's over."
+          </p>
+          <p>
+            Kael chuckled, a harsh, metallic sound. "It's never over, Akira. Not in this city." And with that, he lunged.
+          </p>
+  `;
+
+  private authService = inject(AuthService);
+  private document = inject(DOCUMENT);
+  private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
+  public langService = inject(LanguageService);
+  
+  private scrollSubject = new Subject<number>();
+  private scrollSub?: Subscription;
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -332,6 +375,63 @@ export class ReaderComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       this.storyId = params.get('storyId') || '';
     });
+    
+    const currentLang = this.langService.currentLang();
+    
+    if (currentLang === 'en') {
+      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+    } else {
+      this.isTranslating.set(true);
+      this.http.post<{content: string}>('http://localhost:5000/api/books/translate-html', {
+        html: this.rawHtml,
+        targetLang: currentLang
+      }).subscribe({
+        next: (res) => {
+          this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(res.content));
+          this.isTranslating.set(false);
+        },
+        error: (err) => {
+          console.error('Translation failed', err);
+          this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+          this.isTranslating.set(false);
+        }
+      });
+    }
+
+    this.scrollSub = this.scrollSubject.pipe(
+      debounceTime(2000)
+    ).subscribe(percentage => {
+      this.saveProgress(percentage);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.scrollSub) {
+      this.scrollSub.unsubscribe();
+    }
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const scrollOffset = window.scrollY || this.document.documentElement.scrollTop || this.document.body.scrollTop || 0;
+    const scrollHeight = this.document.documentElement.scrollHeight || this.document.body.scrollHeight || 0;
+    const clientHeight = this.document.documentElement.clientHeight || window.innerHeight || 0;
+    
+    let percent = 0;
+    if (scrollHeight > clientHeight) {
+      percent = (scrollOffset / (scrollHeight - clientHeight)) * 100;
+    }
+    
+    percent = Math.max(0, Math.min(100, Math.round(percent)));
+    this.scrollSubject.next(percent);
+  }
+
+  saveProgress(percentage: number) {
+    if (this.storyId && this.authService.user()) {
+      this.authService.updateReadingProgress(this.storyId, undefined, percentage).subscribe({
+        error: (err) => console.error('Failed to save reading progress', err)
+      });
+    }
   }
 
   toggleControls(): void {
@@ -359,6 +459,20 @@ export class ReaderComponent implements OnInit {
       this.router.navigate(['/story', this.storyId]);
     } else {
       this.router.navigate(['/']);
+    }
+  }
+
+  nextChapter() {
+    this.currentChapterNum++;
+    this.chapterTitle = `Chapter ${this.currentChapterNum}: The Continuation`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  prevChapter() {
+    if (this.currentChapterNum > 1) {
+      this.currentChapterNum--;
+      this.chapterTitle = `Chapter ${this.currentChapterNum}: The Previous`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 }

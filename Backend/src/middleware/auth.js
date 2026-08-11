@@ -38,4 +38,12 @@ const superadmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, superadmin };
+const author = (req, res, next) => {
+  if (req.user && (req.user.role === 'writer' || req.user.role === 'superadmin')) {
+    next();
+  } else {
+    res.status(403).json({ msg: 'Forbidden, author only' });
+  }
+};
+
+module.exports = { protect, superadmin, author };

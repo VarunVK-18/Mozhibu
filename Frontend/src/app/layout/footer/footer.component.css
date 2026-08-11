@@ -112,3 +112,9 @@
 @media (max-width: 680px) {
   .footer-top { grid-template-columns: 1fr 1fr; }
 }
+@media (max-width: 480px) {
+  .footer { padding: 40px 0 24px; }
+  .footer-top { grid-template-columns: 1fr; row-gap: 24px; }
+  .footer-brand p { font-size: 13px; margin: 10px 0 14px; max-width: 100%; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; gap: 16px; padding-top: 20px; }
+}

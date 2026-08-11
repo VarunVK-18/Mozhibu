@@ -186,8 +186,9 @@ export class StoryDetailComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
+      const resume = this.route.snapshot.queryParamMap.get('resume') === 'true';
       if (id) {
-        this.storyService.loadMockStory(id);
+        this.storyService.loadStory(id, resume);
       }
     });
   }

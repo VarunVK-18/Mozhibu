@@ -32,6 +32,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/categories/categories.component').then(m => m.CategoriesComponent),
   },
   {
+    path: 'category/:id',
+    loadComponent: () => import('./features/categories/category-detail/category-detail.component').then(m => m.CategoryDetailComponent),
+  },
+  {
     path: 'read/:storyId',
     loadComponent: () => import('./features/reader/reader.component').then(m => m.ReaderComponent),
   },
@@ -57,7 +61,7 @@ export const routes: Routes = [
   },
   {
     path: 'community',
-    loadComponent: () => import('./shared/components/placeholder-page/placeholder-page.component').then(m => m.PlaceholderPageComponent),
+    loadComponent: () => import('./features/community/community.component').then(m => m.CommunityComponent),
   },
   {
     path: 'competitions',
@@ -74,7 +78,8 @@ export const routes: Routes = [
       { path: 'users', loadComponent: () => import('./features/admin/users/users.component').then(m => m.UsersComponent) },
       { path: 'authors', loadComponent: () => import('./features/admin/authors/authors.component').then(m => m.AuthorsComponent) },
       { path: 'author-approvals', loadComponent: () => import('./features/admin/author-approvals/author-approvals.component').then(m => m.AuthorApprovalsComponent) },
-      { path: 'authors/:id', loadComponent: () => import('./features/admin/author-detail/author-detail.component').then(m => m.AuthorDetailComponent) }
+      { path: 'authors/:id', loadComponent: () => import('./features/admin/author-detail/author-detail.component').then(m => m.AuthorDetailComponent) },
+      { path: 'broadcast', loadComponent: () => import('./features/admin/broadcast/broadcast.component').then(m => m.BroadcastComponent) }
     ]
   },
   { path: '**', redirectTo: '' },

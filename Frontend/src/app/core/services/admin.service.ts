@@ -117,4 +117,8 @@ export class AdminService {
   updatePendingAuthorStatus(id: string, action: 'approve' | 'reject'): Observable<any> {
     return this.api.put(`/admin/pending-authors/${id}/status`, { action });
   }
+
+  broadcastAnnouncement(data: { title: string, message: string, audience: string }): Observable<any> {
+    return this.api.post('/admin/broadcast', data);
+  }
 }

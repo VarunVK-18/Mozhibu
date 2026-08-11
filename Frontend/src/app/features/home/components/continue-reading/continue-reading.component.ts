@@ -1,26 +1,71 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { BookService } from '../../../../core/services/book.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 interface ReadingItem {
+  id?: string;
   initials: string;
   colorClass: string;
   title: string;
   meta: string;
   progress: number;
+  cover?: string;
 }
 
 @Component({
   selector: 'app-continue-reading',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   templateUrl: './continue-reading.component.html',
   styleUrls: ['./continue-reading.component.css'],
 })
-export class ContinueReadingComponent {
-  readonly items: ReadingItem[] = [
-    { initials: 'ML', colorClass: 'cv-1', title: 'Monsoon Letters',            meta: 'Chapter 14 of 26 · Tamil',     progress: 54 },
-    { initials: 'SP', colorClass: 'cv-4', title: 'The Silence at Platform 9',  meta: 'Chapter 3 of 18 · Hindi',      progress: 17 },
-    { initials: 'LF', colorClass: 'cv-7', title: 'The Last Ferry to Vaikuntam',meta: 'Chapter 8 of 12 · Malayalam',  progress: 78 },
-  ];
+export class ContinueReadingComponent implements OnInit {
+  bookService = inject(BookService);
+  authService = inject(AuthService);
+  items: ReadingItem[] = [];
+
+  ngOnInit() {
+    if (this.authService.user()) {
+      this.authService.getReadingProgress().subscribe({
+        next: (progressList) => {
+          if (progressList && progressList.length > 0) {
+            this.items = progressList.slice(0, 3).map((p: any, index: number) => ({
+              id: p.book._id,
+              initials: p.book.title.substring(0, 2).toUpperCase(),
+              colorClass: `cv-${(index % 8) + 1}`,
+              title: p.book.title,
+              meta: `Chapter 1 of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
+              progress: p.progressPercentage || 0,
+              cover: p.book.cover
+            }));
+          } else {
+            this.loadFallbackBooks();
+          }
+        },
+        error: () => this.loadFallbackBooks()
+      });
+    } else {
+      this.loadFallbackBooks();
+    }
+  }
+
+  loadFallbackBooks() {
+    this.bookService.getBooks().subscribe({
+      next: (books) => {
+        // Take up to 3 books and mock the user progress for the UI
+        this.items = books.slice(0, 3).map((book: any, index: number) => ({
+          id: book._id,
+          initials: book.title.substring(0, 2).toUpperCase(),
+          colorClass: `cv-${(index % 8) + 1}`,
+          title: book.title,
+          meta: `Chapter ${Math.floor(Math.random() * 10) + 1} of ${book.chapters?.length || 20} · ${book.genre || 'Story'}`,
+          progress: Math.floor(Math.random() * 80) + 10,
+          cover: book.cover
+        }));
+      }
+    });
+  }
 }

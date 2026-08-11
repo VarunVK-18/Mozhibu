@@ -1,18 +1,20 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StoryCardComponent, Story } from '../../shared/components/story-card/story-card.component';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-library',
   standalone: true,
-  imports: [CommonModule, StoryCardComponent, RouterModule],
+  imports: [CommonModule, StoryCardComponent, RouterModule, TranslatePipe],
   template: `
     <div class="library-page">
       <div class="hero-section">
         <div class="wrap">
-          <h1>Your Library</h1>
-          <p>Your personal collection of saved stories and favorite authors.</p>
+          <h1>{{ 'libraryPage.title' | translate }}</h1>
+          <p>{{ 'libraryPage.subtitle' | translate }}</p>
         </div>
       </div>
       
@@ -22,13 +24,13 @@ import { RouterModule } from '@angular/router';
             class="tab-btn" 
             [class.active]="activeTab() === 'saved'" 
             (click)="activeTab.set('saved')">
-            Saved Stories ({{ savedStories.length }})
+            {{ 'libraryPage.savedStories' | translate }} ({{ savedStories.length }})
           </button>
           <button 
             class="tab-btn" 
             [class.active]="activeTab() === 'authors'" 
             (click)="activeTab.set('authors')">
-            Followed Authors ({{ followedAuthors.length }})
+            {{ 'libraryPage.followedAuthors' | translate }} ({{ followedAuthors.length }})
           </button>
         </div>
         
@@ -41,7 +43,9 @@ import { RouterModule } from '@angular/router';
             </div>
           } @else {
             <div class="empty-state">
-              <div class="empty-icon">📚</div>
+              <div class="empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+              </div>
               <h2>No saved stories yet</h2>
               <p>Explore the discovery page and bookmark stories to build your collection.</p>
               <button class="btn-primary" routerLink="/">Discover Stories</button>
@@ -67,7 +71,9 @@ import { RouterModule } from '@angular/router';
             </div>
           } @else {
             <div class="empty-state">
-              <div class="empty-icon">✍️</div>
+              <div class="empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </div>
               <h2>No followed authors yet</h2>
               <p>Follow authors you love to get notified when they publish new stories.</p>
               <button class="btn-primary" routerLink="/">Find Authors</button>
@@ -223,8 +229,10 @@ import { RouterModule } from '@angular/router';
     }
     
     .empty-icon {
-      font-size: 48px;
       margin-bottom: 16px;
+      color: var(--ink-faint, #a09a90);
+      display: flex;
+      justify-content: center;
     }
     
     .empty-state h2 {
@@ -259,18 +267,35 @@ import { RouterModule } from '@angular/router';
     }
   `]
 })
-export class LibraryComponent {
+export class LibraryComponent implements OnInit {
+  authService = inject(AuthService);
   activeTab = signal<'saved' | 'authors'>('saved');
   
-  savedStories: Story[] = [
-    { id: '1', title: 'The Silent Echo', author: 'Elara Vance', cover: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=300&q=80', genre: 'Sci-Fi' },
-    { id: '2', title: 'A Memory of Light', author: 'Robert Jordan', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80', genre: 'Fantasy' },
-    { id: '3', title: 'Crimson Tide', author: 'Maya Lin', cover: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=300&q=80', genre: 'Thriller' }
-  ];
+  savedStories: Story[] = [];
+  followedAuthors: any[] = [];
 
-  followedAuthors = [
-    { id: 'a1', name: 'Elara Vance', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', followers: '12.4k' },
-    { id: 'a2', name: 'J.T. Sterling', avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80', followers: '8.1k' },
-    { id: 'a3', name: 'Maya Lin', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80', followers: '24k' }
-  ];
+  ngOnInit() {
+    this.authService.getLibrary().subscribe({
+      next: (books: any[]) => {
+        this.savedStories = books.map(b => ({
+          id: b._id,
+          title: b.title,
+          author: b.author?.username || 'Unknown',
+          cover: b.cover || 'assets/placeholder.jpg',
+          genre: b.genre
+        }));
+      }
+    });
+
+    this.authService.getFollowing().subscribe({
+      next: (authors: any[]) => {
+        this.followedAuthors = authors.map(a => ({
+          id: a._id,
+          name: a.username,
+          avatar: a.avatar || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100',
+          followers: (a.followersCount / 1000).toFixed(1) + 'K'
+        }));
+      }
+    });
+  }
 }

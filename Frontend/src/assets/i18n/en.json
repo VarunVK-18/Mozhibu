@@ -1,7 +1,10 @@
 {
   "nav": {
+    "home": "Home",
     "discover": "Discover",
+    "categories": "Categories",
     "library": "Library",
+    "myReading": "My Reading",
     "write": "Write",
     "community": "Community",
     "competitions": "Competitions"
@@ -80,5 +83,11 @@
     "instagram": "Instagram",
     "x": "X",
     "youtube": "YouTube"
+  },
+  "libraryPage": {
+    "title": "Your Library",
+    "subtitle": "Your personal collection of saved stories and favorite authors.",
+    "savedStories": "Saved Stories",
+    "followedAuthors": "Followed Authors"
   }
 }

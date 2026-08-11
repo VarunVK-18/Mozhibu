@@ -1,7 +1,10 @@
 {
   "nav": {
+    "home": "होम",
     "discover": "खोजें",
+    "categories": "श्रेणियाँ",
     "library": "पुस्तकालय",
+    "myReading": "मेरा पठन",
     "write": "लिखें",
     "community": "समुदाय",
     "competitions": "प्रतियोगिताएं"
@@ -80,5 +83,11 @@
     "instagram": "Instagram",
     "x": "X",
     "youtube": "YouTube"
+  },
+  "libraryPage": {
+    "title": "आपका पुस्तकालय",
+    "subtitle": "सहेजी गई कहानियों और पसंदीदा लेखकों का आपका व्यक्तिगत संग्रह।",
+    "savedStories": "सहेजी गई कहानियां",
+    "followedAuthors": "अनुसरण किए गए लेखक"
   }
 }

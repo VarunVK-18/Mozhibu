@@ -181,6 +181,15 @@ export interface Story {
       color: var(--ink-faint);
       font-weight: 500;
     }
+    @media (max-width: 480px) {
+      .title { font-size: 13.5px; line-height: 1.25; font-weight: 500; }
+      .author { font-size: 11.5px; }
+      .genre-tag { font-size: 10px; padding: 3px 8px; }
+      .read-btn { font-size: 12px; padding: 6px 12px; }
+      .story-card { gap: 8px; }
+      .stats { gap: 8px; }
+      .stat { font-size: 11px; }
+    }
   `]
 })
 export class StoryCardComponent {
