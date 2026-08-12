@@ -11,6 +11,7 @@ import { ContinueReadingComponent } from './components/continue-reading/continue
 import { BookService } from '../../core/services/book.service';
 import { OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { GoogleAdComponent } from '../../shared/components/ad/google-ad.component';
 
 @Component({
   selector: 'app-home',
@@ -23,7 +24,8 @@ import { RouterModule } from '@angular/router';
     UserCardComponent,
     AnnouncementCardComponent,
     ContinueReadingComponent,
-    RouterModule
+    RouterModule,
+    GoogleAdComponent
   ],
   template: `
     <div class="page-wrapper">
@@ -31,27 +33,36 @@ import { RouterModule } from '@angular/router';
         <!-- GUEST VIEW -->
         <app-hero></app-hero>
         
-        <app-story-section title="Recommended for You" [stories]="recommendedStories" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Trending Today" [stories]="trendingStories" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Most Read" [stories]="mostReadStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Recommended for You" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        
+        <div class="ad-banner-wrapper">
+          <app-google-ad></app-google-ad>
+        </div>
+        
+        <app-story-section title="Trending Today" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Most Read" [stories]="mostReadStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
         
         <app-competition-banner></app-competition-banner>
         
-        <app-story-section title="Editor's Picks" [stories]="editorPicks" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Newly Published" [stories]="newlyPublished" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Completed Stories" [stories]="completedStories" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Ongoing Stories" [stories]="ongoingStories" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Audio Stories" [stories]="audioStories" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Editor's Picks" [stories]="editorPicks" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Newly Published" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Completed Stories" [stories]="completedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Ongoing Stories" [stories]="ongoingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Audio Stories" [stories]="audioStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
       } @else {
         <!-- LOGGED IN VIEW -->
         <div class="logged-in-container">
           <app-continue-reading></app-continue-reading>
           
-          <app-story-section title="Recommended" [stories]="recommendedStories" viewAllLink="/categories"></app-story-section>
+          <app-story-section title="Recommended" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
           
-          <app-story-section title="Latest" [stories]="newlyPublished" viewAllLink="/categories"></app-story-section>
+          <div class="ad-banner-wrapper">
+            <app-google-ad></app-google-ad>
+          </div>
           
-          <app-story-section title="Trending" [stories]="trendingStories" viewAllLink="/categories"></app-story-section>
+          <app-story-section title="Latest" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+          
+          <app-story-section title="Trending" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
           
           <!-- Following Users -->
           <section class="user-section">
@@ -102,6 +113,10 @@ import { RouterModule } from '@angular/router';
       margin: 0 auto;
       padding: 0 32px 80px 32px;
     }
+    .ad-banner-wrapper {
+      margin: 40px 0;
+      width: 100%;
+    }
     .logged-in-container {
       padding-top: 48px;
     }
@@ -147,6 +162,17 @@ import { RouterModule } from '@angular/router';
       .page-wrapper {
         padding: 0 16px 48px 16px;
       }
+      .scroll-container {
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .users-track::after, .announcements-track::after {
+        content: '';
+        width: 1px;
+      }
     }
   `]
 })
@@ -162,6 +188,8 @@ export class HomeComponent implements OnInit {
   completedStories: any[] = [];
   ongoingStories: any[] = [];
   audioStories: any[] = [];
+
+  isStoriesLoading = true;
 
   ngOnInit() {
     forkJoin({
@@ -181,8 +209,13 @@ export class HomeComponent implements OnInit {
         this.editorPicks = this.mapStories(res.trending).slice(5, 10);
         this.completedStories = this.mapStories(res.latest).slice(5, 10);
         this.ongoingStories = this.mapStories(res.audio).slice(5, 10);
+
+        this.isStoriesLoading = false;
       },
-      error: (err) => console.error('Failed to load books:', err)
+      error: (err) => {
+        console.error('Failed to load books:', err);
+        this.isStoriesLoading = false;
+      }
     });
 
     if (this.authService.user()) {
@@ -221,7 +254,7 @@ export class HomeComponent implements OnInit {
       cover: b.cover || 'assets/placeholder.jpg',
       genre: b.genre,
       views: (b.views / 1000).toFixed(1) + 'K',
-      rating: b.rating || 0,
+      rating: b.rating ? Number(b.rating).toFixed(1) : 0,
       isAudio: !!b.isAudio
     }));
   }

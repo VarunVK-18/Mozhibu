@@ -38,7 +38,18 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Reading Area -->
       <main class="reading-area" (click)="toggleControls()" [style.fontSize.px]="fontSize()">
-        <div class="content-wrapper" [innerHTML]="chapterContent()" [style.display]="isTranslating() ? 'none' : 'block'"></div>
+        @if (requiresSubscription()) {
+          <div class="paywall-overlay">
+            <div class="paywall-content">
+              <div class="paywall-icon">👑</div>
+              <h2>Premium Chapter</h2>
+              <p>This chapter is exclusive to Mozhibu Premium subscribers.</p>
+              <a routerLink="/subscription/plans" class="btn-subscribe">View Premium Plans</a>
+            </div>
+          </div>
+        } @else {
+          <div class="content-wrapper" [innerHTML]="chapterContent()" [style.display]="isTranslating() ? 'none' : 'block'"></div>
+        }
         
         <div class="skeleton-buffer" *ngIf="isTranslating()">
           <div class="skeleton-line" style="width: 80%"></div>
@@ -57,7 +68,7 @@ import { AuthService } from '../../core/services/auth.service';
       </main>
 
       <!-- Bottom Toolbar -->
-      <footer class="reader-footer" [class.hidden]="!showControls()">
+      <footer class="reader-footer" [class.hidden]="!showControls() || requiresSubscription()">
         <div class="toolbar-content">
           <button class="nav-btn" (click)="prevChapter()" [disabled]="currentChapterNum === 1" [style.opacity]="currentChapterNum === 1 ? '0.3' : '1'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,12 +225,8 @@ import { AuthService } from '../../core/services/auth.service';
       gap: 12px;
       padding: 20px 0;
     }
-    .skeleton-line {
-      height: 18px;
-      background: var(--reader-border);
-      border-radius: 4px;
-      animation: pulse 1.5s infinite ease-in-out;
-    }
+    .skeleton-line { height: 1em; background: var(--reader-border); margin-bottom: 0.8em; border-radius: 4px; animation: pulse 1.5s infinite; }
+    
     @keyframes pulse {
       0% { opacity: 0.4; }
       50% { opacity: 0.8; }
@@ -242,6 +249,38 @@ import { AuthService } from '../../core/services/auth.service';
     .content-wrapper p {
       margin-bottom: 1.5em;
     }
+
+    /* Paywall */
+    .paywall-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50vh;
+      text-align: center;
+    }
+    .paywall-content {
+      background: var(--reader-surface);
+      border: 1px solid var(--reader-border);
+      border-radius: 16px;
+      padding: 48px;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .paywall-icon { font-size: 48px; margin-bottom: 16px; }
+    .paywall-content h2 { font-family: var(--display); font-size: 24px; margin: 0 0 12px; }
+    .paywall-content p { font-size: 15px; opacity: 0.8; margin: 0 0 24px; line-height: 1.5; }
+    .btn-subscribe {
+      display: inline-block;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 15px;
+      transition: transform 0.2s;
+    }
+    .btn-subscribe:hover { transform: translateY(-2px); }
 
     /* Bottom Toolbar */
     .reader-footer {
@@ -358,6 +397,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
   storyId: string = '';
   chapterContent = signal<SafeHtml>('');
   isTranslating = signal(false);
+  requiresSubscription = signal(false);
 
   rawHtml = `
           <p>
@@ -500,6 +540,12 @@ export class ReaderComponent implements OnInit, OnDestroy {
   nextChapter() {
     this.currentChapterNum++;
     this.chapterTitle = `Chapter ${this.currentChapterNum}: The Continuation`;
+    // Mock paywall on chapter 3
+    if (this.currentChapterNum === 3) {
+      this.requiresSubscription.set(true);
+    } else {
+      this.requiresSubscription.set(false);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -507,6 +553,11 @@ export class ReaderComponent implements OnInit, OnDestroy {
     if (this.currentChapterNum > 1) {
       this.currentChapterNum--;
       this.chapterTitle = `Chapter ${this.currentChapterNum}: The Previous`;
+      if (this.currentChapterNum === 3) {
+        this.requiresSubscription.set(true);
+      } else {
+        this.requiresSubscription.set(false);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }

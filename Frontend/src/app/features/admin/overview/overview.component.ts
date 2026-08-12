@@ -271,9 +271,9 @@ import { Router } from '@angular/router';
       display: flex; align-items: center; justify-content: flex-start;
     }
     .users-icon { background: transparent; color: var(--ink); }
-    .books-icon { background: transparent; color: var(--forest-deep); }
-    .pending-icon { background: transparent; color: #b45309; }
-    .approval-icon { background: transparent; color: #4338ca; }
+    .books-icon { background: transparent; color: var(--ink); }
+    .pending-icon { background: transparent; color: var(--ink); }
+    .approval-icon { background: transparent; color: var(--ink); }
     
     .stat-label { font-size: 13px; color: var(--ink-soft); font-weight: 400; margin-bottom: 8px; position: relative; z-index: 2; }
     .stat-bottom { display: flex; align-items: flex-end; justify-content: space-between; position: relative; z-index: 2; }

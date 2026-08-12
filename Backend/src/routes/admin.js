@@ -3,6 +3,7 @@ const { protect, superadmin } = require('../middleware/auth');
 const User = require('../models/User');
 const Book = require('../models/Book');
 const Notification = require('../models/Notification');
+const Broadcast = require('../models/Broadcast');
 
 const router = express.Router();
 
@@ -84,6 +85,19 @@ router.get('/books', async (req, res) => {
   }
 });
 
+// @route GET /api/admin/reported-books
+// @desc Get all books with more than 10 reports
+router.get('/reported-books', async (req, res) => {
+  try {
+    const books = await Book.find({ reportCount: { $gt: 10 }, status: { $ne: 'suspended' } })
+      .populate('author', 'username email')
+      .sort({ reportCount: -1 });
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // @route GET /api/admin/books/:id
 // @desc Get book details
 router.get('/books/:id', async (req, res) => {
@@ -101,7 +115,7 @@ router.get('/books/:id', async (req, res) => {
 router.put('/books/:id/status', async (req, res) => {
   try {
     const { status, rejectionReason } = req.body;
-    if (!['pending', 'published', 'rejected'].includes(status)) {
+    if (!['pending', 'published', 'rejected', 'suspended'].includes(status)) {
       return res.status(400).json({ msg: 'Invalid status' });
     }
 
@@ -275,6 +289,15 @@ router.post('/broadcast', async (req, res) => {
 
     await Notification.insertMany(notifications);
 
+    // Save broadcast history
+    const broadcastRecord = new Broadcast({
+      title,
+      message,
+      audience,
+      sentBy: req.user.id
+    });
+    await broadcastRecord.save();
+
     const io = req.app.get('io');
     const userSockets = req.app.get('userSockets');
     
@@ -290,6 +313,85 @@ router.post('/broadcast', async (req, res) => {
     res.json({ msg: `Announcement sent successfully to ${users.length} users.` });
   } catch (err) {
     console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route GET /api/admin/broadcasts
+// @desc Get broadcast history
+router.get('/broadcasts', async (req, res) => {
+  try {
+    const broadcasts = await Broadcast.find()
+      .populate('sentBy', 'username email')
+      .sort({ createdAt: -1 });
+    res.json(broadcasts);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route DELETE /api/admin/broadcasts/:id
+// @desc Delete a broadcast from history
+router.delete('/broadcasts/:id', async (req, res) => {
+  try {
+    const broadcast = await Broadcast.findById(req.params.id);
+    if (!broadcast) {
+      return res.status(404).json({ msg: 'Broadcast not found' });
+    }
+    
+    await broadcast.deleteOne();
+    res.json({ msg: 'Broadcast deleted from history' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+const Competition = require('../models/Competition');
+
+// @route GET /api/admin/competition
+// @desc Get competition config
+router.get('/competition', async (req, res) => {
+  try {
+    let competition = await Competition.findOne();
+    if (!competition) {
+      competition = new Competition();
+      await competition.save();
+    }
+
+    // Auto-expire if end date has passed
+    if (competition.isActive && competition.endDate && new Date() > new Date(competition.endDate)) {
+      competition.isActive = false;
+      await competition.save();
+    }
+
+    res.json(competition);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route PUT /api/admin/competition
+// @desc Update competition config
+router.put('/competition', async (req, res) => {
+  try {
+    const { isActive, tag, title, description, endDate, buttonText, buttonLink } = req.body;
+    let competition = await Competition.findOne();
+    
+    if (!competition) {
+      competition = new Competition();
+    }
+
+    if (isActive !== undefined) competition.isActive = isActive;
+    if (tag) competition.tag = tag;
+    if (title) competition.title = title;
+    if (description) competition.description = description;
+    if (endDate) competition.endDate = endDate;
+    if (buttonText) competition.buttonText = buttonText;
+    if (buttonLink) competition.buttonLink = buttonLink;
+
+    await competition.save();
+    res.json(competition);
+  } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
   }
 });

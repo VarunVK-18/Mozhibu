@@ -7,7 +7,8 @@ const ChapterSchema = new mongoose.Schema({
   order: { type: Number, required: true },
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   translations: { type: Map, of: String, default: {} },
-  titleTranslations: { type: Map, of: String, default: {} }
+  titleTranslations: { type: Map, of: String, default: {} },
+  accessType: { type: String, enum: ['inherit', 'free', 'premium'], default: 'inherit' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Chapter', ChapterSchema);

@@ -56,6 +56,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             (readClicked)="onReadClicked()"
             (bookmarkClicked)="onBookmarkClicked()"
             (likeClicked)="onLikeClicked()"
+            (reportSubmitted)="onReportSubmitted($event)"
           ></app-story-actions>
           
           <div class="synopsis-section">
@@ -72,8 +73,11 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
           
           <app-comment-list 
             [comments]="comments()"
-            [currentUserAvatar]="currentUser()?.avatar || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&q=80'"
+            [currentUserAvatar]="getAvatarUrl(currentUser()?.avatar)"
             (postComment)="onPostComment($event)"
+            (likeComment)="onLikeComment($event)"
+            (dislikeComment)="onDislikeComment($event)"
+            (postReply)="onPostReply($event)"
           ></app-comment-list>
           
           <!-- Related Stories -->
@@ -225,9 +229,39 @@ export class StoryDetailComponent implements OnInit {
     }
   }
 
+  getAvatarUrl(path: string | undefined): string {
+    if (!path) return 'https://placehold.co/100x100/333333/999999?text=You';
+    if (path.startsWith('http')) return path;
+    return `http://localhost:5000${path}`;
+  }
+
   onPostComment(text: string) {
     if (this.requireAuth()) {
       this.storyService.addComment(text, this.currentUser());
+    }
+  }
+
+  onLikeComment(commentId: string) {
+    if (this.requireAuth()) {
+      this.storyService.toggleCommentLike(commentId);
+    }
+  }
+
+  onDislikeComment(commentId: string) {
+    if (this.requireAuth()) {
+      this.storyService.toggleCommentDislike(commentId);
+    }
+  }
+
+  onPostReply(event: {parentId: string, text: string}) {
+    if (this.requireAuth()) {
+      this.storyService.replyToComment(event.parentId, event.text, this.currentUser());
+    }
+  }
+
+  onReportSubmitted(reason: string) {
+    if (this.requireAuth()) {
+      this.storyService.reportBook(reason);
     }
   }
 }

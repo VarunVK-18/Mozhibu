@@ -36,7 +36,47 @@ export class BookService {
     return this.api.get(`/books/${bookId}/reviews`);
   }
 
+  addReview(bookId: string, content: string, rating: number = 5): Observable<any> {
+    return this.api.post(`/books/${bookId}/reviews`, { content, rating });
+  }
+
+  toggleCommentLike(bookId: string, reviewId: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/reviews/${reviewId}/like`, {});
+  }
+
+  toggleCommentDislike(bookId: string, reviewId: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/reviews/${reviewId}/dislike`, {});
+  }
+
+  replyToComment(bookId: string, reviewId: string, content: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/reviews/${reviewId}/reply`, { content });
+  }
+
   getCategories(): Observable<string[]> {
     return this.api.get('/books/categories');
+  }
+
+  toggleLike(bookId: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/like`, {});
+  }
+
+  reportBook(bookId: string, reason: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/report`, { reason });
+  }
+
+  createBook(data: any): Observable<any> {
+    return this.api.post('/books', data);
+  }
+
+  createChapter(bookId: string, data: any): Observable<any> {
+    return this.api.post(`/books/${bookId}/chapters`, data);
+  }
+
+  getMyBooks(): Observable<any[]> {
+    return this.api.get('/books/me');
+  }
+
+  updateBookStatus(bookId: string, completionStatus: string): Observable<any> {
+    return this.api.put(`/books/${bookId}/status`, { completionStatus });
   }
 }

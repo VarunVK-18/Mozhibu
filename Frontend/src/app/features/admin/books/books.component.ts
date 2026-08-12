@@ -21,6 +21,8 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
             <option value="pending">Pending Review</option>
             <option value="published">Published</option>
             <option value="rejected">Rejected</option>
+            <option value="suspended">Suspended</option>
+            <option value="reported">Reported Queue (10+)</option>
           </select>
         </div>
       </header>
@@ -38,7 +40,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
               <tr>
                 <th>Title & Author</th>
                 <th>Status</th>
-                <th>Submitted</th>
+                <th>{{ statusFilter === 'reported' ? 'Reports' : 'Submitted' }}</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -54,15 +56,21 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   <td>
                     <span class="status-badge" [ngClass]="book.status">{{ book.status }}</span>
                   </td>
-                  <td class="date-cell">{{ book.submittedAt | date:'mediumDate' }}</td>
+                  <td class="date-cell">
+                    @if (statusFilter === 'reported') {
+                      <span style="color: var(--rose); font-weight: bold;">{{ book.reportCount }} Reports</span>
+                    } @else {
+                      {{ book.submittedAt | date:'mediumDate' }}
+                    }
+                  </td>
                   <td>
                     <div class="action-buttons">
                       @if (book.status === 'pending') {
                         <button class="btn-approve" (click)="updateStatus(book, 'published')">Approve</button>
                         <button class="btn-reject" (click)="rejectBook(book)">Reject</button>
                       } @else if (book.status === 'published') {
-                        <button class="btn-reject" (click)="updateStatus(book, 'rejected')">Suspend</button>
-                      } @else if (book.status === 'rejected') {
+                        <button class="btn-reject" (click)="updateStatus(book, 'suspended')">Suspend</button>
+                      } @else if (book.status === 'rejected' || book.status === 'suspended') {
                         <button class="btn-approve" (click)="updateStatus(book, 'published')">Republish</button>
                       }
                     </div>
@@ -99,7 +107,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
     .status-badge { display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
     .status-badge.pending { background: #FFF7ED; color: #C2410C; }
     .status-badge.published { background: var(--forest-tint); color: var(--forest-deep); }
-    .status-badge.rejected { background: var(--rose-tint); color: var(--rose); }
+    .status-badge.rejected, .status-badge.suspended { background: var(--rose-tint); color: var(--rose); }
     
     .date-cell { font-size: 14px; color: var(--ink-soft); }
     
@@ -124,13 +132,24 @@ export class BooksComponent implements OnInit {
 
   loadBooks() {
     this.loading.set(true);
-    this.adminService.getBooks(this.statusFilter).subscribe({
-      next: (data) => {
-        this.books.set(data);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+    
+    if (this.statusFilter === 'reported') {
+      this.adminService.getReportedBooks().subscribe({
+        next: (data) => {
+          this.books.set(data);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false)
+      });
+    } else {
+      this.adminService.getBooks(this.statusFilter).subscribe({
+        next: (data) => {
+          this.books.set(data);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false)
+      });
+    }
   }
 
   updateStatus(book: AdminBook, status: string, reason?: string) {

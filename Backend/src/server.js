@@ -5,6 +5,9 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+const cron = require('node-cron');
+const { computeEngagementScores } = require('./services/engagementScorer');
+const { computeMonthlyRevenue } = require('./services/revenueEngine');
 
 const app = express();
 const server = http.createServer(app);
@@ -59,12 +62,23 @@ const bookRoutes = require('./routes/books');
 const adminRoutes = require('./routes/admin');
 const userRoutes = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
+const competitionRoutes = require('./routes/competitions');
+const searchRoutes = require('./routes/search');
+
+const subscriptionRoutes = require('./routes/subscriptions');
+const revenueRoutes = require('./routes/revenue');
+const earningsRoutes = require('./routes/earnings');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/competitions', competitionRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/revenue', revenueRoutes);
+app.use('/api', earningsRoutes);
 
 // Basic route
 app.get('/api', (req, res) => {
@@ -74,4 +88,49 @@ app.get('/api', (req, res) => {
 // Start server
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// ─── Cron Jobs ────────────────────────────────────────────────
+
+// Nightly at 2:00 AM: compute engagement scores for current month
+cron.schedule('0 2 * * *', async () => {
+  const now = new Date();
+  console.log(`[Cron] Running nightly engagement scorer for ${now.getFullYear()}-${now.getMonth() + 1}`);
+  try {
+    await computeEngagementScores(now.getFullYear(), now.getMonth() + 1);
+  } catch (err) {
+    console.error('[Cron] Engagement scoring failed:', err.message);
+  }
+});
+
+// 1st of each month at 3:00 AM: auto-compute revenue for previous month
+cron.schedule('0 3 1 * *', async () => {
+  const now = new Date();
+  // Previous month
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+  console.log(`[Cron] Running monthly revenue computation for ${year}-${month}`);
+  try {
+    await computeMonthlyRevenue(year, month, 'system');
+    console.log(`[Cron] Revenue computation complete for ${year}-${month}`);
+  } catch (err) {
+    console.error('[Cron] Revenue computation failed:', err.message);
+  }
+});
+
+// Daily: expire subscriptions past end_date
+cron.schedule('0 0 * * *', async () => {
+  try {
+    const UserSubscription = require('./models/UserSubscription');
+    const result = await UserSubscription.updateMany(
+      { status: 'active', endDate: { $lt: new Date() } },
+      { $set: { status: 'expired' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[Cron] Expired ${result.modifiedCount} subscriptions`);
+    }
+  } catch (err) {
+    console.error('[Cron] Subscription expiry failed:', err.message);
+  }
 });

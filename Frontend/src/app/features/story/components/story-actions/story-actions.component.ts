@@ -63,7 +63,7 @@ import { CommonModule } from '@angular/common';
           </select>
           <div class="modal-actions">
             <button class="btn-outline" (click)="showReportModal = false">Cancel</button>
-            <button class="btn-primary btn-danger" (click)="submitReport()">Submit Report</button>
+            <button class="btn-primary btn-danger" (click)="submitReport(reportReason.value)">Submit Report</button>
           </div>
           @if (showReportToast) {
             <p class="toast-text text-success">Report submitted successfully.</p>
@@ -166,6 +166,7 @@ export class StoryActionsComponent {
   @Output() readClicked = new EventEmitter<void>();
   @Output() bookmarkClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<void>();
+  @Output() reportSubmitted = new EventEmitter<string>();
 
   showShareModal = false;
   showReportModal = false;
@@ -179,7 +180,8 @@ export class StoryActionsComponent {
     setTimeout(() => { this.showCopyToast = false; this.showShareModal = false; }, 1500);
   }
 
-  submitReport() {
+  submitReport(reason: string) {
+    this.reportSubmitted.emit(reason);
     this.showReportToast = true;
     setTimeout(() => { this.showReportToast = false; this.showReportModal = false; }, 1500);
   }

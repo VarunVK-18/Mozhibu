@@ -143,9 +143,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!target.closest('.user-profile-wrapper')) {
       this.profileMenuOpen.set(false);
     }
-    if (!target.closest('.search-wrapper') && !target.closest('.icon-btn[aria-label="Search"]')) {
-      this.searchOpen.set(false);
-    }
     if (!target.closest('.notifications-wrapper') && !target.closest('.icon-btn[aria-label="Notifications"]')) {
       this.notificationsOpen.set(false);
     }

@@ -70,43 +70,12 @@
 
       <!-- Search -->
       <div class="search-wrapper">
-        <button class="icon-btn" aria-label="Search" (click)="toggleSearch()">
+        <a class="icon-btn" aria-label="Search" routerLink="/search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/>
             <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
-        </button>
-        <div class="search-dropdown" [class.open]="searchOpen()">
-          <div class="search-input-group">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input type="text" placeholder="Search stories..." (input)="onSearchInput($event)">
-          </div>
-          
-          @if (searchQuery.trim().length > 0) {
-            <div class="search-results-list">
-              @for (book of searchResults; track book._id) {
-                <a [routerLink]="['/book', book._id]" class="search-result-item" (click)="searchOpen.set(false)">
-                  <div class="search-cover">
-                    <img [src]="book.cover" [alt]="book.title">
-                    @if (isNewRelease(book.createdAt)) {
-                      <span class="latest-badge">Latest</span>
-                    }
-                  </div>
-                  <div class="search-info">
-                    <h5 class="search-title">{{ book.title }}</h5>
-                    <span class="search-author">by {{ book.author?.username || 'Unknown' }}</span>
-                  </div>
-                </a>
-              }
-              
-              @if (searchResults.length === 0) {
-                <div class="no-search-results">
-                  No books found for "{{ searchQuery }}"
-                </div>
-              }
-            </div>
-          }
-        </div>
+        </a>
       </div>
 
       <!-- Notifications -->

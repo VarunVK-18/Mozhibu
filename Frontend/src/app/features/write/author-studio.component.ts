@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { BookService } from '../../core/services/book.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface AuthorStory {
   id: string;
@@ -47,7 +49,7 @@ interface AuthorStory {
             </div>
             <div class="stat-info">
               <p class="stat-label">Total Reads</p>
-              <h3 class="stat-value">124.5K</h3>
+              <h3 class="stat-value">{{ totalReads | number }}</h3>
             </div>
           </div>
           
@@ -59,7 +61,7 @@ interface AuthorStory {
             </div>
             <div class="stat-info">
               <p class="stat-label">Followers</p>
-              <h3 class="stat-value">8,420</h3>
+              <h3 class="stat-value">{{ userFollowers | number }}</h3>
             </div>
           </div>
           
@@ -71,7 +73,7 @@ interface AuthorStory {
             </div>
             <div class="stat-info">
               <p class="stat-label">Total Likes</p>
-              <h3 class="stat-value">12.1K</h3>
+              <h3 class="stat-value">{{ totalLikes | number }}</h3>
             </div>
           </div>
         </div>
@@ -81,51 +83,58 @@ interface AuthorStory {
           <div class="section-header">
             <h2>My Works</h2>
             <div class="filter-tabs">
-              <button class="filter-btn active">All</button>
-              <button class="filter-btn">Published</button>
-              <button class="filter-btn">Ongoing</button>
-              <button class="filter-btn">Drafts</button>
+              <button class="filter-btn" [class.active]="currentFilter === 'All'" (click)="setFilter('All')">All</button>
+              <button class="filter-btn" [class.active]="currentFilter === 'Published'" (click)="setFilter('Published')">Published</button>
+              <button class="filter-btn" [class.active]="currentFilter === 'Ongoing'" (click)="setFilter('Ongoing')">Ongoing</button>
+              <button class="filter-btn" [class.active]="currentFilter === 'Drafts'" (click)="setFilter('Drafts')">Drafts</button>
             </div>
           </div>
           
-          <div class="stories-list">
-            @for (story of myStories; track story.id) {
-              <div class="story-card">
-                <img [src]="story.cover" [alt]="story.title" class="story-cover">
-                
-                <div class="story-details">
-                  <div class="story-header">
-                    <h3>{{ story.title }}</h3>
-                    <span class="status-badge" [ngClass]="story.status.toLowerCase()">{{ story.status }}</span>
+          @if (isLoading) {
+            <div class="loading-state" style="padding: 48px; text-align: center;">
+              Loading stories...
+            </div>
+          } @else {
+            <div class="stories-list">
+              @for (story of filteredStories; track story._id) {
+                <div class="story-card">
+                  <img [src]="story.cover || 'assets/default-cover.png'" [alt]="story.title" class="story-cover">
+                  
+                  <div class="story-details">
+                    <div class="story-header">
+                      <h3>{{ story.title }}</h3>
+                      <span class="status-badge" [ngClass]="story.completionStatus === 'completed' ? 'completed' : story.status">{{ story.completionStatus === 'completed' ? 'Completed' : story.status }}</span>
+                    </div>
+                    
+                    <div class="story-stats">
+                      <span>{{ story.chapters || 0 }} Chapters</span>
+                      <span>•</span>
+                      <span>{{ story.views || 0 }} Reads</span>
+                      <span>•</span>
+                      <span>{{ story.likesCount || 0 }} Likes</span>
+                    </div>
+                    
+                    <p class="last-updated">Last updated {{ story.updatedAt | date }}</p>
                   </div>
                   
-                  <div class="story-stats">
-                    <span>{{ story.chapters }} Chapters</span>
-                    <span>•</span>
-                    <span>{{ story.views }} Reads</span>
-                    <span>•</span>
-                    <span>{{ story.likes }} Likes</span>
+                  <div class="story-actions">
+                    <button class="btn-action edit" [routerLink]="['/write/book', story._id]">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      Manage
+                    </button>
                   </div>
-                  
-                  <p class="last-updated">Last updated {{ story.lastUpdated }}</p>
                 </div>
-                
-                <div class="story-actions">
-                  <button class="btn-action edit" routerLink="/write/new">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                    Edit
-                  </button>
-                  <button class="btn-action" (click)="showOptions(story.id)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
-                    </svg>
-                  </button>
+              }
+              
+              @if (filteredStories.length === 0) {
+                <div class="empty-state" style="padding: 48px; text-align: center; color: var(--ink-soft);">
+                  {{ myStories.length === 0 ? "You haven't written any stories yet." : "No stories match this filter." }}
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
       </div>
     </div>
@@ -218,9 +227,9 @@ interface AuthorStory {
       justify-content: center;
     }
     
-    .stat-icon.reads { background: rgba(63, 98, 89, 0.1); color: var(--forest); }
-    .stat-icon.followers { background: rgba(185, 139, 50, 0.1); color: var(--gold); }
-    .stat-icon.likes { background: rgba(174, 98, 116, 0.1); color: var(--rose); }
+    .stat-icon.reads { color: var(--forest); background: transparent; }
+    .stat-icon.followers { color: var(--gold); background: transparent; }
+    .stat-icon.likes { color: var(--rose); background: transparent; }
     
     .stat-info {
       display: flex;
@@ -340,7 +349,8 @@ interface AuthorStory {
     
     .status-badge.published { background: rgba(63, 98, 89, 0.1); color: var(--forest); }
     .status-badge.ongoing { background: rgba(185, 139, 50, 0.1); color: var(--gold); }
-    .status-badge.draft { background: var(--border-soft); color: var(--ink-soft); }
+    .status-badge.completed { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .status-badge.pending, .status-badge.draft { background: var(--border-soft); color: var(--ink-soft); }
     
     .story-stats {
       display: flex;
@@ -399,42 +409,54 @@ interface AuthorStory {
     }
   `]
 })
-export class AuthorStudioComponent {
+export class AuthorStudioComponent implements OnInit {
+  private bookService = inject(BookService);
+  private authService = inject(AuthService);
   
-  myStories: AuthorStory[] = [
-    {
-      id: 'w1',
-      title: 'Echoes of a Forgotten Epoch',
-      cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80',
-      status: 'Ongoing',
-      views: '45.2K',
-      likes: '3.4K',
-      chapters: 18,
-      lastUpdated: '2 days ago'
-    },
-    {
-      id: 'w2',
-      title: 'The Silent Code',
-      cover: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=300&q=80',
-      status: 'Published',
-      views: '78.9K',
-      likes: '8.1K',
-      chapters: 32,
-      lastUpdated: 'May 14, 2026'
-    },
-    {
-      id: 'w3',
-      title: 'Midnight in Neo-Kyoto',
-      cover: 'https://images.unsplash.com/photo-1549488344-c6c748c15664?w=300&q=80',
-      status: 'Draft',
-      views: '-',
-      likes: '-',
-      chapters: 3,
-      lastUpdated: 'Just now'
-    }
-  ];
+  myStories: any[] = [];
+  isLoading = true;
+  currentFilter: 'All' | 'Published' | 'Ongoing' | 'Drafts' = 'All';
 
-  showOptions(id: string) {
-    alert('Options menu for story ID: ' + id + ' (Feature coming soon!)');
+  totalReads = 0;
+  totalLikes = 0;
+  userFollowers = 0;
+
+  ngOnInit() {
+    this.userFollowers = this.authService.user()?.followersCount || 0;
+    this.fetchStories();
+  }
+
+  fetchStories() {
+    this.isLoading = true;
+    this.bookService.getMyBooks().subscribe({
+      next: (books) => {
+        this.myStories = books;
+        this.calculateStats();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to fetch stories', err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  calculateStats() {
+    this.totalReads = this.myStories.reduce((sum, book) => sum + (book.views || 0), 0);
+    this.totalLikes = this.myStories.reduce((sum, book) => sum + (book.likesCount || 0), 0);
+  }
+
+  setFilter(filter: 'All' | 'Published' | 'Ongoing' | 'Drafts') {
+    this.currentFilter = filter;
+  }
+
+  get filteredStories() {
+    return this.myStories.filter(story => {
+      if (this.currentFilter === 'All') return true;
+      if (this.currentFilter === 'Published') return story.status === 'published';
+      if (this.currentFilter === 'Ongoing') return story.status === 'published' && story.completionStatus !== 'completed';
+      if (this.currentFilter === 'Drafts') return story.status === 'pending' || story.status === 'draft';
+      return true;
+    });
   }
 }

@@ -11,6 +11,7 @@ export interface User {
   role?: string;
   authorStatus?: string;
   avatar?: string;
+  followersCount?: number;
 }
 
 @Injectable({
@@ -67,6 +68,10 @@ export class AuthService {
 
   followAuthor(authorId: string): Observable<any> {
     return this.api.post(`/users/follow/${authorId}`, {});
+  }
+
+  toggleBookmark(bookId: string): Observable<any> {
+    return this.api.post(`/users/me/bookmarks/${bookId}`, {});
   }
 
   getReadingProgress(): Observable<any[]> {

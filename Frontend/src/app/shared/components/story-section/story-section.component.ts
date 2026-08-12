@@ -29,12 +29,19 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
       </div>
       
       <div class="scroll-container" #scrollContainer>
-        <div class="stories-track">
+        <div class="stories-track" *ngIf="!isLoading">
           <app-story-card 
             *ngFor="let story of stories" 
             [story]="story"
             class="story-item">
           </app-story-card>
+        </div>
+        
+        <!-- Local Loading Buffer -->
+        <div class="section-loader-container" *ngIf="isLoading">
+          <div class="section-loading-bar">
+            <div class="section-loading-progress"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -114,12 +121,49 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
       width: 200px;
       flex-shrink: 0;
     }
+    .section-loader-container {
+      width: 100%;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .section-loading-bar {
+      width: 150px;
+      height: 4px;
+      background-color: rgba(194, 159, 96, 0.2);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .section-loading-progress {
+      width: 100%;
+      height: 100%;
+      background: var(--gold);
+      transform-origin: 0% 50%;
+      animation: loadingSlide 1.5s infinite linear;
+      border-radius: 100px;
+    }
     @media (max-width: 768px) {
       .story-item {
-        width: 160px;
+        width: 130px;
       }
       .nav-btns {
         display: none;
+      }
+      .stories-track {
+        gap: 16px;
+      }
+      /* Edge-to-edge scrolling on mobile */
+      .scroll-container {
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .stories-track::after {
+        content: '';
+        width: 1px;
       }
     }
   `]
@@ -128,6 +172,7 @@ export class StorySectionComponent {
   @Input() title: string = 'Section Title';
   @Input() stories: Story[] = [];
   @Input() viewAllLink?: string;
+  @Input() isLoading: boolean = false;
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 

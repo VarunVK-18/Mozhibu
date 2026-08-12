@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { finalize } from 'rxjs/operators';
 
 interface ReadingHistory {
   id: string;
@@ -20,277 +22,289 @@ interface ReadingHistory {
   imports: [CommonModule, RouterModule],
   template: `
     <div class="reading-page">
-      <div class="hero-section">
-        <div class="wrap">
+      <div class="wrap">
+        <div class="page-header">
           <h1>My Reading</h1>
           <p>Pick up right where you left off.</p>
         </div>
       </div>
       
       <div class="wrap content-area">
-        @if (recentlyRead) {
-          <!-- Active Reading Hero Banner -->
-          <div class="active-book-banner">
-            <div class="banner-bg">
-              <img [src]="recentlyRead.cover" [alt]="recentlyRead.title" class="blur-bg">
-              <div class="overlay"></div>
-            </div>
-            
-            <div class="banner-content">
-              <img [src]="recentlyRead.cover" [alt]="recentlyRead.title" class="active-cover">
-              
-              <div class="active-info">
-                <span class="label">CONTINUE READING</span>
-                <h2>{{ recentlyRead.title }}</h2>
-                <p class="author">By {{ recentlyRead.author }}</p>
+        @if (isLoading()) {
+          <div class="loading-state">Loading your reading history...</div>
+        } @else {
+          @if (recentlyRead()) {
+            <!-- Active Reading Simplified Banner -->
+            <div class="active-book-banner-clean">
+              <div class="banner-content">
+                <img [src]="recentlyRead()!.cover" [alt]="recentlyRead()!.title" class="active-cover">
                 
-                <div class="progress-section">
-                  <div class="progress-header">
-                    <span>Chapter {{ recentlyRead.currentChapter }} of {{ recentlyRead.totalChapters }}</span>
-                    <span class="percentage">{{ recentlyRead.progressPercentage }}%</span>
+                <div class="active-info-card">
+                  <span class="label">CONTINUE READING</span>
+                  <h2>{{ recentlyRead()!.title }}</h2>
+                  <p class="author">By {{ recentlyRead()!.author }}</p>
+                  
+                  <div class="progress-section">
+                    <div class="progress-header">
+                      <span>Chapter {{ recentlyRead()!.currentChapter }} of {{ recentlyRead()!.totalChapters }}</span>
+                      <span class="percentage">{{ recentlyRead()!.progressPercentage }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" [style.width.%]="recentlyRead()!.progressPercentage"></div>
+                    </div>
                   </div>
-                  <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="recentlyRead.progressPercentage"></div>
-                  </div>
+                  
+                  <button class="btn-continue" [routerLink]="['/read', recentlyRead()!.storyId]">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="margin-right: 8px;">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Continue Chapter {{ recentlyRead()!.currentChapter }}
+                  </button>
                 </div>
-                
-                <button class="btn-primary" [routerLink]="['/read', recentlyRead.storyId]">
-                  Continue Chapter {{ recentlyRead.currentChapter }}
-                </button>
               </div>
             </div>
-          </div>
-        }
+          }
 
-        <!-- Reading History List -->
-        <div class="history-section">
-          <h2>Reading History</h2>
-          
-          <div class="history-list">
-            @for (book of readingHistory; track book.id) {
-              <div class="history-card" [routerLink]="['/story', book.storyId]">
-                <img [src]="book.cover" [alt]="book.title" class="history-cover">
-                
-                <div class="history-info">
-                  <h3>{{ book.title }}</h3>
-                  <p class="history-author">{{ book.author }}</p>
-                  <p class="last-read">Last read: {{ book.lastReadDate }}</p>
-                  
-                  <div class="mini-progress">
-                    <div class="mini-bar">
-                      <div class="mini-fill" [style.width.%]="book.progressPercentage"></div>
+          <!-- Clean Reading History List -->
+          <div class="history-section">
+            <h2>Reading History</h2>
+            
+            @if (readingHistory().length > 0) {
+              <div class="history-list">
+                @for (book of readingHistory(); track book.id) {
+                  <div class="history-card-clean" [routerLink]="['/story', book.storyId]">
+                    <img [src]="book.cover" [alt]="book.title" class="history-cover">
+                    
+                    <div class="history-info">
+                      <h3>{{ book.title }}</h3>
+                      <p class="history-author">By {{ book.author }}</p>
+                      
+                      <div class="mini-progress-container">
+                        <div class="mini-bar">
+                          <div class="mini-fill" [style.width.%]="book.progressPercentage"></div>
+                        </div>
+                      </div>
+                      <p class="last-read">Last read: {{ book.lastReadDate }}</p>
                     </div>
-                    <span>{{ book.progressPercentage }}%</span>
+                    
+                    <div class="history-actions">
+                      <button class="btn-icon" [routerLink]="['/read', book.storyId]" (click)="$event.stopPropagation()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                
-                <button class="btn-resume" [routerLink]="['/read', book.storyId]" (click)="$event.stopPropagation()">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                </button>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <p>You haven't read any books yet. Head over to the discovery page to start exploring!</p>
+                <button class="btn-continue" routerLink="/">Discover Books</button>
               </div>
             }
           </div>
-        </div>
+        }
       </div>
     </div>
   `,
   styles: [`
     .reading-page {
       min-height: calc(100vh - 72px);
-      background: var(--paper-warm);
+      background: var(--paper);
       padding-bottom: 80px;
     }
     
-    .hero-section {
-      background: var(--card);
-      padding: 48px 0;
-      text-align: left;
-      border-bottom: 1px solid var(--border-soft);
-      margin-bottom: 40px;
-    }
-    
-    .hero-section h1 {
-      font-family: var(--display);
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 8px;
-    }
-    
-    .hero-section p {
-      font-size: 15px;
-      color: var(--ink-soft);
-    }
-    
-    /* Active Book Banner */
-    .active-book-banner {
-      position: relative;
-      border-radius: var(--radius-l);
-      overflow: hidden;
-      margin-bottom: 48px;
-      box-shadow: 0 12px 32px rgba(43, 38, 32, 0.1);
-    }
-    
-    .banner-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-    }
-    
-    .blur-bg {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: blur(40px);
-      transform: scale(1.2);
-    }
-    
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(43, 38, 32, 0.75);
-    }
-    
-    .banner-content {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      padding: 40px;
-      gap: 40px;
-      color: white;
-    }
-    
-    .active-cover {
-      width: 200px;
-      height: 300px;
-      object-fit: cover;
-      border-radius: var(--radius-m);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-      flex-shrink: 0;
-    }
-    
-    .active-info {
+    /* ──────────────────────────────────────────
+       PREMIUM CLEAN HERO
+       ────────────────────────────────────────── */
+    .page-header {
+      padding: 64px 0 48px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      flex: 1;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border-soft);
+      margin-bottom: 48px;
     }
     
-    .label {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--border-soft);
-      margin-bottom: 12px;
-    }
-    
-    .active-info h2 {
+    .page-header h1 {
       font-family: var(--display);
-      font-size: 30px;
-      font-weight: 700;
-      margin-bottom: 8px;
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--ink);
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
       line-height: 1.1;
     }
     
+    .page-header p {
+      font-size: 18px;
+      color: var(--ink-soft);
+      max-width: 500px;
+      line-height: 1.5;
+    }
+    
+    /* ──────────────────────────────────────────
+       CLEAN ACTIVE BOOK BANNER (MOCKUP STYLE)
+       ────────────────────────────────────────── */
+    .active-book-banner-clean {
+      background: #5E5E5E; /* Dark grey background */
+      border-radius: 20px;
+      margin-bottom: 56px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      max-width: 900px; /* Keep it from stretching too wide */
+    }
+    
+    .banner-content {
+      display: flex;
+      padding: 24px;
+      gap: 24px;
+      align-items: stretch;
+    }
+    
+    .active-cover {
+      width: 140px; /* Much smaller, minimal cover */
+      height: 210px;
+      object-fit: cover;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+      background: #444; /* Fallback color */
+    }
+    
+    .active-info-card {
+      background: rgba(255, 255, 255, 0.06); 
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 12px;
+      padding: 24px 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    
+    .active-info-card h2 {
+      font-family: var(--display);
+      font-size: 24px; /* More minimal font size */
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+    
     .author {
-      font-size: 16px;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 32px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 24px;
     }
     
     .progress-section {
-      background: rgba(0,0,0,0.2);
-      padding: 20px;
-      border-radius: var(--radius-m);
-      margin-bottom: 32px;
-      max-width: 500px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      max-width: 400px;
     }
     
     .progress-header {
       display: flex;
       justify-content: space-between;
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 8px;
     }
     
     .percentage {
       font-family: var(--display);
       font-weight: 700;
-      color: var(--border);
     }
     
     .progress-bar {
-      height: 6px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 3px;
+      height: 4px; /* Slimmer progress bar */
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
       overflow: hidden;
     }
     
     .progress-fill {
       height: 100%;
-      background: var(--rose);
-      border-radius: 3px;
+      background: linear-gradient(90deg, #F08080, #FFB6C1); /* Soft pink gradient */
+      border-radius: 2px;
       transition: width 0.5s ease;
     }
     
-    .btn-primary {
-      background: var(--forest);
+    .btn-continue {
+      background: #2D4A43; /* Forest green */
       color: white;
       border: none;
-      padding: 14px 32px;
+      padding: 10px 20px; /* Slimmer button */
       border-radius: 100px;
       font-family: var(--display);
       font-weight: 600;
-      font-size: 15px;
+      font-size: 12px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
       width: fit-content;
       transition: background 0.2s;
     }
     
-    .btn-primary:hover {
-      background: var(--forest-deep);
+    .btn-continue:hover {
+      background: #233b35;
     }
-    
-    /* History List */
+
+    /* ──────────────────────────────────────────
+       CLEAN HISTORY LIST
+       ────────────────────────────────────────── */
     .history-section h2 {
       font-family: var(--display);
       font-size: 24px;
-      margin-bottom: 24px;
+      font-weight: 700;
       color: var(--ink);
+      margin-bottom: 24px;
     }
     
     .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
     }
     
-    .history-card {
+    .history-card-clean {
       background: var(--card);
       border: 1px solid var(--border-soft);
-      border-radius: var(--radius-m);
+      border-radius: 16px;
       padding: 16px;
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
       cursor: pointer;
-      transition: background 0.2s, box-shadow 0.2s;
+      transition: box-shadow 0.2s, transform 0.2s;
     }
     
-    .history-card:hover {
-      background: var(--paper-soft);
-      box-shadow: 0 4px 16px rgba(43, 38, 32, 0.05);
+    .history-card-clean:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      transform: translateY(-2px);
     }
     
     .history-cover {
-      width: 72px;
-      height: 108px;
+      width: 70px;
+      height: 100px;
       object-fit: cover;
-      border-radius: 6px;
+      border-radius: 8px;
       flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background: #e0e0e0; /* Fallback color */
     }
     
     .history-info {
@@ -299,36 +313,25 @@ interface ReadingHistory {
     
     .history-info h3 {
       font-family: var(--display);
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 17px;
+      font-weight: 700;
       color: var(--ink);
       margin-bottom: 4px;
+      line-height: 1.3;
     }
     
     .history-author {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--ink-soft);
-      margin-bottom: 8px;
-    }
-    
-    .last-read {
-      font-size: 12px;
-      color: var(--ink-faint);
       margin-bottom: 12px;
     }
     
-    .mini-progress {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--forest-deep);
+    .mini-progress-container {
+      margin-bottom: 8px;
     }
     
     .mini-bar {
-      flex: 1;
-      max-width: 200px;
+      width: 100%;
       height: 4px;
       background: var(--border-soft);
       border-radius: 2px;
@@ -337,17 +340,22 @@ interface ReadingHistory {
     
     .mini-fill {
       height: 100%;
-      background: var(--forest);
+      background: #5E5E5E;
       border-radius: 2px;
     }
     
-    .btn-resume {
-      width: 48px;
-      height: 48px;
+    .last-read {
+      font-size: 12px;
+      color: var(--ink-faint);
+    }
+    
+    .btn-icon {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: var(--paper-warm);
-      border: 1px solid var(--border);
-      color: var(--ink);
+      background: var(--paper-soft);
+      border: none;
+      color: var(--ink-soft);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -355,76 +363,86 @@ interface ReadingHistory {
       transition: all 0.2s;
     }
     
-    .history-card:hover .btn-resume {
-      background: var(--forest);
-      border-color: var(--forest);
+    .history-card-clean:hover .btn-icon {
+      background: #2D4A43;
       color: white;
     }
     
+    .loading-state, .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--ink-soft);
+    }
+    
+    .empty-state p {
+      margin-bottom: 24px;
+      font-size: 16px;
+    }
+
+    /* ──────────────────────────────────────────
+       MOBILE RESPONSIVENESS
+       ────────────────────────────────────────── */
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    
     @media (max-width: 768px) {
+      .wrap { padding: 0 16px; }
+      
       .banner-content {
         flex-direction: column;
         padding: 24px;
-        gap: 24px;
         align-items: center;
+      }
+      
+      .active-info-card {
+        padding: 24px;
         text-align: center;
       }
-      .active-info { align-items: center; }
-      .btn-primary { width: 100%; }
-      .history-card { padding: 12px; gap: 16px; }
-      .btn-resume { display: none; }
+      
+      .progress-section { margin: 0 auto 32px; }
+      .btn-continue { width: 100%; justify-content: center; }
+      
+      .history-list { grid-template-columns: 1fr; }
+      .history-card-clean { gap: 16px; }
+      .btn-icon { display: none; }
     }
   `]
 })
-export class MyReadingComponent {
+export class MyReadingComponent implements OnInit {
+  authService = inject(AuthService);
   
-  // Mock data for the hero banner
-  recentlyRead: ReadingHistory = {
-    id: 'h1',
-    storyId: '101',
-    title: 'The Neon Shadows',
-    author: 'Akira Toriyama',
-    cover: 'https://images.unsplash.com/photo-1549488344-c6c748c15664?w=400&q=80',
-    currentChapter: 12,
-    totalChapters: 40,
-    progressPercentage: 30, // (12/40) * 100
-    lastReadDate: 'Today, 2:45 PM'
-  };
+  recentlyRead = signal<ReadingHistory | null>(null);
+  readingHistory = signal<ReadingHistory[]>([]);
+  isLoading = signal<boolean>(true);
 
-  // Mock data for reading history list
-  readingHistory: ReadingHistory[] = [
-    {
-      id: 'h2',
-      storyId: '202',
-      title: 'Whispers of the Wind',
-      author: 'Elara Vance',
-      cover: 'https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?w=150&q=80',
-      currentChapter: 4,
-      totalChapters: 20,
-      progressPercentage: 20,
-      lastReadDate: 'Yesterday, 8:15 PM'
-    },
-    {
-      id: 'h3',
-      storyId: '303',
-      title: 'A Memory of Light',
-      author: 'Robert Jordan',
-      cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&q=80',
-      currentChapter: 58,
-      totalChapters: 60,
-      progressPercentage: 96,
-      lastReadDate: 'Oct 8, 2026'
-    },
-    {
-      id: 'h4',
-      storyId: '404',
-      title: 'Crimson Tide',
-      author: 'Maya Lin',
-      cover: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=150&q=80',
-      currentChapter: 1,
-      totalChapters: 15,
-      progressPercentage: 6,
-      lastReadDate: 'Oct 5, 2026'
-    }
-  ];
+  ngOnInit() {
+    this.authService.getReadingProgress().pipe(
+      finalize(() => this.isLoading.set(false))
+    ).subscribe({
+      next: (progressData) => {
+        const history: ReadingHistory[] = progressData.map((p: any) => ({
+          id: p._id,
+          storyId: p.book?._id,
+          title: p.book?.title || 'Unknown Title',
+          author: typeof p.book?.author === 'object' ? p.book?.author?.username : (p.book?.author || 'Unknown Author'),
+          cover: p.book?.cover || 'https://placehold.co/400x600/333333/999999?text=Cover',
+          currentChapter: p.currentChapter?.order || p.currentChapter || 1,
+          totalChapters: p.book?.chapters?.length || 10,
+          progressPercentage: p.progressPercentage || 0,
+          lastReadDate: new Date(p.lastReadAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+        })).filter((h: any) => h.storyId);
+
+        if (history.length > 0) {
+          this.recentlyRead.set(history[0]);
+          this.readingHistory.set(history.slice(1));
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load reading history', err);
+      }
+    });
+  }
 }

@@ -27,6 +27,7 @@ export interface AdminBook {
   rejectionReason?: string;
   submittedAt: string;
   createdAt: string;
+  reportCount?: number;
 }
 
 export interface AdminUser {
@@ -62,6 +63,16 @@ export interface AdminAuthorDetail {
   books: AdminBook[];
 }
 
+export interface CompetitionConfig {
+  isActive: boolean;
+  tag: string;
+  title: string;
+  description: string;
+  endDate: string;
+  buttonText: string;
+  buttonLink: string;
+}
+
 export interface PendingAuthor {
   _id: string;
   username: string;
@@ -69,6 +80,19 @@ export interface PendingAuthor {
   createdAt: string;
   status: string;
   authorStatus: string;
+}
+
+export interface AdminBroadcast {
+  _id: string;
+  title: string;
+  message: string;
+  audience: string;
+  sentBy: {
+    _id: string;
+    username: string;
+    email: string;
+  };
+  createdAt: string;
 }
 
 @Injectable({
@@ -82,8 +106,12 @@ export class AdminService {
   }
 
   getBooks(status?: string): Observable<AdminBook[]> {
-    const params = status ? `?status=${status}` : '';
+    const params = status && status !== 'reported' ? `?status=${status}` : '';
     return this.api.get(`/admin/books${params}`);
+  }
+
+  getReportedBooks(): Observable<AdminBook[]> {
+    return this.api.get('/admin/reported-books');
   }
 
   getBookDetails(id: string): Observable<AdminBook> {
@@ -120,5 +148,21 @@ export class AdminService {
 
   broadcastAnnouncement(data: { title: string, message: string, audience: string }): Observable<any> {
     return this.api.post('/admin/broadcast', data);
+  }
+
+  getBroadcastHistory(): Observable<AdminBroadcast[]> {
+    return this.api.get('/admin/broadcasts');
+  }
+
+  deleteBroadcast(id: string): Observable<any> {
+    return this.api.delete(`/admin/broadcasts/${id}`);
+  }
+
+  getCompetitionConfig(): Observable<any> {
+    return this.api.get('/admin/competition');
+  }
+
+  updateCompetitionConfig(data: any): Observable<any> {
+    return this.api.put('/admin/competition', data);
   }
 }

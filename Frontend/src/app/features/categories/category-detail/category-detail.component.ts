@@ -42,7 +42,12 @@ import { StoryCardComponent, Story } from '../../../shared/components/story-card
           </div>
         } @else {
           <div class="empty-state">
-            <div class="empty-icon">📚</div>
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
             <h2>No stories found</h2>
             <p>We couldn't find any published stories in the {{ categoryName }} category yet.</p>
           </div>

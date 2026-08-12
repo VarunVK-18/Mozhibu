@@ -19,7 +19,12 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
         <div class="loading-state">Loading pending requests...</div>
       } @else if (pendingAuthors().length === 0) {
         <div class="empty-state">
-          <div class="empty-icon">✅</div>
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
           <h3>All caught up!</h3>
           <p>There are no pending author requests to review right now.</p>
         </div>
@@ -72,7 +77,8 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
     .page-header p { color: var(--ink-soft); font-size: 15px; }
     
     .loading-state, .empty-state { padding: 64px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-icon { display: flex; justify-content: center; margin-bottom: 16px; color: var(--forest); }
+    .empty-icon svg { width: 48px; height: 48px; }
     .empty-state h3 { font-family: var(--display); font-size: 20px; color: var(--ink); margin-bottom: 8px; }
     
     .table-container { background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); overflow: hidden; }

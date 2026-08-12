@@ -8,7 +8,13 @@
       <button class="view-all">{{ 'authors.seeAll' | translate }}</button>
     </div>
 
-    <div class="authors-row">
+    <div class="section-loader-container" *ngIf="isLoading()">
+      <div class="section-loading-bar">
+        <div class="section-loading-progress"></div>
+      </div>
+    </div>
+
+    <div class="authors-row" *ngIf="!isLoading()">
       @for (author of authors(); track author.name; let i = $index) {
         <div class="author-card">
           <div class="author-avatar" [style.background]="author.color">

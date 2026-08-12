@@ -48,6 +48,19 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="nav-section">
+            <h4 class="nav-section-title">Revenue & Subscriptions</h4>
+            <a routerLink="/admin/revenue" routerLinkActive="active" class="nav-item">
+              <span class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 5h-11h3a4 4 0 0 1 0 8h-3l6 6" />
+                  <path d="M7 9l11 0" />
+                </svg>
+              </span>
+              <span class="label">Revenue & Plans</span>
+            </a>
+          </div>
+
+          <div class="nav-section">
             <h4 class="nav-section-title">User Management</h4>
             <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
               <span class="icon">
@@ -76,6 +89,12 @@ import { AuthService } from '../../core/services/auth.service';
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
               </span>
               <span class="label">Broadcast</span>
+            </a>
+            <a routerLink="/admin/competition" routerLinkActive="active" class="nav-item">
+              <span class="icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v4M19 3v4M5 11h14M5 15h14M5 19h14M3 3h18v18H3z"></path></svg>
+              </span>
+              <span class="label">Competition Banner</span>
             </a>
           </div>
         </nav>

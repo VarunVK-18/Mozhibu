@@ -313,10 +313,16 @@ export class LibraryComponent implements OnInit {
         this.followedAuthors = authors.map(a => ({
           id: a._id,
           name: a.username,
-          avatar: a.avatar || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100',
+          avatar: this.getAvatarUrl(a.avatar),
           followers: (a.followersCount / 1000).toFixed(1) + 'K'
         }));
       }
     });
+  }
+
+  getAvatarUrl(path: string | undefined): string {
+    if (!path) return 'https://placehold.co/100x100/333333/999999?text=Author';
+    if (path.startsWith('http')) return path;
+    return `http://localhost:5000${path}`;
   }
 }

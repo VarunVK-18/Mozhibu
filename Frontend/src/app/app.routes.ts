@@ -60,8 +60,45 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'write/book/:id',
+    loadComponent: () => import('./features/write/story-dashboard.component').then(m => m.StoryDashboardComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'write/book/:id/chapter/new',
+    loadComponent: () => import('./features/write/chapter-editor.component').then(m => m.ChapterEditorComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'author/:id',
+    loadComponent: () => import('./features/author-profile/author-profile.component').then(m => m.AuthorProfileComponent),
+  },
+  {
+    path: 'search',
+    loadComponent: () => import('./features/search/search.component').then(m => m.SearchComponent),
+  },
+  {
     path: 'community',
     loadComponent: () => import('./features/community/community.component').then(m => m.CommunityComponent),
+  },
+  {
+    path: 'subscription/plans',
+    loadComponent: () => import('./features/subscription/subscription-plans.component').then(m => m.SubscriptionPlansComponent),
+  },
+  {
+    path: 'subscription/me',
+    loadComponent: () => import('./features/subscription/subscription-me.component').then(m => m.SubscriptionMeComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'earnings',
+    loadComponent: () => import('./features/earnings/author-earnings.component').then(m => m.AuthorEarningsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'rewards',
+    loadComponent: () => import('./features/rewards/reader-rewards.component').then(m => m.ReaderRewardsComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'competitions',
@@ -79,7 +116,9 @@ export const routes: Routes = [
       { path: 'authors', loadComponent: () => import('./features/admin/authors/authors.component').then(m => m.AuthorsComponent) },
       { path: 'author-approvals', loadComponent: () => import('./features/admin/author-approvals/author-approvals.component').then(m => m.AuthorApprovalsComponent) },
       { path: 'authors/:id', loadComponent: () => import('./features/admin/author-detail/author-detail.component').then(m => m.AuthorDetailComponent) },
-      { path: 'broadcast', loadComponent: () => import('./features/admin/broadcast/broadcast.component').then(m => m.BroadcastComponent) }
+      { path: 'broadcast', loadComponent: () => import('./features/admin/broadcast/broadcast.component').then(m => m.BroadcastComponent) },
+      { path: 'competition', loadComponent: () => import('./features/admin/competition/competition.component').then(m => m.AdminCompetitionComponent) },
+      { path: 'revenue', loadComponent: () => import('./features/admin/revenue/admin-revenue.component').then(m => m.AdminRevenueComponent) }
     ]
   },
   { path: '**', redirectTo: '' },

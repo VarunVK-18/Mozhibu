@@ -32,13 +32,14 @@ export interface UserProfile {
       background: var(--card);
       border: 1px solid var(--border-soft);
       border-radius: var(--radius-m);
-      padding: 24px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      width: 160px;
+      width: 150px;
       flex-shrink: 0;
+      box-sizing: border-box;
       transition: box-shadow .15s ease, transform .15s ease;
     }
     .user-card:hover {
@@ -79,9 +80,10 @@ export interface UserProfile {
     }
     .follow-btn {
       width: 100%;
+      box-sizing: border-box;
       border: 1px solid var(--border);
       border-radius: 100px;
-      padding: 6px 14px;
+      padding: 6px 12px;
       font-size: 13px;
       font-weight: 600;
       color: var(--ink);
@@ -89,6 +91,9 @@ export interface UserProfile {
       font-family: var(--display);
       transition: all 0.2s ease;
       background: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .follow-btn.following {
       background: var(--forest);
@@ -99,6 +104,30 @@ export interface UserProfile {
       background: var(--forest);
       color: #fff;
       border-color: var(--forest);
+    }
+
+    @media (max-width: 768px) {
+      .user-card {
+        width: 124px;
+        padding: 12px;
+      }
+      .user-avatar {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+        margin-bottom: 8px;
+      }
+      .user-name {
+        font-size: 13px;
+      }
+      .user-followers {
+        font-size: 11px;
+        margin-bottom: 12px;
+      }
+      .follow-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+      }
     }
   `]
 })

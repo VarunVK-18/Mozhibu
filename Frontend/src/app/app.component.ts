@@ -11,11 +11,6 @@ import { LoadingService } from './core/services/loading.service';
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, FooterComponent, CommonModule],
   template: `
-    @if (loadingService.loading()) {
-      <div class="global-loading-bar">
-        <div class="global-loading-progress"></div>
-      </div>
-    }
     @if (!isStandaloneRoute) {
       <app-header></app-header>
     }

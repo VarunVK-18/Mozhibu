@@ -1,11 +1,13 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { BookService } from '../../core/services/book.service';
 
 @Component({
   selector: 'app-story-editor',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="editor-layout">
       <!-- Left Sidebar: Story Meta -->
@@ -20,6 +22,12 @@ import { RouterModule } from '@angular/router';
         </div>
         
         <div class="meta-content">
+          @if (competitionTag) {
+            <div style="background: #e0f2f1; padding: 12px; border-radius: 6px; border: 1px solid #b2dfdb; color: #00695c; font-size: 13px; margin-bottom: 8px;">
+              <strong>Competition Entry:</strong> This story will automatically be submitted for <em>#{{ competitionTag }}</em>.
+            </div>
+          }
+
           <div class="cover-upload" (click)="fileInput.click()">
             <input type="file" #fileInput accept="image/*" style="display: none" (change)="onFileSelected($event)">
             
@@ -37,24 +45,44 @@ import { RouterModule } from '@angular/router';
           
           <div class="form-group">
             <label>Story Title</label>
-            <input type="text" class="input-field" placeholder="e.g. The Neon Shadows">
+            <input type="text" class="input-field" placeholder="e.g. The Neon Shadows" [(ngModel)]="story.title">
           </div>
           
           <div class="form-group">
             <label>Primary Genre</label>
-            <select class="input-field select-field">
+            <select class="input-field select-field" [(ngModel)]="story.genre">
               <option value="" disabled selected>Select a genre...</option>
-              <option value="romance">Romance</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="scifi">Sci-Fi</option>
-              <option value="mystery">Mystery</option>
-              <option value="thriller">Thriller</option>
+              <option value="Romance">Romance</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Thriller">Thriller</option>
+              <option value="Horror">Horror</option>
+              <option value="Mystery">Mystery</option>
+              <option value="Historical">Historical</option>
+              <option value="Drama">Drama</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Sci-Fi">Sci-Fi</option>
+              <option value="Children">Children</option>
+              <option value="Poetry">Poetry</option>
+              <option value="Short Stories">Short Stories</option>
+              <option value="Fan Fiction">Fan Fiction</option>
+              <option value="Motivational">Motivational</option>
+              <option value="Biography">Biography</option>
             </select>
           </div>
           
           <div class="form-group">
+            <label>Tags (Comma separated)</label>
+            <input type="text" class="input-field" placeholder="e.g. magic, dragons, war" [(ngModel)]="story.tags">
+          </div>
+          
+          <div class="form-group">
+            <label>Series Name (Optional)</label>
+            <input type="text" class="input-field" placeholder="e.g. The Lord of the Rings" [(ngModel)]="story.series">
+          </div>
+          
+          <div class="form-group">
             <label>Synopsis</label>
-            <textarea class="input-field textarea-field" placeholder="Write a compelling summary to hook your readers..." rows="6"></textarea>
+            <textarea class="input-field textarea-field" placeholder="Write a compelling summary to hook your readers..." rows="6" [(ngModel)]="story.description"></textarea>
           </div>
         </div>
       </aside>
@@ -64,18 +92,23 @@ import { RouterModule } from '@angular/router';
         <header class="editor-header">
           <div class="save-status">
             <span class="dot"></span>
-            Saved just now
+            {{ isSaving ? 'Saving...' : 'Saved just now' }}
           </div>
           <div class="actions">
-            <button class="btn-secondary">Save Draft</button>
-            <button class="btn-primary">Publish Chapter</button>
+            <button class="btn-secondary" [disabled]="isSaving" (click)="publishChapter(true)">Save Draft</button>
+            <button class="btn-primary" [disabled]="isSaving" (click)="publishChapter(false)">Publish Chapter</button>
           </div>
         </header>
         
         <div class="writing-workspace">
-          <input type="text" class="chapter-title-input" placeholder="Chapter 1: Title...">
+          @if (errorMessage) {
+            <div style="color: #c62828; padding: 10px; background: #ffebee; border-radius: 4px; margin-bottom: 10px;">
+              {{ errorMessage }}
+            </div>
+          }
+          <input type="text" class="chapter-title-input" placeholder="Chapter 1: Title..." [(ngModel)]="chapter.title">
           
-          <textarea class="content-textarea" placeholder="Start writing your story here..."></textarea>
+          <textarea class="content-textarea" placeholder="Start writing your story here..." [(ngModel)]="chapter.content"></textarea>
         </div>
       </main>
     </div>
@@ -345,8 +378,37 @@ import { RouterModule } from '@angular/router';
     }
   `]
 })
-export class StoryEditorComponent {
+export class StoryEditorComponent implements OnInit {
+  private bookService = inject(BookService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   coverPreviewUrl = signal<string | null>(null);
+
+  isSaving = false;
+  errorMessage = '';
+  competitionTag: string | null = null;
+
+  story = {
+    title: '',
+    genre: '',
+    description: '',
+    tags: '',
+    series: ''
+  };
+
+  chapter = {
+    title: '',
+    content: ''
+  };
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['competition']) {
+        this.competitionTag = params['competition'];
+      }
+    });
+  }
 
   onFileSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -357,5 +419,62 @@ export class StoryEditorComponent {
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  publishChapter(isDraft: boolean) {
+    if (!this.story.title || !this.story.genre || !this.chapter.title) {
+      this.errorMessage = 'Please fill out the story title, genre, and chapter title.';
+      return;
+    }
+
+    this.isSaving = true;
+    this.errorMessage = '';
+    
+    // Parse tags string to array
+    const tagsArray = this.story.tags
+      ? this.story.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
+      : [];
+
+    const bookData: any = {
+      title: this.story.title,
+      genre: this.story.genre,
+      description: this.story.description,
+      tags: tagsArray,
+      series: this.story.series || undefined,
+      cover: this.coverPreviewUrl() || '', // Use the base64 preview as the cover for now
+      status: isDraft ? 'pending' : 'published' // Simplistic logic for now
+    };
+
+    if (this.competitionTag) {
+      bookData.competitionTag = this.competitionTag;
+    }
+
+    this.bookService.createBook(bookData).subscribe({
+      next: (book) => {
+        const chapterData = {
+          title: this.chapter.title,
+          content: this.chapter.content,
+          status: isDraft ? 'draft' : 'published',
+          order: 1
+        };
+
+        this.bookService.createChapter(book._id, chapterData).subscribe({
+          next: () => {
+            this.isSaving = false;
+            this.router.navigate(['/write']);
+          },
+          error: (err) => {
+            console.error('Failed to save chapter', err);
+            this.errorMessage = 'Failed to save chapter. Please try again.';
+            this.isSaving = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to create book', err);
+        this.errorMessage = 'Failed to create story. Please try again.';
+        this.isSaving = false;
+      }
+    });
   }
 }

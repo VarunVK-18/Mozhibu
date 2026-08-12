@@ -86,6 +86,36 @@ router.get('/me/library', protect, async (req, res) => {
   }
 });
 
+// @route POST /api/users/me/bookmarks/:bookId
+// @desc Toggle bookmark status for a book
+router.post('/me/bookmarks/:bookId', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const book = await Book.findById(req.params.bookId);
+
+    if (!user || !book) {
+      return res.status(404).json({ msg: 'User or Book not found' });
+    }
+
+    const isBookmarked = user.savedBooks.some(id => id.toString() === req.params.bookId);
+
+    if (isBookmarked) {
+      // Remove bookmark
+      user.savedBooks = user.savedBooks.filter(id => id.toString() !== req.params.bookId);
+      await user.save();
+      res.json({ msg: 'Bookmark removed', isBookmarked: false });
+    } else {
+      // Add bookmark
+      user.savedBooks.push(req.params.bookId);
+      await user.save();
+      res.json({ msg: 'Bookmarked successfully', isBookmarked: true });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // @route GET /api/users/me/following
 // @desc Get current user's followed authors
 router.get('/me/following', protect, async (req, res) => {
@@ -107,6 +137,32 @@ router.get('/authors', async (req, res) => {
       .select('username avatar followersCount bio role')
       .sort({ followersCount: -1 });
     res.json(authors);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route GET /api/users/author/:id
+// @desc Get author profile and their published books
+router.get('/author/:id', async (req, res) => {
+  try {
+    const author = await User.findOne({ 
+      _id: req.params.id, 
+      role: { $in: ['writer', 'superadmin'] } 
+    }).select('username avatar followersCount bio role createdAt');
+
+    if (!author) {
+      return res.status(404).json({ msg: 'Author not found' });
+    }
+
+    const books = await Book.find({ author: req.params.id, status: 'published' })
+      .sort({ createdAt: -1 });
+
+    const targetLang = req.headers['x-app-language'] || 'en';
+    const translatedBooks = await translateBooks(books, targetLang);
+
+    res.json({ author, books: translatedBooks });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server Error' });
