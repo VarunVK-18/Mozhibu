@@ -20,6 +20,9 @@ export interface AdminBook {
   author: { _id: string; username: string; email: string };
   cover?: string;
   genre: string;
+  description?: string;
+  tags?: string[];
+  series?: string;
   views: number;
   rating?: number;
   isAudio?: boolean;

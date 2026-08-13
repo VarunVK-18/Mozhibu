@@ -8,7 +8,7 @@ const AuthorEarningsSchema = new mongoose.Schema({
   totalPlatformReads: { type: Number, default: 0 }, // snapshot of total platform reads at compute time
   earningsInPaise: { type: Number, default: 0 }, // integer math only
   authorsPoolInPaise: { type: Number, default: 0 }, // snapshot of pool used
-  status: { type: String, enum: ['pending', 'paid', 'rolled_over'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'requested', 'paid', 'rolled_over'], default: 'pending' },
   computedAt: { type: Date },
   paidAt: { type: Date },
   paidBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -11,7 +11,7 @@ import { isPlatformBrowser, CommonModule } from '@angular/common';
       <!-- Fallback text (visible if ad fails to load on localhost/adblock) -->
       <div class="ad-fallback-text">
         <span>Google AdSpace</span>
-        <small>(Ads do not load on localhost)</small>
+        <small>(Ad will display when domain is verified in AdSense)</small>
       </div>
 
       <!-- Mozhibu -->

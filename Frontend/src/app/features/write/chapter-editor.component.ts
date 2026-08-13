@@ -19,12 +19,12 @@ import { BookService } from '../../core/services/book.service';
               </svg>
             </button>
             <div class="header-info">
-              <span class="context">Writing a new chapter for</span>
+              <span class="context">{{ chapterId && chapterId !== 'new' ? 'Editing chapter for' : 'Writing a new chapter for' }}</span>
               <h1>{{ bookTitle || 'Loading...' }}</h1>
             </div>
             <div class="header-actions">
               <button class="btn-primary" [disabled]="isPublishing || !chapterTitle || !editorContent" (click)="publishChapter()">
-                {{ isPublishing ? 'Publishing...' : 'Publish Chapter' }}
+                {{ isPublishing ? 'Saving...' : (chapterId && chapterId !== 'new' ? 'Save Changes' : 'Publish Chapter') }}
               </button>
             </div>
           </div>
@@ -224,6 +224,7 @@ export class ChapterEditorComponent implements OnInit {
   
   bookId: string | null = null;
   bookTitle = '';
+  chapterId: string | null = null;
   
   chapterTitle = '';
   editorContent = '';
@@ -233,8 +234,14 @@ export class ChapterEditorComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       this.bookId = params.get('id');
+      this.chapterId = params.get('chapterId');
+      
       if (this.bookId) {
         this.fetchBookDetails(this.bookId);
+      }
+      
+      if (this.bookId && this.chapterId && this.chapterId !== 'new') {
+        this.fetchChapterDetails(this.bookId, this.chapterId);
       }
     });
   }
@@ -243,6 +250,17 @@ export class ChapterEditorComponent implements OnInit {
     this.bookService.getBookById(id).subscribe({
       next: (book) => this.bookTitle = book.title,
       error: () => this.bookTitle = 'Unknown Book'
+    });
+  }
+
+  fetchChapterDetails(bookId: string, chapterId: string) {
+    this.bookService.getChapter(bookId, chapterId).subscribe({
+      next: (chapter) => {
+        this.chapterTitle = chapter.title;
+        this.editorContent = chapter.content;
+        this.accessType = chapter.accessType || 'inherit';
+      },
+      error: (err) => console.error('Failed to fetch chapter', err)
     });
   }
 
@@ -266,15 +284,28 @@ export class ChapterEditorComponent implements OnInit {
       order: 1 // Ideally calculated by backend
     };
     
-    this.bookService.createChapter(this.bookId, chapterData).subscribe({
-      next: () => {
-        this.router.navigate(['/write/book', this.bookId]);
-      },
-      error: (err) => {
-        console.error('Failed to publish chapter', err);
-        alert('Failed to publish chapter');
-        this.isPublishing = false;
-      }
-    });
+    if (this.chapterId && this.chapterId !== 'new') {
+      this.bookService.updateChapter(this.bookId, this.chapterId, chapterData).subscribe({
+        next: () => {
+          this.router.navigate(['/write/book', this.bookId]);
+        },
+        error: (err) => {
+          console.error('Failed to update chapter', err);
+          alert('Failed to update chapter');
+          this.isPublishing = false;
+        }
+      });
+    } else {
+      this.bookService.createChapter(this.bookId, chapterData).subscribe({
+        next: () => {
+          this.router.navigate(['/write/book', this.bookId]);
+        },
+        error: (err) => {
+          console.error('Failed to publish chapter', err);
+          alert('Failed to publish chapter');
+          this.isPublishing = false;
+        }
+      });
+    }
   }
 }

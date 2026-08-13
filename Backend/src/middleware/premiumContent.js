@@ -12,6 +12,25 @@ const UserSubscription = require('../models/UserSubscription');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 
 /**
+ * Checks if a user has a specific subscription benefit.
+ * Checks the snapshot at time of purchase first, falling back to current plan definition.
+ */
+const hasEntitlement = async (userId, benefitKey) => {
+  const sub = await getActiveSubscription(userId);
+  if (!sub) return false;
+  
+  if (sub.planSnapshot && sub.planSnapshot.structuredBenefits) {
+    return !!sub.planSnapshot.structuredBenefits[benefitKey];
+  }
+  
+  if (sub.plan && sub.plan.structuredBenefits) {
+    return !!sub.plan.structuredBenefits[benefitKey];
+  }
+  
+  return false;
+};
+
+/**
  * Resolve effective access type for a chapter, respecting the
  * chapter-level → book-level override chain.
  *
@@ -61,9 +80,9 @@ const buildSubscriptionPrompt = async () => {
       name: p.name,
       description: p.description,
       priceInPaise: p.priceInPaise,
-      priceDisplay: `₹${(p.priceInPaise / 100).toFixed(2)}`,
+      priceDisplay: `${p.currency === 'INR' ? '₹' : p.currency} ${(p.priceInPaise / 100).toFixed(2)}`,
       durationDays: p.durationDays,
-      benefits: p.benefits
+      marketingBenefits: p.marketingBenefits
     }))
   };
 };
@@ -98,4 +117,10 @@ const premiumContent = async (req, res, next) => {
   return res.status(402).json(prompt);
 };
 
-module.exports = { premiumContent, getActiveSubscription, resolveAccessType, buildSubscriptionPrompt };
+module.exports = {
+  resolveAccessType,
+  getActiveSubscription,
+  buildSubscriptionPrompt,
+  premiumContent,
+  hasEntitlement
+};

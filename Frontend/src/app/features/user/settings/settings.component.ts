@@ -362,11 +362,6 @@ export class SettingsComponent implements OnInit {
       this.auth.uploadAvatar(file).subscribe({
         next: (res) => {
           this.uploading.set(false);
-          // Update the user signal in AuthService
-          const currentUser = this.auth.user();
-          if (currentUser) {
-            this.auth.user.set({ ...currentUser, avatar: res.avatar });
-          }
         },
         error: (err) => {
           this.uploading.set(false);

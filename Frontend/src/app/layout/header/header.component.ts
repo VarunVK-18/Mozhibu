@@ -8,6 +8,7 @@ import { BookService } from '../../core/services/book.service';
 import { AdminBook } from '../../core/services/admin.service';
 import { NotificationService, NotificationItem } from '../../core/services/notification.service';
 import { SocketService } from '../../core/services/socket.service';
+import { SubscriptionService } from '../../core/services/subscription.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -27,6 +28,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   
   notifications = signal<NotificationItem[]>([]);
   unreadCount = signal(0);
+  isPremium = signal(false);
 
   searchResults: AdminBook[] = [];
   searchQuery = '';
@@ -38,6 +40,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private bookService = inject(BookService);
   private notificationService = inject(NotificationService);
   private socketService = inject(SocketService);
+  private subService = inject(SubscriptionService);
 
   onSearchInput(event: Event): void {
     const query = (event.target as HTMLInputElement).value;
@@ -163,6 +166,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
         .subscribe(() => {
           this.fetchNotifications();
         });
+        
+      this.subService.getMySubscription().subscribe({
+        next: (sub) => {
+          this.isPremium.set(sub?.active || false);
+        },
+        error: () => {}
+      });
     }
   }
 
@@ -235,6 +245,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onLogout(): void {
     if (confirm('Are you sure you want to log out?')) {
       this.authService.logout();
+      this.isPremium.set(false);
       this.socketService.disconnect();
       this.profileMenuOpen.set(false);
       this.router.navigate(['/']);

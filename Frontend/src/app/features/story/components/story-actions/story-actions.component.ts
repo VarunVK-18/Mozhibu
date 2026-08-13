@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
     <div class="actions-container">
       <button class="btn-primary" (click)="readClicked.emit()">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        {{ userProgress.hasStarted ? 'Resume Reading' : 'Start Reading' }}
+        {{ accessType === 'premium' && !isPremiumSubscriber ? 'Unlock Premium' : (userProgress.hasStarted ? 'Resume Reading' : 'Start Reading') }}
       </button>
 
       <button class="action-btn" [class.active]="isBookmarked" (click)="bookmarkClicked.emit()">
@@ -161,8 +161,9 @@ export class StoryActionsComponent {
   @Input() isBookmarked!: boolean;
   @Input() isLiked!: boolean;
   @Input() bookmarks!: number;
-  @Input() likes!: number;
-  
+  @Input() likes: number = 0;
+  @Input() accessType?: string;
+  @Input() isPremiumSubscriber: boolean = false;
   @Output() readClicked = new EventEmitter<void>();
   @Output() bookmarkClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<void>();
@@ -172,7 +173,9 @@ export class StoryActionsComponent {
   showReportModal = false;
   showCopyToast = false;
   showReportToast = false;
-  currentUrl = 'http://localhost:4200/story/1'; // Mock URL
+  get currentUrl(): string {
+    return window.location.href;
+  }
 
   copyLink() {
     navigator.clipboard.writeText(this.currentUrl);

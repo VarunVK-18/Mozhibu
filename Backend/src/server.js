@@ -46,15 +46,18 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch(err => console.error('MongoDB connection error:', err));
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch(err => console.error('MongoDB connection error:', err));
+}
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -86,9 +89,11 @@ app.get('/api', (req, res) => {
 });
 
 // Start server
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
 
 // ─── Cron Jobs ────────────────────────────────────────────────
 
@@ -115,9 +120,10 @@ cron.schedule('0 3 1 * *', async () => {
     await computeMonthlyRevenue(year, month, 'system');
     console.log(`[Cron] Revenue computation complete for ${year}-${month}`);
   } catch (err) {
-    console.error('[Cron] Revenue computation failed:', err.message);
+    console.error(`[Cron] Error computing engagement scores:`, err);
   }
 });
+
 
 // Daily: expire subscriptions past end_date
 cron.schedule('0 0 * * *', async () => {
@@ -134,3 +140,5 @@ cron.schedule('0 0 * * *', async () => {
     console.error('[Cron] Subscription expiry failed:', err.message);
   }
 });
+
+module.exports = server;

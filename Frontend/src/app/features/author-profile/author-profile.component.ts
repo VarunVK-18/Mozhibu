@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthorService, AuthorProfile } from '../../core/services/author.service';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-author-profile',
@@ -362,11 +363,12 @@ export class AuthorProfileComponent implements OnInit {
   }
 
   getAvatarUrl(author: any): string {
+    const baseUrl = environment.apiUrl.replace('/api', '');
     if (author.avatar) {
       if (author.avatar.startsWith('http')) return author.avatar;
-      return `http://localhost:5000${author.avatar}`;
+      return `${baseUrl}${author.avatar}`;
     }
-    return `https://ui-avatars.com/api/?name=${author.username || 'A'}&length=1&background=3F6259&color=fff`;
+    return 'assets/default-avatar.png';
   }
 
   isCurrentUser(): boolean {

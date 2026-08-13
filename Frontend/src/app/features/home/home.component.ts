@@ -9,6 +9,7 @@ import { UserCardComponent, UserProfile } from '../../shared/components/user-car
 import { AnnouncementCardComponent, Announcement } from '../../shared/components/announcement-card/announcement-card.component';
 import { ContinueReadingComponent } from './components/continue-reading/continue-reading.component';
 import { BookService } from '../../core/services/book.service';
+import { ApiService } from '../../core/services/api.service';
 import { OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { GoogleAdComponent } from '../../shared/components/ad/google-ad.component';
@@ -179,6 +180,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
 export class HomeComponent implements OnInit {
   authService = inject(AuthService);
   bookService = inject(BookService);
+  private apiService = inject(ApiService);
 
   recommendedStories: any[] = [];
   trendingStories: any[] = [];
@@ -244,6 +246,20 @@ export class HomeComponent implements OnInit {
         }
       });
     }
+
+    // Fetch real announcements from backend broadcasts
+    this.apiService.get<any[]>('/notifications/broadcasts').subscribe({
+      next: (broadcasts) => {
+        this.announcements = broadcasts.map((b: any) => ({
+          id: b._id,
+          type: 'news' as 'news' | 'update' | 'event',
+          date: new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          title: b.title,
+          content: b.message
+        }));
+      },
+      error: () => { this.announcements = []; }
+    });
   }
 
   private mapStories(books: any[]) {
@@ -255,20 +271,13 @@ export class HomeComponent implements OnInit {
       genre: b.genre,
       views: (b.views / 1000).toFixed(1) + 'K',
       rating: b.rating ? Number(b.rating).toFixed(1) : 0,
-      isAudio: !!b.isAudio
+      isAudio: !!b.isAudio,
+      accessType: b.accessType
     }));
   }
 
-  private createMockAnnouncements(): Announcement[] {
-    return [
-      { id: '1', type: 'update', date: 'Oct 12, 2026', title: 'New Reading Experience', content: 'We just rolled out an entirely new immersive reading mode that saves your progress seamlessly across all devices.' },
-      { id: '2', type: 'event', date: 'Oct 15, 2026', title: 'Winter Writing Contest', content: 'Join thousands of authors in our annual Winter Writing Contest for a chance to win publishing contracts.' },
-      { id: '3', type: 'news', date: 'Oct 10, 2026', title: 'Platform Milestone', content: 'Mozhibu just crossed 1 million published stories in over 15 regional languages! Thank you to our incredible community.' },
-      { id: '4', type: 'update', date: 'Oct 8, 2026', title: 'Audio Stories Expansion', content: 'We have added text-to-speech integration for over 5 new languages including Malayalam and Kannada.' }
-    ];
-  }
 
   followingUsers: UserProfile[] = [];
   followerUsers: UserProfile[] = [];
-  announcements = this.createMockAnnouncements();
+  announcements: Announcement[] = [];
 }

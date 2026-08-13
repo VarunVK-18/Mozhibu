@@ -13,7 +13,8 @@ const UserSubscriptionSchema = new mongoose.Schema({
   razorpaySignature: { type: String },
   gatewayProvider: { type: String, default: 'razorpay' },
   amountPaidInPaise: { type: Number },
-  couponApplied: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' }
+  couponApplied: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+  planSnapshot: { type: mongoose.Schema.Types.Mixed } // Stores name, price, and structuredBenefits at time of purchase
 }, { timestamps: true });
 
 // Index for fast lookup

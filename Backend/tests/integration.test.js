@@ -90,11 +90,12 @@ describe('Integration Tests: Books & Users API', () => {
     expect(res.body[0].title).toBe('Audio Book');
   });
 
-  test('GET /api/books/categories returns unique categories', async () => {
+  it('GET /api/books/categories returns unique categories with counts', async () => {
     const res = await request(testApp).get('/api/books/categories');
     expect(res.status).toBe(200);
-    expect(res.body).toContain('Fantasy');
-    expect(res.body).toContain('Romance');
+    const categoryNames = res.body.map(c => c.name);
+    expect(categoryNames).toContain('Fantasy');
+    expect(categoryNames).toContain('Romance');
     expect(res.body.length).toBe(2);
   });
 

@@ -31,6 +31,9 @@ import { BookService } from '../../core/services/book.service';
                   <button class="btn-primary" [routerLink]="['/write/book', book._id, 'chapter', 'new']">
                     + Add New Chapter
                   </button>
+                  <button class="btn-outline" [routerLink]="['/write/book', book._id, 'settings']">
+                    Edit Story Settings
+                  </button>
                   <button class="btn-outline" (click)="toggleCompletionStatus()">
                     {{ book.completionStatus === 'completed' ? 'Mark as Ongoing' : 'Mark as Completed' }}
                   </button>
@@ -57,7 +60,8 @@ import { BookService } from '../../core/services/book.service';
                       <h4 class="chapter-title">{{ chapter.title }}</h4>
                     </div>
                     <div class="chapter-status">
-                      <span class="status-indicator published">Published</span>
+                      <span class="status-indicator" [ngClass]="chapter.status">{{ chapter.status === 'published' ? 'Published' : 'Draft' }}</span>
+                      <button class="btn-outline btn-sm" [routerLink]="['/write/book', book._id, 'chapter', chapter._id]">Edit</button>
                     </div>
                   </div>
                 }
@@ -189,21 +193,76 @@ import { BookService } from '../../core/services/book.service';
 
     .chapter-title {
       font-family: var(--display);
-      font-size: 18px;
       margin: 0;
       color: var(--ink);
+    }
+
+    .chapter-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
     .status-indicator {
       font-size: 12px;
       font-weight: 600;
+    }
+    
+    .status-indicator.published {
       color: var(--forest);
+    }
+    
+    .status-indicator.draft {
+      color: var(--ink-soft);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
     }
 
     .loading-state, .empty-state {
       padding: 48px;
       text-align: center;
       color: var(--ink-soft);
+    }
+
+    @media (max-width: 768px) {
+      .book-summary {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 24px;
+      }
+      
+      .actions-row {
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .actions-row button {
+        width: 100%;
+      }
+      
+      .meta-row {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      .dashboard-header {
+        padding: 32px 0;
+      }
+
+      .chapter-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .chapter-status {
+        width: 100%;
+        justify-content: space-between;
+      }
     }
   `]
 })

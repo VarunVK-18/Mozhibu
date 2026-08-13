@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, HostListener, OnDestroy, inject } from '@angular/core';
+import { Component, signal, OnInit, HostListener, OnDestroy, inject, computed, effect } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
+import { StoryService } from '../../core/services/story.service';
 
 @Component({
   selector: 'app-reader',
@@ -386,8 +387,8 @@ import { AuthService } from '../../core/services/auth.service';
   `]
 })
 export class ReaderComponent implements OnInit, OnDestroy {
-  storyTitle = 'The Neon Shadows';
-  chapterTitle = 'Chapter 1: The Drop';
+  storyTitle = 'Reading...';
+  chapterTitle = '';
   currentChapterNum = 1;
   
   showControls = signal(true);
@@ -398,44 +399,10 @@ export class ReaderComponent implements OnInit, OnDestroy {
   chapterContent = signal<SafeHtml>('');
   isTranslating = signal(false);
   requiresSubscription = signal(false);
-
-  rawHtml = `
-          <p>
-            The neon lights of Neo-Kyoto flickered, casting long, vibrant shadows across the rain-slicked pavement. Akira pulled up the collar of his trench coat, the synthetic fabric repelling the acidic drizzle. He checked his neural interface; the target's signal was weak, but definitely close. 
-          </p>
-          <p>
-            "You sure about this, kid?" barked the gruff voice of Captain Sato through the comms link. "This sector is crawling with Chrome Syndicate thugs."
-          </p>
-          <p>
-            "I'm sure," Akira muttered, his eyes scanning the alleyway. "The data drive is here. I can feel it." 
-          </p>
-          <p>
-            He stepped over a pile of discarded tech-junk, the remnants of a failed cybernetic augmentation clinic. The hum of a rogue generator vibrated in the soles of his boots. He reached for the heavy blaster holstered at his side, the cold metal a comforting weight.
-          </p>
-          <p>
-            Suddenly, a shadow detached itself from the gloom. A figure, clad head-to-toe in matte-black armor, stepped into the meager light of a flickering streetlamp. The figure held a sleek, humming vibro-blade.
-          </p>
-          <p>
-            "You're late, Akira," the figure hissed, its voice synthesized and devoid of emotion. 
-          </p>
-          <p>
-            Akira drew his blaster in a fluid motion, aiming it dead center at the figure's chest. "I didn't think you'd actually show up, Kael."
-          </p>
-          <p>
-            "I never miss a reunion," Kael replied, raising the vibro-blade. "Especially not when there's a score to settle."
-          </p>
-          <p>
-            The air crackled with tension, the rain seeming to freeze in the tense silence. Akira knew this was it. The culmination of months of tracking, of betrayals, and of close calls. He tightened his grip on the blaster.
-          </p>
-          <p>
-            "Give me the drive, Kael. It's over."
-          </p>
-          <p>
-            Kael chuckled, a harsh, metallic sound. "It's never over, Akira. Not in this city." And with that, he lunged.
-          </p>
-  `;
+  currentHtml = '';
 
   private authService = inject(AuthService);
+  private storyService = inject(StoryService);
   private document = inject(DOCUMENT);
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
@@ -444,21 +411,45 @@ export class ReaderComponent implements OnInit, OnDestroy {
   private scrollSubject = new Subject<number>();
   private scrollSub?: Subscription;
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  storyEpisodes = this.storyService.getEpisodes();
+  storyDetail = this.storyService.getActiveStory();
 
-  ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      this.storyId = params.get('storyId') || '';
-    });
-    
+  constructor(private route: ActivatedRoute, private router: Router) {
+    effect(() => {
+      const episodes = this.storyEpisodes();
+      const detail = this.storyDetail();
+      
+      if (detail) {
+        this.storyTitle = detail.title;
+      }
+
+      if (episodes && episodes.length > 0) {
+        const currentEp = episodes.find(e => e.episode === this.currentChapterNum) || episodes[0];
+        if (currentEp) {
+          this.chapterTitle = currentEp.title || `Chapter ${currentEp.episode}`;
+          this.requiresSubscription.set(!currentEp.isUnlocked);
+          
+          if (currentEp.isUnlocked && currentEp.content) {
+            this.currentHtml = currentEp.content;
+            this.processContent(currentEp.content);
+          } else {
+            this.currentHtml = '';
+            this.chapterContent.set('');
+          }
+        }
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  processContent(html: string) {
     const currentLang = this.langService.currentLang();
     
     if (currentLang === 'en') {
-      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(html));
     } else {
       this.isTranslating.set(true);
       this.http.post<{content: string}>('http://localhost:5000/api/books/translate-html', {
-        html: this.rawHtml,
+        html: html,
         targetLang: currentLang
       }).subscribe({
         next: (res) => {
@@ -467,11 +458,21 @@ export class ReaderComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Translation failed', err);
-          this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+          this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(html));
           this.isTranslating.set(false);
         }
       });
     }
+  }
+
+  ngOnInit(): void {
+    this.route.paramMap.subscribe(params => {
+      this.storyId = params.get('storyId') || '';
+      if (this.storyId) {
+        // This will fetch chapters and update the storyEpisodes signal
+        this.storyService.loadStory(this.storyId, false);
+      }
+    });
 
     this.scrollSub = this.scrollSubject.pipe(
       debounceTime(2000)
@@ -539,25 +540,12 @@ export class ReaderComponent implements OnInit, OnDestroy {
 
   nextChapter() {
     this.currentChapterNum++;
-    this.chapterTitle = `Chapter ${this.currentChapterNum}: The Continuation`;
-    // Mock paywall on chapter 3
-    if (this.currentChapterNum === 3) {
-      this.requiresSubscription.set(true);
-    } else {
-      this.requiresSubscription.set(false);
-    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   prevChapter() {
     if (this.currentChapterNum > 1) {
       this.currentChapterNum--;
-      this.chapterTitle = `Chapter ${this.currentChapterNum}: The Previous`;
-      if (this.currentChapterNum === 3) {
-        this.requiresSubscription.set(true);
-      } else {
-        this.requiresSubscription.set(false);
-      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
@@ -570,13 +558,13 @@ export class ReaderComponent implements OnInit, OnDestroy {
     this.langService.setLanguage(targetLang);
     
     if (targetLang === 'en') {
-      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.rawHtml));
+      this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(this.currentHtml));
       return;
     }
     
     this.isTranslating.set(true);
     this.http.post<{content: string}>('http://localhost:5000/api/books/translate-html', {
-      html: this.rawHtml,
+      html: this.currentHtml,
       targetLang: targetLang
     }).subscribe({
       next: (res) => {
@@ -588,7 +576,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
         this.isTranslating.set(false);
         const fallbackHtml = `<div style="padding: 16px; margin-bottom: 24px; background: #FFF4E5; border-left: 4px solid #FFA000; color: #b27300; border-radius: 4px;">
           <strong>API Rate Limit Reached:</strong> The Gemini API is currently receiving too many requests. Showing original English text. Please try again in about a minute.
-        </div>` + this.rawHtml;
+        </div>` + this.currentHtml;
         this.chapterContent.set(this.sanitizer.bypassSecurityTrustHtml(fallbackHtml));
       }
     });

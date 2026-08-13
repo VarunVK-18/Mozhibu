@@ -1,4 +1,4 @@
-@if (config) {
+@if (config && !isExpired) {
 <section class="section alt">
   <div class="wrap">
     <div class="competition">
@@ -31,7 +31,7 @@
           @if (isExternalLink(config.buttonLink)) {
             <a [href]="config.buttonLink" target="_blank" rel="noopener noreferrer" class="btn btn-light">{{ config.buttonText }}</a>
           } @else {
-            <a [routerLink]="config.buttonLink.split('?')[0]" [queryParams]="getQueryParams(config.buttonLink)" class="btn btn-light">{{ config.buttonText }}</a>
+            <a [routerLink]="(config.buttonLink || '/competitions').split('?')[0]" [queryParams]="getQueryParams(config.buttonLink)" class="btn btn-light">{{ config.buttonText }}</a>
           }
       </div>
     </div>

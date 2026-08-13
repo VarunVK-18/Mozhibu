@@ -81,7 +81,18 @@ export class AuthService {
   uploadAvatar(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('avatar', file);
-    return this.api.post('/users/me/avatar', formData);
+    return this.api.post('/users/me/avatar', formData).pipe(
+      tap((res: any) => {
+        if (res && res.avatar) {
+          const currentUser = this.user();
+          if (currentUser) {
+            const updatedUser = { ...currentUser, avatar: res.avatar };
+            this.user.set(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      })
+    );
   }
 
   updateReadingProgress(bookId: string, chapterId?: string, progressPercentage?: number): Observable<any> {

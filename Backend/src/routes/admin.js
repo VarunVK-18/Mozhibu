@@ -4,6 +4,9 @@ const User = require('../models/User');
 const Book = require('../models/Book');
 const Notification = require('../models/Notification');
 const Broadcast = require('../models/Broadcast');
+const SubscriptionPlan = require('../models/SubscriptionPlan');
+const SubscriptionPlanHistory = require('../models/SubscriptionPlanHistory');
+const UserSubscription = require('../models/UserSubscription');
 
 const router = express.Router();
 
@@ -391,6 +394,143 @@ router.put('/competition', async (req, res) => {
 
     await competition.save();
     res.json(competition);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// --- SUBSCRIPTION PLAN MANAGEMENT ---
+
+// @route GET /api/admin/plans
+// @desc Get all subscription plans
+router.get('/plans', async (req, res) => {
+  try {
+    const plans = await SubscriptionPlan.find().sort({ displayOrder: 1, createdAt: -1 });
+    res.json(plans);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route POST /api/admin/plans
+// @desc Create a new subscription plan
+router.post('/plans', async (req, res) => {
+  try {
+    const { name, priceInPaise, currency, durationDays, marketingBenefits, structuredBenefits, terms, isActive, displayOrder } = req.body;
+    
+    const existing = await SubscriptionPlan.findOne({ name, isActive: true });
+    if (existing) {
+      return res.status(400).json({ msg: 'An active plan with this name already exists' });
+    }
+
+    const plan = new SubscriptionPlan({
+      name, priceInPaise, currency, durationDays, marketingBenefits, structuredBenefits, terms, isActive, displayOrder,
+      createdBy: req.user.id
+    });
+    
+    await plan.save();
+    
+    await SubscriptionPlanHistory.create({
+      planId: plan._id,
+      fieldChanged: 'created',
+      newValue: plan,
+      changedBy: req.user.id
+    });
+    
+    res.json(plan);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route PUT /api/admin/plans/:id
+// @desc Update a subscription plan
+router.put('/plans/:id', async (req, res) => {
+  try {
+    const plan = await SubscriptionPlan.findById(req.params.id);
+    if (!plan) return res.status(404).json({ msg: 'Plan not found' });
+    
+    const oldValues = { ...plan.toObject() };
+    const updates = ['name', 'priceInPaise', 'currency', 'durationDays', 'marketingBenefits', 'structuredBenefits', 'terms', 'isActive', 'displayOrder'];
+    let changed = false;
+
+    for (let field of updates) {
+      if (req.body[field] !== undefined && JSON.stringify(plan[field]) !== JSON.stringify(req.body[field])) {
+        const oldVal = plan[field];
+        plan[field] = req.body[field];
+        
+        await SubscriptionPlanHistory.create({
+          planId: plan._id,
+          fieldChanged: field,
+          oldValue: oldVal,
+          newValue: req.body[field],
+          changedBy: req.user.id
+        });
+        changed = true;
+      }
+    }
+    
+    if (changed) {
+      await plan.save();
+    }
+    
+    res.json(plan);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route PATCH /api/admin/plans/:id/status
+// @desc Toggle active status of a plan
+router.patch('/plans/:id/status', async (req, res) => {
+  try {
+    const plan = await SubscriptionPlan.findById(req.params.id);
+    if (!plan) return res.status(404).json({ msg: 'Plan not found' });
+    
+    const oldVal = plan.isActive;
+    plan.isActive = !plan.isActive;
+    await plan.save();
+    
+    await SubscriptionPlanHistory.create({
+      planId: plan._id,
+      fieldChanged: 'isActive',
+      oldValue: oldVal,
+      newValue: plan.isActive,
+      changedBy: req.user.id
+    });
+    
+    res.json(plan);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route DELETE /api/admin/plans/:id
+// @desc Delete a plan (only if zero subscribers)
+router.delete('/plans/:id', async (req, res) => {
+  try {
+    const subscribersCount = await UserSubscription.countDocuments({ plan: req.params.id });
+    if (subscribersCount > 0) {
+      return res.status(400).json({ msg: 'Cannot delete plan because it has historical or active subscribers. Please deactivate it instead.' });
+    }
+    
+    await SubscriptionPlan.findByIdAndDelete(req.params.id);
+    await SubscriptionPlanHistory.deleteMany({ planId: req.params.id });
+    
+    res.json({ msg: 'Plan deleted' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route GET /api/admin/plans/:id/history
+// @desc Get audit trail for a plan
+router.get('/plans/:id/history', async (req, res) => {
+  try {
+    const history = await SubscriptionPlanHistory.find({ planId: req.params.id })
+      .populate('changedBy', 'username email')
+      .sort({ changedAt: -1 });
+    res.json(history);
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
   }

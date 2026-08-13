@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoryService } from '../../../core/services/story.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SubscriptionService } from '../../../core/services/subscription.service';
+import { BookService } from '../../../core/services/book.service';
+import { environment } from '../../../../environments/environment';
 
 import { StoryHeroComponent } from '../components/story-hero/story-hero.component';
 import { StoryMetaRowComponent } from '../components/story-meta-row/story-meta-row.component';
@@ -32,6 +35,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
           [coverImage]="story()!.coverImage"
           [author]="story()!.author"
           [genres]="story()!.genres"
+          [accessType]="story()!.accessType"
           (authorClicked)="goToAuthor($event)"
         ></app-story-hero>
         
@@ -53,6 +57,8 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             [isLiked]="story()!.isLiked"
             [bookmarks]="story()!.bookmarks"
             [likes]="story()!.likes"
+            [accessType]="story()!.accessType"
+            [isPremiumSubscriber]="isPremiumSubscriber()"
             (readClicked)="onReadClicked()"
             (bookmarkClicked)="onBookmarkClicked()"
             (likeClicked)="onLikeClicked()"
@@ -84,7 +90,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
           <div class="related-section">
             <h2>More like this</h2>
             <div class="related-grid">
-              @for (related of mockRelatedStories; track related.id) {
+              @for (related of relatedStories(); track related.id) {
                 <app-story-card
                   [story]="related"
                 ></app-story-card>
@@ -172,6 +178,8 @@ export class StoryDetailComponent implements OnInit {
   router = inject(Router);
   storyService = inject(StoryService);
   authService = inject(AuthService);
+  subService = inject(SubscriptionService);
+  private bookService = inject(BookService);
   
   story = this.storyService.getActiveStory();
   episodes = this.storyService.getEpisodes();
@@ -179,13 +187,8 @@ export class StoryDetailComponent implements OnInit {
   currentUser = this.authService.user;
   
   synopsisExpanded = signal(false);
-
-  mockRelatedStories = [
-    { id: '101', title: 'Whispers of the Wind', author: 'Elara Vance', cover: 'https://images.unsplash.com/photo-1516585427167-9f4af9627e6c?w=300&q=80', rating: 4.5, genre: 'Fantasy' },
-    { id: '102', title: 'The Chronos Paradox', author: 'J.T. Sterling', cover: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&q=80', rating: 4.8, genre: 'Sci-Fi' },
-    { id: '103', title: 'Crimson Tide', author: 'Maya Lin', cover: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=300&q=80', rating: 4.2, genre: 'Adventure' },
-    { id: '104', title: 'A Memory of Light', author: 'Robert Jordan', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80', rating: 4.9, genre: 'Fantasy' }
-  ];
+  isPremiumSubscriber = signal(false);
+  relatedStories = signal<any[]>([]);
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -193,27 +196,76 @@ export class StoryDetailComponent implements OnInit {
       const resume = this.route.snapshot.queryParamMap.get('resume') === 'true';
       if (id) {
         this.storyService.loadStory(id, resume);
+        // Load related stories once story genre is available
+        this.loadRelatedStories(id);
       }
     });
+
+    if (this.currentUser()) {
+      this.subService.getMySubscription().subscribe({
+        next: (sub) => {
+          if (sub && sub.active) {
+            this.isPremiumSubscriber.set(true);
+          }
+        },
+        error: () => {}
+      });
+    }
+  }
+
+  private loadRelatedStories(currentBookId: string) {
+    // Wait for story to load to get genre, then fetch related by genre
+    const checkStory = setInterval(() => {
+      const story = this.story();
+      if (story) {
+        clearInterval(checkStory);
+        const genre = story.genres?.[0] || '';
+        this.bookService.getBooks('popular', genre).subscribe({
+          next: (books: any[]) => {
+            const related = books
+              .filter((b: any) => b._id !== currentBookId)
+              .slice(0, 4)
+              .map((b: any) => ({
+                id: b._id,
+                title: b.title,
+                author: b.author?.username || 'Unknown',
+                cover: b.cover || 'assets/default-cover.png',
+                rating: b.rating || 0,
+                genre: b.genre
+              }));
+            this.relatedStories.set(related);
+          },
+          error: () => {}
+        });
+      }
+    }, 300);
+    // Stop polling after 5 seconds
+    setTimeout(() => clearInterval(checkStory), 5000);
   }
 
   goToAuthor(id: string) {
-    // Navigate to author profile
-    console.log('Navigate to author:', id);
+    this.router.navigate(['/author', id]);
   }
 
-  requireAuth(): boolean {
+  requireAuth(customReturnUrl?: string): boolean {
     if (!this.currentUser()) {
-      this.router.navigate(['/login']);
+      const returnUrl = customReturnUrl || this.router.url;
+      this.router.navigate(['/login'], { queryParams: { returnUrl } });
       return false;
     }
     return true;
   }
 
   onReadClicked() {
-    if (this.requireAuth()) {
+    if (this.story()?.accessType === 'premium' && !this.isPremiumSubscriber()) {
+       this.router.navigate(['/subscription/plans']);
+       return;
+    }
+
+    const readUrl = `/read/${this.story()?.id || '1'}`;
+    if (this.requireAuth(readUrl)) {
       this.storyService.startReading();
-      this.router.navigate(['/read', this.story()?.id || '1']);
+      this.router.navigate([readUrl]);
     }
   }
 
@@ -230,14 +282,15 @@ export class StoryDetailComponent implements OnInit {
   }
 
   getAvatarUrl(path: string | undefined): string {
-    if (!path) return 'https://placehold.co/100x100/333333/999999?text=You';
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    if (!path) return 'assets/default-avatar.png';
     if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    return `${baseUrl}${path}`;
   }
 
-  onPostComment(text: string) {
+  onPostComment(event: {text: string, rating: number}) {
     if (this.requireAuth()) {
-      this.storyService.addComment(text, this.currentUser());
+      this.storyService.addComment(event.text, this.currentUser(), event.rating);
     }
   }
 

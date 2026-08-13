@@ -43,13 +43,16 @@ describe('CompetitionBannerComponent', () => {
   });
 
   it('should render banner when isActive is true', () => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7); // 7 days in the future
     mockCompetitionService.getActiveCompetition.and.returnValue(of({
       isActive: true,
       tag: 'Test',
       title: 'Test Title',
       description: 'Desc',
-      endDate: new Date().toISOString(),
-      buttonText: 'Submit'
+      endDate: futureDate.toISOString(),
+      buttonText: 'Submit',
+      buttonLink: '/write?competition=test'
     } as CompetitionConfig));
 
     fixture = TestBed.createComponent(CompetitionBannerComponent);

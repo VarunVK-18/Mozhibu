@@ -29,10 +29,26 @@ import { SubscriptionService } from '../../core/services/subscription.service';
               <div class="card-value yellow">{{ summary()?.totalPendingDisplay || '₹0.00' }}</div>
             </div>
             <div class="summary-card">
+              <div class="card-label">Requested Payout</div>
+              <div class="card-value blue">{{ summary()?.totalRequestedDisplay || '₹0.00' }}</div>
+            </div>
+            <div class="summary-card">
               <div class="card-label">This Month (Est.)</div>
               <div class="card-value">{{ projection()?.estimatedEarningsDisplay || '₹0.00' }}</div>
               <div class="card-sub">{{ projection()?.myQualifiedReads || 0 }} qualified reads</div>
             </div>
+          </div>
+          
+          <div class="actions-container">
+            <button class="btn-primary" (click)="requestWithdrawal()" 
+                    [disabled]="isWithdrawing() || !canWithdraw()">
+              {{ isWithdrawing() ? 'Requesting...' : 'Request Withdrawal' }}
+            </button>
+            @if (summary()?.totalPendingInPaise < summary()?.minPayoutInPaise) {
+              <div class="min-payout-note">
+                Minimum withdrawal is ₹{{ (summary()?.minPayoutInPaise / 100).toFixed(2) }}
+              </div>
+            }
           </div>
 
           <!-- Projection Note -->
@@ -118,8 +134,15 @@ import { SubscriptionService } from '../../core/services/subscription.service';
     .amount { color: #f5f0e8; font-weight: 700; }
     .status-badge { padding: 3px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; text-align: center; width: fit-content; }
     .status-badge.pending { background: #2a2a0a; color: #fbbf24; }
+    .status-badge.requested { background: #1e3a8a; color: #60a5fa; }
     .status-badge.paid { background: #1a3a1a; color: #69f0ae; }
     .status-badge.rolled_over { background: #1a1a3a; color: #a5b4fc; }
+
+    .actions-container { display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 32px; gap: 8px; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .min-payout-note { font-size: 12px; color: #9ca3af; }
 
     .how-it-works { margin-top: 48px; padding-top: 32px; border-top: 1px solid #2a2a3e; }
     .how-it-works h3 { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
@@ -135,8 +158,13 @@ export class AuthorEarningsComponent implements OnInit {
   summary = signal<any>(null);
   projection = signal<any>(null);
   isLoading = signal(true);
+  isWithdrawing = signal(false);
 
   ngOnInit() {
+    this.fetchData();
+  }
+  
+  fetchData() {
     this.subscriptionService.getMyEarnings().subscribe({
       next: (res) => {
         this.earnings.set(res.earnings || []);
@@ -148,6 +176,28 @@ export class AuthorEarningsComponent implements OnInit {
     this.subscriptionService.getEarningsProjection().subscribe({
       next: (p) => this.projection.set(p),
       error: () => {}
+    });
+  }
+  
+  canWithdraw(): boolean {
+    const sum = this.summary();
+    if (!sum) return false;
+    return sum.totalPendingInPaise >= sum.minPayoutInPaise;
+  }
+  
+  requestWithdrawal() {
+    if (!this.canWithdraw()) return;
+    this.isWithdrawing.set(true);
+    this.subscriptionService.requestWithdrawal().subscribe({
+      next: (res) => {
+        alert('Withdrawal requested successfully!');
+        this.fetchData();
+        this.isWithdrawing.set(false);
+      },
+      error: (err) => {
+        alert(err.error?.msg || 'Failed to request withdrawal');
+        this.isWithdrawing.set(false);
+      }
     });
   }
 

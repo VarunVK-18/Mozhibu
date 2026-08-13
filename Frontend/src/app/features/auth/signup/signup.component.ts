@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -127,7 +127,7 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
         </form>
         
         <div class="login-link">
-          Already have an account? <a routerLink="/login">Sign in</a>
+          Already have an account? <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }">Log in</a>
         </div>
       </div>
     </div>
@@ -328,10 +328,17 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     }
   `]
 })
-export class SignupComponent {
+export class SignupComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
   fb = inject(FormBuilder);
+  
+  returnUrl = '/';
+
+  ngOnInit() {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+  }
 
   // Regex: At least 8 chars, 1 uppercase, 1 number
   passwordRegex = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
@@ -379,7 +386,7 @@ export class SignupComponent {
     this.auth.register(formData).subscribe({
       next: () => {
         this.isLoading = false;
-        this.router.navigate(['/']);
+        this.router.navigateByUrl(this.returnUrl);
       },
       error: (err) => {
         this.isLoading = false;

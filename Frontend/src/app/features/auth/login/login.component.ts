@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 
@@ -47,7 +47,7 @@ import { AuthService } from '../../../core/services/auth.service';
         </form>
         
         <div class="signup-link">
-          Don't have an account? <a routerLink="/signup">Sign up</a>
+          Don't have an account? <a [routerLink]="['/signup']" [queryParams]="{ returnUrl: returnUrl }">Sign up</a>
         </div>
       </div>
     </div>
@@ -173,10 +173,17 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
   fb = inject(FormBuilder);
+
+  returnUrl = '/';
+
+  ngOnInit() {
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+  }
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -206,7 +213,7 @@ export class LoginComponent {
         if (res.user && res.user.role === 'superadmin') {
           this.router.navigate(['/admin']);
         } else {
-          this.router.navigate(['/']);
+          this.router.navigateByUrl(this.returnUrl);
         }
       },
       error: (err) => {

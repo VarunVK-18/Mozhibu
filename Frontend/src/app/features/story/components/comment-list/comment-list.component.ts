@@ -15,6 +15,24 @@ import { StoryComment } from '../../../../core/services/story.service';
       <div class="comment-input-area">
         <img [src]="currentUserAvatar" alt="You" class="avatar">
         <div class="input-wrapper">
+          @if (isFocused || newCommentText.trim().length > 0) {
+            <div class="rating-selector">
+              <span class="rating-label">Rating:</span>
+              <div class="stars">
+                @for (star of [1,2,3,4,5]; track star) {
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    [attr.fill]="star <= newRating ? 'currentColor' : 'none'" 
+                    [attr.stroke]="star <= newRating ? 'none' : 'currentColor'" 
+                    stroke-width="2"
+                    (click)="newRating = star"
+                    class="star-icon">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                }
+              </div>
+            </div>
+          }
           <textarea 
             [(ngModel)]="newCommentText" 
             placeholder="Add a public comment..."
@@ -286,9 +304,10 @@ import { StoryComment } from '../../../../core/services/story.service';
 export class CommentListComponent {
   @Input() comments: StoryComment[] = [];
   @Input() currentUserAvatar = 'https://placehold.co/100x100/333333/999999?text=You';
-  @Output() postComment = new EventEmitter<string>();
+  @Output() postComment = new EventEmitter<{text: string, rating: number}>();
 
   newCommentText = '';
+  newRating = 5;
   isFocused = false;
   activeReplyId: string | null = null;
   replyText = '';
@@ -303,13 +322,15 @@ export class CommentListComponent {
 
   cancelComment() {
     this.newCommentText = '';
+    this.newRating = 5;
     this.isFocused = false;
   }
 
   submitComment() {
     if (this.newCommentText.trim()) {
-      this.postComment.emit(this.newCommentText.trim());
+      this.postComment.emit({text: this.newCommentText.trim(), rating: this.newRating});
       this.newCommentText = '';
+      this.newRating = 5;
       this.isFocused = false;
     }
   }

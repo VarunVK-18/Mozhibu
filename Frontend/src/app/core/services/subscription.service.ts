@@ -8,8 +8,10 @@ export interface SubscriptionPlan {
   description: string;
   priceInPaise: number;
   priceDisplay: string;
+  currency: string;
   durationDays: number;
-  benefits: string[];
+  marketingBenefits: string[];
+  structuredBenefits: any;
   isActive: boolean;
 }
 
@@ -80,6 +82,10 @@ export class SubscriptionService {
 
   getEarningsProjection(): Observable<any> {
     return this.api.get('/earnings/me/projection');
+  }
+
+  requestWithdrawal(): Observable<any> {
+    return this.api.post('/earnings/withdraw', {});
   }
 
   getMyRewards(): Observable<any> {

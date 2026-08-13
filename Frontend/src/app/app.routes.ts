@@ -65,7 +65,17 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'write/book/:id/settings',
+    loadComponent: () => import('./features/write/story-settings.component').then(m => m.StorySettingsComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'write/book/:id/chapter/new',
+    loadComponent: () => import('./features/write/chapter-editor.component').then(m => m.ChapterEditorComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'write/book/:id/chapter/:chapterId',
     loadComponent: () => import('./features/write/chapter-editor.component').then(m => m.ChapterEditorComponent),
     canActivate: [authGuard]
   },
@@ -123,3 +133,4 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' },
 ];
+// force angular recompile

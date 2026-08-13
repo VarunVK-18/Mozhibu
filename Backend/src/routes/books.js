@@ -1,13 +1,46 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const Book = require('../models/Book');
 const Chapter = require('../models/Chapter');
 const Review = require('../models/Review');
 const Report = require('../models/Report');
-const { protect, author } = require('../middleware/auth');
+const UserSubscription = require('../models/UserSubscription');
+const { protect, protectOptional, author } = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { translateBooks, translateChapters } = require('../services/translationService');
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../../uploads/covers'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images are allowed'));
+    }
+  }
+});
+
+// @route POST /api/books/cover
+// @desc Upload a cover image and get its URL
+router.post('/cover', protect, author, upload.single('cover'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ msg: 'No file uploaded' });
+  }
+  res.json({ coverUrl: `/uploads/covers/${req.file.filename}` });
+});
 const getGenAI = () => {
   const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
@@ -15,10 +48,15 @@ const getGenAI = () => {
 };
 
 // @route GET /api/books/categories
-// @desc Get all unique book genres
+// @desc Get all unique book genres with counts
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await Book.distinct('genre', { status: 'published' });
+    const categories = await Book.aggregate([
+      { $match: { status: 'published' } },
+      { $group: { _id: '$genre', count: { $sum: 1 } } },
+      { $project: { _id: 0, name: '$_id', count: 1 } },
+      { $sort: { count: -1 } }
+    ]);
     res.json(categories);
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
@@ -115,12 +153,17 @@ router.get('/', async (req, res) => {
 });
 
 // @route GET /api/books/:id
-// @desc Get a single published book
-router.get('/:id', async (req, res) => {
+// @desc Get a single published book (or unpublished if requested by author)
+router.get('/:id', protectOptional, async (req, res) => {
   try {
-    const book = await Book.findOne({ _id: req.params.id, status: 'published' })
-      .populate('author', 'username avatar');
-    if (!book) return res.status(404).json({ msg: 'Book not found or not published' });
+    const book = await Book.findById(req.params.id).populate('author', 'username avatar');
+    
+    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    
+    const isAuthor = req.user && book.author && book.author._id.toString() === req.user.id;
+    if (book.status !== 'published' && !isAuthor) {
+      return res.status(404).json({ msg: 'Book not found or not published' });
+    }
 
     const targetLang = req.headers['x-app-language'] || 'en';
     const translatedBooks = await translateBooks([book], targetLang);
@@ -132,15 +175,92 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// @route PUT /api/books/:id
+// @desc Update an existing book
+router.put('/:id', protect, author, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    
+    // Check if user is author or superadmin
+    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
+      return res.status(403).json({ msg: 'Not authorized to update this book' });
+    }
+    
+    // Only allow updating certain fields to prevent abuse
+    const updatableFields = ['title', 'genre', 'description', 'tags', 'series', 'cover', 'status', 'accessType'];
+    const updateData = {};
+    for (const field of updatableFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+    
+    const updatedBook = await Book.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true }
+    );
+    
+    res.json(updatedBook);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // @route GET /api/books/:id/chapters
 // @desc Get all chapters for a book
-router.get('/:id/chapters', async (req, res) => {
+router.get('/:id/chapters', protectOptional, async (req, res) => {
   try {
-    const chapters = await Chapter.find({ book: req.params.id, status: 'published' })
-      .sort({ order: 1 });
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ msg: 'Book not found' });
+    }
+
+    let isSubscriber = false;
+    if (req.user) {
+      const activeSub = await UserSubscription.findOne({
+        user: req.user.id,
+        status: 'active',
+        endDate: { $gt: new Date() }
+      });
+      if (activeSub) {
+        isSubscriber = true;
+      }
+    }
+
+    const isAuthor = req.user && book.author && book.author.toString() === req.user.id;
+    const query = { book: req.params.id };
+    if (!isAuthor) {
+      query.status = 'published';
+    }
+
+    const chapters = await Chapter.find(query).sort({ order: 1 });
+      
+    // Apply access control before returning
+    const chaptersWithAccess = chapters.map(chapter => {
+      const isPremium = chapter.accessType === 'premium' || (chapter.accessType === 'inherit' && book.accessType === 'premium');
+      
+      const chapObj = chapter.toObject();
+      
+      // Authors can always read their own chapters
+      if (isAuthor) {
+        chapObj.isLocked = false;
+        return chapObj;
+      }
+      
+      if (isPremium && !isSubscriber) {
+        chapObj.content = null;
+        chapObj.isLocked = true;
+      } else {
+        chapObj.isLocked = false;
+      }
+      return chapObj;
+    });
       
     const targetLang = req.headers['x-app-language'] || 'en';
-    const translatedChapters = await translateChapters(chapters, targetLang);
+    const translatedChapters = await translateChapters(chaptersWithAccess, targetLang);
 
     res.json(translatedChapters);
   } catch (err) {
@@ -365,6 +485,65 @@ router.post('/:id/chapters', protect, author, async (req, res) => {
       book: req.params.id
     });
     const chapter = await newChapter.save();
+    res.json(chapter);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route GET /api/books/:id/chapters/:chapterId
+// @desc Get a single chapter
+router.get('/:id/chapters/:chapterId', protectOptional, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    
+    const chapter = await Chapter.findOne({ _id: req.params.chapterId, book: req.params.id });
+    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
+    
+    const isAuthor = req.user && book.author.toString() === req.user.id;
+    
+    // Determine if premium
+    const isPremium = chapter.accessType === 'premium' || (chapter.accessType === 'inherit' && book.accessType === 'premium');
+    
+    if (isPremium && !isAuthor) {
+      let isSubscriber = false;
+      if (req.user) {
+        const activeSub = await UserSubscription.findOne({
+          user: req.user.id,
+          status: 'active',
+          endDate: { $gt: new Date() }
+        });
+        if (activeSub) isSubscriber = true;
+      }
+      if (!isSubscriber) {
+        return res.status(403).json({ msg: 'Premium chapter. Subscription required.' });
+      }
+    }
+
+    res.json(chapter);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route PUT /api/books/:id/chapters/:chapterId
+// @desc Update a chapter
+router.put('/:id/chapters/:chapterId', protect, author, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+    
+    const chapter = await Chapter.findOneAndUpdate(
+      { _id: req.params.chapterId, book: req.params.id },
+      { $set: req.body },
+      { new: true }
+    );
+    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
+    
     res.json(chapter);
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });

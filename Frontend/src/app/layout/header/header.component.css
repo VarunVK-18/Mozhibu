@@ -624,5 +624,16 @@
 .modal-actions {
   display: flex;
   gap: 12px;
+}
+.avatar-ring {
+  padding: 2.5px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.premium-ring {
+  background: linear-gradient(135deg, #4285F4, #a855f7, #ec4899, #EA4335);
 }

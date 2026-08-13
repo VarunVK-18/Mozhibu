@@ -18,10 +18,10 @@ const { getActiveSubscription } = require('../middleware/premiumContent');
 // ─── GET /api/subscriptions/plans ────────────────────────────
 router.get('/plans', async (req, res) => {
   try {
-    const plans = await SubscriptionPlan.find({ isActive: true }).sort({ priceInPaise: 1 });
+    const plans = await SubscriptionPlan.find({ isActive: true }).sort({ displayOrder: 1, priceInPaise: 1 });
     res.json(plans.map(p => ({
       ...p.toObject(),
-      priceDisplay: `₹${(p.priceInPaise / 100).toFixed(2)}`
+      priceDisplay: `${p.currency === 'INR' ? '₹' : p.currency} ${(p.priceInPaise / 100).toFixed(2)}`
     })));
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
@@ -159,7 +159,13 @@ router.post('/verify', protect, async (req, res) => {
       razorpayPaymentId,
       razorpaySignature,
       amountPaidInPaise: finalAmount,
-      couponApplied: appliedCoupon
+      couponApplied: appliedCoupon,
+      planSnapshot: {
+        name: plan.name,
+        priceInPaise: plan.priceInPaise,
+        currency: plan.currency,
+        structuredBenefits: plan.structuredBenefits
+      }
     });
     await subscription.save();
 

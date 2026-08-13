@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { Observable, of, delay } from 'rxjs';
 import { BookService } from './book.service';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface StoryEpisode {
   id: string;
@@ -13,6 +14,7 @@ export interface StoryEpisode {
   synopsis: string;
   isRead: boolean;
   isUnlocked: boolean;
+  content?: string;
 }
 
 export interface StoryComment {
@@ -60,6 +62,7 @@ export interface StoryDetail {
     lastChapterNumber?: number;
     percentComplete?: number;
   };
+  accessType?: 'free' | 'premium';
 }
 
 @Injectable({
@@ -87,6 +90,7 @@ export class StoryService {
   private authService = inject(AuthService);
 
   loadStory(id: string, resume: boolean = false) {
+    const baseUrl = environment.apiUrl.replace('/api', '');
     this.bookService.getBookById(id).subscribe({
       next: (book: any) => {
         const currentUser = this.authService.user();
@@ -97,11 +101,11 @@ export class StoryService {
           id: book._id,
           title: book.title,
           subtitle: book.subtitle || '',
-          coverImage: book.cover || 'assets/placeholder.jpg',
+          coverImage: book.cover ? (book.cover.startsWith('http') ? book.cover : `${baseUrl}${book.cover}`) : 'assets/default-cover.png',
           author: {
             id: book.author._id,
             name: book.author.username,
-            avatar: book.author.avatar || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100',
+            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') ? book.author.avatar : `${baseUrl}${book.author.avatar}`) : 'assets/default-avatar.png',
             isFollowed: false
           },
           genres: [book.genre],
@@ -116,26 +120,33 @@ export class StoryService {
           language: 'English',
           publishedDate: book.createdAt,
           updatedDate: book.updatedAt,
-          synopsis: book.synopsis || 'No synopsis available.',
-          isLiked: isLiked,
+          synopsis: book.description || 'No synopsis available.',
+          isLiked,
           isBookmarked: false,
-          userProgress: { hasStarted: resume }
+          userProgress: {
+            hasStarted: resume
+          },
+          accessType: book.accessType || 'free'
         };
+
         this.activeStory.set(detail);
       }
     });
 
     this.bookService.getChapters(id).subscribe(chapters => {
+      const story = this.activeStory();
+      const coverImage = story?.coverImage || 'assets/default-cover.png';
       this.storyEpisodes.set(chapters.map((c: any) => ({
         id: c._id,
         season: 1,
         episode: c.order,
         title: c.title,
-        thumbnail: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&q=80',
+        thumbnail: coverImage,
         readingTime: '15 min',
-        synopsis: c.content.substring(0, 100) + '...',
+        synopsis: (c.content || '').substring(0, 100) + '...',
         isRead: false,
-        isUnlocked: true
+        isUnlocked: !c.isLocked,
+        content: c.content
       })));
     });
 
@@ -145,7 +156,7 @@ export class StoryService {
       const mapReview = (r: any): StoryComment => ({
         id: r._id,
         authorName: r.user?.username || 'Unknown',
-        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `http://localhost:5000${r.user.avatar}`) : 'https://placehold.co/100x100/333333/999999?text=U',
+        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : 'assets/default-avatar.png',
         timestamp: new Date(r.createdAt).toLocaleDateString(),
         text: r.comment,
         likes: r.likes?.length || 0,
@@ -226,14 +237,14 @@ export class StoryService {
     });
   }
 
-  addComment(text: string, user: any) {
+  addComment(text: string, user: any, rating: number = 5) {
     const story = this.activeStory();
     if (!story) return;
 
     const newComment: StoryComment = {
       id: Date.now().toString(),
       authorName: user?.username || 'You',
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`) : 'https://placehold.co/100x100/333333/999999?text=You',
+      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar}`) : 'assets/default-avatar.png',
       timestamp: 'Just now',
       text,
       likes: 0,
@@ -247,7 +258,7 @@ export class StoryService {
     this.storyComments.update(comments => [newComment, ...comments]);
 
     // Persist to backend
-    this.bookService.addReview(story.id, text, 5).subscribe({
+    this.bookService.addReview(story.id, text, rating).subscribe({
       next: (res) => {},
       error: (err) => {
         console.error('Failed to add comment', err);

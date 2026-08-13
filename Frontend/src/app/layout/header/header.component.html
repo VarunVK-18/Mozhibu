@@ -133,8 +133,10 @@
             <div class="user-info">
               <span class="user-name">{{ camelCaseName }}</span>
             </div>
-            <div *ngIf="user.avatar" class="avatar logged-in" [style.backgroundImage]="'url(' + getAvatarUrl(user.avatar) + ')'" style="background-size: cover; background-position: center;"></div>
-            <div *ngIf="!user.avatar" class="avatar logged-in">{{ firstInitial }}</div>
+            <div class="avatar-ring" [class.premium-ring]="isPremium()">
+              <div *ngIf="user.avatar" class="avatar logged-in" [style.backgroundImage]="'url(' + getAvatarUrl(user.avatar) + ')'" style="background-size: cover; background-position: center;"></div>
+              <div *ngIf="!user.avatar" class="avatar logged-in">{{ firstInitial }}</div>
+            </div>
           </div>
           
           <div class="profile-dropdown" [class.open]="profileMenuOpen()">
@@ -145,6 +147,7 @@
             </div>
             <hr class="dropdown-divider">
             <a *ngIf="user?.role === 'superadmin'" routerLink="/admin" class="profile-option" style="text-decoration: none; display: block;">Admin Dashboard</a>
+            <a routerLink="/subscription/me" class="profile-option" style="text-decoration: none; display: block;" (click)="profileMenuOpen.set(false)">My Subscription</a>
             <a routerLink="/settings" class="profile-option" style="text-decoration: none; display: block;" (click)="profileMenuOpen.set(false)">Settings</a>
             <button class="profile-option" (click)="onLogout()">Logout</button>
           </div>

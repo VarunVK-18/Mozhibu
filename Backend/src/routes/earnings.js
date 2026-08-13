@@ -30,6 +30,13 @@ router.get('/earnings/me', protect, async (req, res) => {
     const totalPending = earnings
       .filter(e => e.status === 'pending')
       .reduce((s, e) => s + e.earningsInPaise, 0);
+      
+    const totalRequested = earnings
+      .filter(e => e.status === 'requested')
+      .reduce((s, e) => s + e.earningsInPaise, 0);
+      
+    let config = await RevenueSplitConfig.findOne().sort({ createdAt: -1 });
+    const minPayoutInPaise = config ? config.minAuthorPayoutInPaise : 10000;
 
     res.json({
       earnings: earnings.map(e => ({
@@ -39,10 +46,43 @@ router.get('/earnings/me', protect, async (req, res) => {
       summary: {
         totalPaidInPaise: totalPaid,
         totalPendingInPaise: totalPending,
+        totalRequestedInPaise: totalRequested,
         totalPaidDisplay: `₹${(totalPaid / 100).toFixed(2)}`,
-        totalPendingDisplay: `₹${(totalPending / 100).toFixed(2)}`
+        totalPendingDisplay: `₹${(totalPending / 100).toFixed(2)}`,
+        totalRequestedDisplay: `₹${(totalRequested / 100).toFixed(2)}`,
+        minPayoutInPaise: minPayoutInPaise
       }
     });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// POST /api/earnings/withdraw — Request payout for pending earnings
+router.post('/earnings/withdraw', protect, async (req, res) => {
+  try {
+    const earnings = await AuthorEarnings.find({ author: req.user.id, status: 'pending' });
+    
+    if (earnings.length === 0) {
+      return res.status(400).json({ msg: 'No pending earnings to withdraw' });
+    }
+    
+    const totalPending = earnings.reduce((s, e) => s + e.earningsInPaise, 0);
+    
+    let config = await RevenueSplitConfig.findOne().sort({ createdAt: -1 });
+    const minPayoutInPaise = config ? config.minAuthorPayoutInPaise : 10000;
+    
+    if (totalPending < minPayoutInPaise) {
+      return res.status(400).json({ msg: `Minimum withdrawal amount is ₹${(minPayoutInPaise / 100).toFixed(2)}` });
+    }
+    
+    // Update all pending to requested
+    await AuthorEarnings.updateMany(
+      { author: req.user.id, status: 'pending' },
+      { $set: { status: 'requested' } }
+    );
+    
+    res.json({ msg: 'Withdrawal requested successfully' });
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
   }

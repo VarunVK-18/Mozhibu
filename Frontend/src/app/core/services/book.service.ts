@@ -68,8 +68,26 @@ export class BookService {
     return this.api.post('/books', data);
   }
 
+  uploadCover(file: File): Observable<{coverUrl: string}> {
+    const formData = new FormData();
+    formData.append('cover', file);
+    return this.api.post('/books/cover', formData);
+  }
+
+  updateBook(id: string, data: any): Observable<any> {
+    return this.api.put(`/books/${id}`, data);
+  }
+
   createChapter(bookId: string, data: any): Observable<any> {
     return this.api.post(`/books/${bookId}/chapters`, data);
+  }
+
+  getChapter(bookId: string, chapterId: string): Observable<any> {
+    return this.api.get(`/books/${bookId}/chapters/${chapterId}`);
+  }
+
+  updateChapter(bookId: string, chapterId: string, data: any): Observable<any> {
+    return this.api.put(`/books/${bookId}/chapters/${chapterId}`, data);
   }
 
   getMyBooks(): Observable<any[]> {

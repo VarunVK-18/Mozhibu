@@ -56,7 +56,7 @@ import { AuthService } from '../../core/services/auth.service';
                   <path d="M7 9l11 0" />
                 </svg>
               </span>
-              <span class="label">Revenue & Plans</span>
+              <span class="label">Revenue</span>
             </a>
           </div>
 

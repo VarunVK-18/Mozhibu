@@ -19,6 +19,7 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
   days = 0;
   hours = 0;
   mins = 0;
+  isExpired = false;
 
   private interval: any;
 
@@ -52,11 +53,7 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
         this.hours = 0;
         this.mins = 0;
         clearInterval(this.interval);
-        
-        // Hide the banner immediately if time runs out
-        if (this.config) {
-          this.config.isActive = false;
-        }
+        this.isExpired = true;
         return;
       }
 

@@ -235,14 +235,24 @@ export class CategoriesComponent implements OnInit {
   ];
 
   ngOnInit() {
-    // Show the full robust list directly to match the user's requirements exactly.
-    // In a real app, you would fetch counts from the backend or let the backend dictate this list.
+    // First build the list with default count 0
     this.categories = this.allGenres.map(genre => ({
       id: genre.name.toLowerCase().replace(/\s+/g, '-'),
       name: genre.name,
       description: genre.desc,
       image: genre.img,
-      count: Math.floor(Math.random() * 500) + 100 // Mock count for UI
+      count: 0
     }));
+
+    // Then fetch real counts from backend and merge
+    this.bookService.getCategories().subscribe({
+      next: (dbCategories: any[]) => {
+        this.categories = this.categories.map(cat => {
+          const found = dbCategories.find(d => d.name?.toLowerCase() === cat.name.toLowerCase());
+          return { ...cat, count: found ? found.count : 0 };
+        });
+      },
+      error: () => {}
+    });
   }
 }

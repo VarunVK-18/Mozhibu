@@ -78,4 +78,20 @@ router.post('/test', protect, async (req, res) => {
   }
 });
 
+// @route GET /api/notifications/broadcasts
+// @desc Get recent broadcast announcements (public, latest 10)
+const Broadcast = require('../models/Broadcast');
+router.get('/broadcasts', async (req, res) => {
+  try {
+    const broadcasts = await Broadcast.find()
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+    res.json(broadcasts);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

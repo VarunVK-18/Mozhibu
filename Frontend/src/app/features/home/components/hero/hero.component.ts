@@ -18,6 +18,8 @@ import { forkJoin } from 'rxjs';
         
         <ng-container *ngIf="featuredBooks.length > 0; else defaultHero">
           <div class="carousel-slide" *ngFor="let book of featuredBooks; let i = index" [class.active]="i === activeIndex">
+            <!-- Mobile full-bleed background image -->
+            <div class="mobile-hero-bg" [style.background-image]="'url(' + book.coverImage + ')'"></div>
             <div class="featured-content">
               <div class="featured-eyebrow">
                 <span class="live-dot"></span>
@@ -100,6 +102,11 @@ import { forkJoin } from 'rxjs';
       grid-template-columns: 1fr 320px;
       gap: 24px;
       align-items: stretch;
+    }
+
+    /* Hidden on desktop, shown on mobile */
+    .mobile-hero-bg {
+      display: none;
     }
 
     .featured-card {
@@ -381,32 +388,130 @@ import { forkJoin } from 'rxjs';
       }
     }
     @media (max-width: 640px) {
+      .hero-grid { gap: 32px; }
+
+      .featured-card {
+        padding: 0;
+        min-height: auto;
+        background: transparent;
+        border-radius: 0;
+        overflow: visible;
+      }
+      .featured-bg-glow { display: none; }
+
+      /* Completely reset slides for standard mobile flow */
       .carousel-slide {
+        display: flex;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: auto;
         flex-direction: column;
-        padding: 32px 24px;
-        text-align: center;
-        position: relative;
-        top: 0; left: 0; right: 0; bottom: 0;
+        padding: 0;
+        transform: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.5s ease-in-out;
+        pointer-events: none;
       }
       .carousel-slide.active {
         position: relative;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
       }
-      .featured-card {
+
+      /* Clean landscape banner */
+      .mobile-hero-bg {
+        display: block;
+        width: 100%;
+        height: 220px;
+        background-size: cover;
+        background-position: center;
+        border-radius: var(--radius-l);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+      }
+      .mobile-hero-bg::after {
+        display: none; /* Remove any gradient overlays */
+      }
+
+      /* Desktop cover hidden */
+      .featured-cover {
+        display: none;
+      }
+
+      /* Text content below the banner */
+      .featured-content {
+        padding: 0;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+
+      .featured-eyebrow {
+        color: var(--ink-soft);
+        margin-bottom: 8px;
+      }
+
+      .featured-title {
+        color: var(--ink);
+        font-size: 20px;
+        margin-bottom: 10px;
+        text-shadow: none;
+        line-height: 1.3;
+      }
+
+      .featured-desc {
+        display: -webkit-box;
+        color: var(--ink-soft);
+        font-size: 14px;
+        margin-bottom: 20px;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .featured-meta {
+        color: var(--ink-soft);
+        justify-content: flex-start;
+        margin-bottom: 24px;
+        text-shadow: none;
+      }
+
+      .author-text {
+        color: var(--ink-soft);
+      }
+
+      .genre-pill {
+        background: var(--paper-soft);
+        color: var(--ink);
+        border: 1px solid var(--border-soft);
+      }
+      
+      .read-btn {
+        width: 100%;
+        justify-content: center;
+        background: var(--ink);
+        color: var(--paper);
+        border: 1px solid var(--border);
+      }
+
+      /* Dots placed right below the banner image */
+      .carousel-indicators {
+        position: absolute;
+        top: 232px; /* 220px height + 12px gap */
+        left: 0;
+        right: 0;
+        bottom: auto;
+        justify-content: center;
         padding: 0;
       }
-      .featured-title {
-        font-size: 28px;
+      .indicator {
+        background: var(--border-strong);
       }
-      .featured-desc {
-        margin: 0 auto 20px auto;
-      }
-      .featured-meta {
-        justify-content: center;
-      }
-      .featured-cover {
-        width: 140px;
-        height: 210px;
-        margin-top: 20px;
+      .indicator.active {
+        background: var(--forest);
       }
     }
     .section-loader-container {
