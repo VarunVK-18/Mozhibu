@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface AdminStats {
   totalPublishedBooks: number;
@@ -104,25 +106,40 @@ export interface AdminBroadcast {
 export class AdminService {
   private api = inject(ApiService);
 
+  private fixCoverUrl(book: any): any {
+    if (!book || !book.cover) return book;
+    if (book.cover.startsWith('http')) return book;
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return { ...book, cover: `${baseUrl}${book.cover}` };
+  }
+
   getStats(): Observable<AdminStats> {
     return this.api.get('/admin/stats');
   }
 
   getBooks(status?: string): Observable<AdminBook[]> {
     const params = status && status !== 'reported' ? `?status=${status}` : '';
-    return this.api.get(`/admin/books${params}`);
+    return this.api.get<AdminBook[]>(`/admin/books${params}`).pipe(
+      map(books => books.map(b => this.fixCoverUrl(b)))
+    );
   }
 
   getReportedBooks(): Observable<AdminBook[]> {
-    return this.api.get('/admin/reported-books');
+    return this.api.get<AdminBook[]>('/admin/reported-books').pipe(
+      map(books => books.map(b => this.fixCoverUrl(b)))
+    );
   }
 
   getBookDetails(id: string): Observable<AdminBook> {
-    return this.api.get(`/admin/books/${id}`);
+    return this.api.get<AdminBook>(`/admin/books/${id}`).pipe(
+      map(book => this.fixCoverUrl(book))
+    );
   }
 
   updateBookStatus(id: string, status: string, rejectionReason?: string): Observable<any> {
-    return this.api.put(`/admin/books/${id}/status`, { status, rejectionReason });
+    return this.api.put(`/admin/books/${id}/status`, { status, rejectionReason }).pipe(
+      map(book => this.fixCoverUrl(book))
+    );
   }
 
   getUsers(): Observable<AdminUser[]> {
@@ -138,7 +155,14 @@ export class AdminService {
   }
 
   getAuthorDetails(id: string): Observable<AdminAuthorDetail> {
-    return this.api.get(`/admin/authors/${id}`);
+    return this.api.get<AdminAuthorDetail>(`/admin/authors/${id}`).pipe(
+      map(detail => {
+        if (detail.books) {
+          detail.books = detail.books.map((b: any) => this.fixCoverUrl(b));
+        }
+        return detail;
+      })
+    );
   }
 
   getPendingAuthors(): Observable<PendingAuthor[]> {

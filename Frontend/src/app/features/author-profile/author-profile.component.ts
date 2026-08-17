@@ -368,7 +368,8 @@ export class AuthorProfileComponent implements OnInit {
       if (author.avatar.startsWith('http')) return author.avatar;
       return `${baseUrl}${author.avatar}`;
     }
-    return 'assets/default-avatar.png';
+    const initial = author.username ? author.username.charAt(0).toUpperCase() : 'U';
+    return `https://placehold.co/100x100/333333/999999?text=${initial}`;
   }
 
   isCurrentUser(): boolean {

@@ -71,7 +71,7 @@ import { StoryService } from '../../core/services/story.service';
       <!-- Bottom Toolbar -->
       <footer class="reader-footer" [class.hidden]="!showControls() || requiresSubscription()">
         <div class="toolbar-content">
-          <button class="nav-btn" (click)="prevChapter()" [disabled]="currentChapterNum === 1" [style.opacity]="currentChapterNum === 1 ? '0.3' : '1'">
+          <button class="nav-btn" (click)="prevChapter()" [disabled]="currentChapterNum() === 1" [style.opacity]="currentChapterNum() === 1 ? '0.3' : '1'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -245,6 +245,7 @@ import { StoryService } from '../../core/services/story.service';
       max-width: 680px;
       margin: 0 auto;
       line-height: 1.8;
+      white-space: pre-wrap;
     }
 
     .content-wrapper p {
@@ -389,7 +390,7 @@ import { StoryService } from '../../core/services/story.service';
 export class ReaderComponent implements OnInit, OnDestroy {
   storyTitle = 'Reading...';
   chapterTitle = '';
-  currentChapterNum = 1;
+  currentChapterNum = signal(1);
   
   showControls = signal(true);
   isDarkMode = signal(false);
@@ -424,7 +425,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
       }
 
       if (episodes && episodes.length > 0) {
-        const currentEp = episodes.find(e => e.episode === this.currentChapterNum) || episodes[0];
+        const currentEp = episodes.find(e => e.episode === this.currentChapterNum()) || episodes[0];
         if (currentEp) {
           this.chapterTitle = currentEp.title || `Chapter ${currentEp.episode}`;
           this.requiresSubscription.set(!currentEp.isUnlocked);
@@ -471,6 +472,16 @@ export class ReaderComponent implements OnInit, OnDestroy {
       if (this.storyId) {
         // This will fetch chapters and update the storyEpisodes signal
         this.storyService.loadStory(this.storyId, false);
+      }
+    });
+
+    this.route.queryParamMap.subscribe(params => {
+      const chapterStr = params.get('chapter');
+      if (chapterStr) {
+        const parsed = parseInt(chapterStr, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          this.currentChapterNum.set(parsed);
+        }
       }
     });
 
@@ -539,14 +550,24 @@ export class ReaderComponent implements OnInit, OnDestroy {
   }
 
   nextChapter() {
-    this.currentChapterNum++;
+    this.currentChapterNum.update(n => n + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { chapter: this.currentChapterNum() },
+      queryParamsHandling: 'merge',
+    });
   }
 
   prevChapter() {
-    if (this.currentChapterNum > 1) {
-      this.currentChapterNum--;
+    if (this.currentChapterNum() > 1) {
+      this.currentChapterNum.update(n => n - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { chapter: this.currentChapterNum() },
+        queryParamsHandling: 'merge',
+      });
     }
   }
 

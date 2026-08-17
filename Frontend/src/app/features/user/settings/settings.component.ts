@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="settings-page">
       <div class="settings-container">
@@ -52,6 +53,24 @@ import { AuthService } from '../../../core/services/auth.service';
               <div class="value role-badge" [ngClass]="auth.user()?.role">
                 {{ auth.user()?.role }}
               </div>
+            </div>
+            
+            <div class="info-group">
+              <label>Bio</label>
+              <textarea 
+                [(ngModel)]="bioText" 
+                class="form-control" 
+                rows="4" 
+                placeholder="Tell us about yourself..."></textarea>
+            </div>
+            
+            <div *ngIf="profileUpdateError()" class="error-text">{{ profileUpdateError() }}</div>
+            <div *ngIf="profileUpdateSuccess()" class="success-text">Profile updated successfully!</div>
+            
+            <div class="settings-actions">
+              <button class="btn btn-primary" (click)="saveProfile()" [disabled]="savingProfile()">
+                {{ savingProfile() ? 'Saving...' : 'Save Profile' }}
+              </button>
             </div>
           </div>
 
@@ -233,6 +252,31 @@ import { AuthService } from '../../../core/services/auth.service';
     .role-badge.writer { background: var(--forest-tint); color: var(--forest-deep); }
     .role-badge.superadmin { background: var(--gold-tint); color: var(--ink); }
     
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      background: var(--paper);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+    
+    .settings-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    
+    .success-text { color: var(--forest); font-size: 13px; margin-top: 8px; }
+
     .author-upgrade {
       background: var(--forest-tint);
       border-color: var(--forest);
@@ -322,11 +366,18 @@ export class SettingsComponent implements OnInit {
   errorMsg = signal<string | null>(null);
   uploading = signal(false);
   uploadError = signal<string | null>(null);
+  
+  bioText = signal<string>('');
+  savingProfile = signal(false);
+  profileUpdateError = signal<string | null>(null);
+  profileUpdateSuccess = signal(false);
 
   ngOnInit() {
     // If not logged in, redirect to login
     if (!this.auth.user()) {
       this.router.navigate(['/login']);
+    } else {
+      this.bioText.set(this.auth.user()?.bio || '');
     }
   }
 
@@ -341,6 +392,24 @@ export class SettingsComponent implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.errorMsg.set(err.error?.msg || 'Failed to upgrade account. Please try again.');
+      }
+    });
+  }
+  
+  saveProfile() {
+    this.savingProfile.set(true);
+    this.profileUpdateError.set(null);
+    this.profileUpdateSuccess.set(false);
+    
+    this.auth.updateProfile({ bio: this.bioText() }).subscribe({
+      next: () => {
+        this.savingProfile.set(false);
+        this.profileUpdateSuccess.set(true);
+        setTimeout(() => this.profileUpdateSuccess.set(false), 3000);
+      },
+      error: (err) => {
+        this.savingProfile.set(false);
+        this.profileUpdateError.set(err.error?.msg || 'Failed to update profile.');
       }
     });
   }

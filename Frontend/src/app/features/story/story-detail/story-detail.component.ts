@@ -75,7 +75,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             </button>
           </div>
           
-          <app-chapter-list [episodes]="episodes()"></app-chapter-list>
+          <app-chapter-list [episodes]="episodes()" [storyId]="story()?.id || ''"></app-chapter-list>
           
           <app-comment-list 
             [comments]="comments()"
@@ -283,7 +283,7 @@ export class StoryDetailComponent implements OnInit {
 
   getAvatarUrl(path: string | undefined): string {
     const baseUrl = environment.apiUrl.replace('/api', '');
-    if (!path) return 'assets/default-avatar.png';
+    if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser()?.username || 'You')}&background=random&color=fff&size=100&length=1`;
     if (path.startsWith('http')) return path;
     return `${baseUrl}${path}`;
   }

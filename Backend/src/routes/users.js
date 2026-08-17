@@ -349,4 +349,38 @@ router.post('/me/avatar', protect, upload.single('avatar'), async (req, res) => 
   }
 });
 
+// @route PUT /api/users/me/profile
+// @desc Update user profile (bio)
+router.put('/me/profile', protect, async (req, res) => {
+  try {
+    const { bio } = req.body;
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    if (bio !== undefined) {
+      user.bio = bio;
+    }
+
+    await user.save();
+
+    res.json({
+      msg: 'Profile updated successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        bio: user.bio
+      }
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 module.exports = router;

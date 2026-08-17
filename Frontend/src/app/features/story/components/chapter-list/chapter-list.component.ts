@@ -16,7 +16,7 @@ import { StoryEpisode } from '../../../../core/services/story.service';
 
       <div class="episodes-list">
         @for (ep of episodes; track ep.id) {
-          <a [routerLink]="['/read', ep.id]" class="episode-card" [class.locked]="!ep.isUnlocked">
+          <a [routerLink]="['/read', storyId]" [queryParams]="{chapter: ep.episode}" class="episode-card" [class.locked]="!ep.isUnlocked">
             <div class="ep-number">{{ ep.episode }}</div>
             
             <div class="ep-thumbnail-wrapper">
@@ -181,4 +181,5 @@ import { StoryEpisode } from '../../../../core/services/story.service';
 })
 export class ChapterListComponent {
   @Input() episodes: StoryEpisode[] = [];
+  @Input() storyId: string = '';
 }

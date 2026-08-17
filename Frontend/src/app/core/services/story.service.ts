@@ -105,7 +105,7 @@ export class StoryService {
           author: {
             id: book.author._id,
             name: book.author.username,
-            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') ? book.author.avatar : `${baseUrl}${book.author.avatar}`) : 'assets/default-avatar.png',
+            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') ? book.author.avatar : `${baseUrl}${book.author.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
             isFollowed: false
           },
           genres: [book.genre],
@@ -141,7 +141,7 @@ export class StoryService {
         season: 1,
         episode: c.order,
         title: c.title,
-        thumbnail: coverImage,
+        thumbnail: c.cover ? (c.cover.startsWith('http') ? c.cover : `${baseUrl}${c.cover}`) : coverImage,
         readingTime: '15 min',
         synopsis: (c.content || '').substring(0, 100) + '...',
         isRead: false,
@@ -153,18 +153,21 @@ export class StoryService {
     this.bookService.getReviews(id).subscribe(reviews => {
       const currentUser = this.authService.user();
       
-      const mapReview = (r: any): StoryComment => ({
-        id: r._id,
-        authorName: r.user?.username || 'Unknown',
-        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : 'assets/default-avatar.png',
-        timestamp: new Date(r.createdAt).toLocaleDateString(),
+      const mapReview = (r: any): StoryComment => {
+        const authorName = r.user?.username || 'Unknown';
+        return {
+          id: r._id,
+          authorName,
+          authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
+          timestamp: new Date(r.createdAt).toLocaleDateString(),
         text: r.comment,
         likes: r.likes?.length || 0,
         dislikes: r.dislikes?.length || 0,
         isLiked: currentUser ? (r.likes || []).includes(currentUser.id) : false,
-        isDisliked: currentUser ? (r.dislikes || []).includes(currentUser.id) : false,
-        replies: r.replies ? r.replies.map((reply: any) => mapReview(reply)) : []
-      });
+          isDisliked: currentUser ? (r.dislikes || []).includes(currentUser.id) : false,
+          replies: r.replies ? r.replies.map((reply: any) => mapReview(reply)) : []
+        };
+      };
 
       this.storyComments.set(reviews.map(mapReview));
     });
@@ -241,10 +244,11 @@ export class StoryService {
     const story = this.activeStory();
     if (!story) return;
 
+    const authorName = user?.username || 'You';
     const newComment: StoryComment = {
       id: Date.now().toString(),
-      authorName: user?.username || 'You',
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar}`) : 'assets/default-avatar.png',
+      authorName,
+      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,
@@ -321,10 +325,11 @@ export class StoryService {
     const story = this.activeStory();
     if (!story) return;
 
+    const authorName = user?.username || 'You';
     const newReply: StoryComment = {
       id: Date.now().toString(),
-      authorName: user?.username || 'You',
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`) : 'https://placehold.co/100x100/333333/999999?text=You',
+      authorName,
+      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,

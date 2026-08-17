@@ -480,8 +480,13 @@ router.post('/:id/chapters', protect, author, async (req, res) => {
       return res.status(403).json({ msg: 'Not authorized' });
     }
     
+    // Automatically calculate order
+    const lastChapter = await Chapter.findOne({ book: req.params.id }).sort('-order');
+    const nextOrder = lastChapter ? lastChapter.order + 1 : 1;
+    
     const newChapter = new Chapter({
       ...req.body,
+      order: nextOrder,
       book: req.params.id
     });
     const chapter = await newChapter.save();
@@ -545,6 +550,25 @@ router.put('/:id/chapters/:chapterId', protect, author, async (req, res) => {
     if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
     
     res.json(chapter);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route DELETE /api/books/:id/chapters/:chapterId
+// @desc Delete a chapter
+router.delete('/:id/chapters/:chapterId', protect, author, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+    
+    const chapter = await Chapter.findOneAndDelete({ _id: req.params.chapterId, book: req.params.id });
+    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
+    
+    res.json({ msg: 'Chapter deleted' });
   } catch (err) {
     res.status(500).json({ msg: 'Server Error' });
   }

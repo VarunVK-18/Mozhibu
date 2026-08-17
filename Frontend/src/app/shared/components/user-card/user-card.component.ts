@@ -1,5 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 export interface UserProfile {
@@ -14,15 +15,15 @@ export interface UserProfile {
 @Component({
   selector: 'app-user-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
-    <div class="user-card">
+    <div class="user-card" [routerLink]="['/author', user.id]">
       <div class="user-avatar" [ngStyle]="{'background-image': 'url(' + user.avatar + ')'}">
         <span *ngIf="!user.avatar">{{ user.name.charAt(0) }}</span>
       </div>
       <h4 class="user-name">{{ user.name }}</h4>
       <div class="user-followers">{{ formatFollowers(user.followers) }} followers</div>
-      <button class="follow-btn" [class.following]="user.isFollowing" (click)="toggleFollow()">
+      <button class="follow-btn" [class.following]="user.isFollowing" (click)="toggleFollow($event)">
         {{ user.isFollowing ? 'Unfollow' : 'Follow' }}
       </button>
     </div>
@@ -40,6 +41,7 @@ export interface UserProfile {
       width: 150px;
       flex-shrink: 0;
       box-sizing: border-box;
+      cursor: pointer;
       transition: box-shadow .15s ease, transform .15s ease;
     }
     .user-card:hover {
@@ -141,7 +143,8 @@ export class UserCardComponent {
     return num.toString();
   }
 
-  toggleFollow() {
+  toggleFollow(event: Event) {
+    event.stopPropagation();
     if (!this.authService.user()) {
       alert('Please log in to follow authors.');
       return;

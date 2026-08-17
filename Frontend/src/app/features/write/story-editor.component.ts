@@ -4,13 +4,14 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookService } from '../../core/services/book.service';
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-story-editor',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, ImageCropperComponent],
   template: `
-    <div class="editor-layout">
+    <div class="editor-layout" [class.dark-mode]="isDarkMode">
       <!-- Left Sidebar: Story Meta -->
       <aside class="meta-sidebar">
         <div class="sidebar-header">
@@ -68,12 +69,12 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
           
           <div class="form-group">
             <label>Story Title</label>
-            <input type="text" class="input-field" placeholder="e.g. The Neon Shadows" [(ngModel)]="story.title">
+            <input type="text" class="input-field" placeholder="e.g. The Neon Shadows" [(ngModel)]="story.title" (ngModelChange)="onContentChange()">
           </div>
           
           <div class="form-group">
             <label>Primary Genre</label>
-            <select class="input-field select-field" [(ngModel)]="story.genre">
+            <select class="input-field select-field" [(ngModel)]="story.genre" (ngModelChange)="onContentChange()">
               <option value="" disabled selected>Select a genre...</option>
               <option value="Romance">Romance</option>
               <option value="Fantasy">Fantasy</option>
@@ -95,17 +96,17 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
           
           <div class="form-group">
             <label>Tags (Comma separated)</label>
-            <input type="text" class="input-field" placeholder="e.g. magic, dragons, war" [(ngModel)]="story.tags">
+            <input type="text" class="input-field" placeholder="e.g. magic, dragons, war" [(ngModel)]="story.tags" (ngModelChange)="onContentChange()">
           </div>
           
           <div class="form-group">
             <label>Series Name (Optional)</label>
-            <input type="text" class="input-field" placeholder="e.g. The Lord of the Rings" [(ngModel)]="story.series">
+            <input type="text" class="input-field" placeholder="e.g. The Lord of the Rings" [(ngModel)]="story.series" (ngModelChange)="onContentChange()">
           </div>
           
           <div class="form-group">
             <label>Synopsis</label>
-            <textarea class="input-field textarea-field" placeholder="Write a compelling summary to hook your readers..." rows="6" [(ngModel)]="story.description"></textarea>
+            <textarea class="input-field textarea-field" placeholder="Write a compelling summary to hook your readers..." rows="6" [(ngModel)]="story.description" (ngModelChange)="onContentChange()"></textarea>
           </div>
         </div>
       </aside>
@@ -114,10 +115,18 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
       <main class="chapter-editor">
         <header class="editor-header">
           <div class="save-status">
-            <span class="dot"></span>
-            {{ isSaving ? 'Saving...' : 'Saved just now' }}
+            <span class="dot" [style.background]="isSaving ? '#f59e0b' : '#10B981'"></span>
+            {{ isSaving ? 'Saving...' : (lastSaved ? 'Saved at ' + (lastSaved | date:'shortTime') : 'Not saved yet') }}
           </div>
-          <div class="actions">
+          <div class="actions" style="display: flex; gap: 12px; align-items: center;">
+            <button class="theme-toggle" (click)="toggleTheme()">
+              <svg *ngIf="!isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+              </svg>
+              <svg *ngIf="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+              </svg>
+            </button>
             <button class="btn-secondary" [disabled]="isSaving" (click)="publishChapter(true)">Save Draft</button>
             <button class="btn-primary" [disabled]="isSaving" (click)="publishChapter(false)">Publish Chapter</button>
           </div>
@@ -129,18 +138,29 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
               {{ errorMessage }}
             </div>
           }
-          <input type="text" class="chapter-title-input" placeholder="Chapter 1: Title..." [(ngModel)]="chapter.title">
+          <input type="text" class="chapter-title-input" placeholder="Chapter 1: Title..." [(ngModel)]="chapter.title" (ngModelChange)="onContentChange()">
           
-          <textarea class="content-textarea" placeholder="Start writing your story here..." [(ngModel)]="chapter.content"></textarea>
+          <textarea class="content-textarea" placeholder="Start writing your story here..." [(ngModel)]="chapter.content" (ngModelChange)="onContentChange()"></textarea>
         </div>
       </main>
     </div>
   `,
   styles: [`
+    .dark-mode {
+      --paper: #121212;
+      --paper-warm: #181818;
+      --surface: #1e1e1e;
+      --card: #242424;
+      --ink: #e0e0e0;
+      --ink-soft: #a0a0a0;
+      --border: #333333;
+      --border-soft: #2a2a2a;
+    }
     .editor-layout {
       display: flex;
       height: calc(100vh - 73px);
       background: var(--paper);
+      color: var(--ink);
     }
     .meta-sidebar {
       width: 280px;
@@ -189,16 +209,23 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
     .cover-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--ink-soft); font-size: 14px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
     .form-group label { font-size: 12px; font-weight: 700; color: var(--ink); text-transform: uppercase; }
-    .input-field { width: 100%; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; }
+    .input-field { width: 100%; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--ink); }
     .chapter-editor { flex: 1; display: flex; flex-direction: column; background: var(--paper-warm); }
     .editor-header { height: 60px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-soft); background: var(--card); }
     .save-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-faint); }
     .dot { width: 5px; height: 5px; border-radius: 50%; background: #10B981; }
-    .btn-secondary { background: transparent; border: 1px solid var(--border); padding: 8px 16px; border-radius: 100px; font-size: 13px; cursor: pointer; }
+    .theme-toggle { background: transparent; border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink-soft); transition: 0.2s; }
+    .theme-toggle:hover { background: var(--paper-soft); color: var(--ink); }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); padding: 8px 16px; border-radius: 100px; font-size: 13px; cursor: pointer; color: var(--ink); }
     .btn-primary { background: var(--forest); color: white; border: none; padding: 8px 16px; border-radius: 100px; font-size: 13px; cursor: pointer; }
     .writing-workspace { flex: 1; padding: 32px 48px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; max-width: 800px; margin: 0 auto; width: 100%; }
-    .chapter-title-input { width: 100%; background: transparent; border: none; font-size: 32px; font-weight: 700; color: var(--ink); }
-    .content-textarea { flex: 1; width: 100%; background: transparent; border: none; resize: none; font-size: 16px; line-height: 1.6; }
+    .chapter-title-input { font-family: var(--display); font-size: 32px; font-weight: 700; color: var(--ink); border: none; background: transparent; outline: none; text-transform: capitalize; }
+    .chapter-title-input::placeholder { color: var(--ink-faint); }
+    .content-textarea { flex: 1; border: none; background: transparent; outline: none; font-size: 16px; line-height: 1.8; color: var(--ink); resize: none; text-transform: capitalize; }
+    .content-textarea::placeholder { color: var(--ink-faint); }
+    .input-field { width: 100%; padding: 10px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 6px; color: var(--ink); text-transform: capitalize; }
+    .input-field::placeholder { color: var(--ink-soft); opacity: 0.7; }
+    .input-field:focus { outline: none; border-color: var(--forest); }
     .error-message { color: #c62828; padding: 10px; background: #ffebee; border-radius: 4px; }
     .cropper-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .cropper-modal { background: var(--card); padding: 24px; border-radius: 12px; width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 16px; }
@@ -212,11 +239,18 @@ export class StoryEditorComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  isDarkMode = localStorage.getItem('writerDarkMode') === 'true';
   coverPreviewUrl = signal<string | null>(null);
 
   isSaving = false;
+  lastSaved: Date | null = null;
   errorMessage = '';
   competitionTag: string | null = null;
+  
+  bookId: string | null = null;
+  chapterId: string | null = null;
+  isCoverUploaded = false;
+  saveTimeout: any;
 
   story = {
     title: '',
@@ -237,6 +271,38 @@ export class StoryEditorComponent implements OnInit {
         this.competitionTag = params['competition'];
       }
     });
+
+    const draft = localStorage.getItem('storyDraft');
+    if (draft) {
+      try {
+        const parsedDraft = JSON.parse(draft);
+        this.story = parsedDraft.story || this.story;
+        this.chapter = parsedDraft.chapter || this.chapter;
+        this.bookId = parsedDraft.bookId || null;
+        this.chapterId = parsedDraft.chapterId || null;
+        this.isCoverUploaded = parsedDraft.isCoverUploaded || false;
+        if (parsedDraft.coverPreviewUrl) {
+          this.coverPreviewUrl.set(parsedDraft.coverPreviewUrl);
+          if (!this.isCoverUploaded && parsedDraft.coverPreviewUrl.startsWith('data:image')) {
+            this.croppedBlob = this.base64ToBlob(parsedDraft.coverPreviewUrl);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse draft from local storage', err);
+      }
+    }
+  }
+
+  private base64ToBlob(base64: string): Blob {
+    const parts = base64.split(';base64,');
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
   }
 
   imageChangedEvent: any = '';
@@ -262,7 +328,6 @@ export class StoryEditorComponent implements OnInit {
       }
     } else if ((event as any).base64) {
       this.croppedImage = (event as any).base64;
-      // In case we only get base64 (older version of ngx-image-cropper), we'd need to convert it, but event.blob should be available.
       if (event.blob) {
          this.activeBlob = event.blob;
       }
@@ -273,6 +338,8 @@ export class StoryEditorComponent implements OnInit {
     if (this.croppedImage) {
       this.coverPreviewUrl.set(this.croppedImage);
       this.croppedBlob = this.activeBlob;
+      this.isCoverUploaded = false;
+      this.onContentChange();
     }
     this.imageChangedEvent = '';
   }
@@ -283,16 +350,22 @@ export class StoryEditorComponent implements OnInit {
     this.activeBlob = null;
   }
 
-  publishChapter(isDraft: boolean) {
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    localStorage.setItem('writerDarkMode', this.isDarkMode ? 'true' : 'false');
+  }
+
+  publishChapter(isDraft: boolean, isAutoSave = false) {
     if (!this.story.title || !this.story.genre || !this.chapter.title) {
-      this.errorMessage = 'Please fill out the story title, genre, and chapter title.';
+      if (!isAutoSave) {
+        this.errorMessage = 'Please fill out the story title, genre, and chapter title.';
+      }
       return;
     }
 
     this.isSaving = true;
     this.errorMessage = '';
     
-    // Parse tags string to array
     const tagsArray = this.story.tags
       ? this.story.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
       : [];
@@ -302,61 +375,140 @@ export class StoryEditorComponent implements OnInit {
       genre: this.story.genre,
       description: this.story.description,
       tags: tagsArray,
-      series: this.story.series || undefined,
       status: isDraft ? 'pending' : 'published'
     };
-
+    if (this.story.series) {
+      bookData.series = this.story.series;
+    }
     if (this.competitionTag) {
       bookData.competitionTag = this.competitionTag;
     }
 
-    if (this.croppedBlob) {
+    if (this.croppedBlob && !this.isCoverUploaded) {
       const file = new File([this.croppedBlob], 'cover.jpg', { type: 'image/jpeg' });
       this.bookService.uploadCover(file).subscribe({
         next: (res) => {
           bookData.cover = res.coverUrl;
-          this.submitBook(bookData, isDraft);
+          this.isCoverUploaded = true;
+          const baseUrl = environment.apiUrl.replace('/api', '');
+          this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+          this.saveToLocal();
+          this.submitBook(bookData, isDraft, isAutoSave);
         },
         error: (err) => {
           console.error('Failed to upload cover', err);
-          this.errorMessage = 'Failed to upload cover image. Please try again.';
+          if (!isAutoSave) this.errorMessage = 'Failed to upload cover image. Please try again.';
           this.isSaving = false;
         }
       });
     } else {
-      bookData.cover = '';
-      this.submitBook(bookData, isDraft);
+      this.submitBook(bookData, isDraft, isAutoSave);
     }
   }
 
-  private submitBook(bookData: any, isDraft: boolean) {
+  private submitBook(bookData: any, isDraft: boolean, isAutoSave: boolean) {
+    if (this.bookId) {
+      this.bookService.updateBook(this.bookId, bookData).subscribe({
+        next: () => {
+          this.submitChapter(isDraft, isAutoSave);
+        },
+        error: (err) => {
+          console.error('Failed to update book', err);
+          if (!isAutoSave) this.errorMessage = 'Failed to update story. Please try again.';
+          this.isSaving = false;
+        }
+      });
+    } else {
+      this.bookService.createBook(bookData).subscribe({
+        next: (book) => {
+          this.bookId = book._id;
+          this.submitChapter(isDraft, isAutoSave);
+        },
+        error: (err) => {
+          console.error('Failed to create book', err);
+          if (!isAutoSave) this.errorMessage = 'Failed to create story. Please try again.';
+          this.isSaving = false;
+        }
+      });
+    }
+  }
 
-    this.bookService.createBook(bookData).subscribe({
-      next: (book) => {
-        const chapterData = {
-          title: this.chapter.title,
-          content: this.chapter.content,
-          status: isDraft ? 'draft' : 'published',
-          order: 1
-        };
+  private submitChapter(isDraft: boolean, isAutoSave: boolean) {
+    const chapterData = {
+      title: this.chapter.title,
+      content: this.chapter.content,
+      status: isDraft ? 'draft' : 'published'
+    };
 
-        this.bookService.createChapter(book._id, chapterData).subscribe({
-          next: () => {
-            this.isSaving = false;
+    if (this.chapterId) {
+      this.bookService.updateChapter(this.bookId!, this.chapterId, chapterData).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.lastSaved = new Date();
+          if (!isAutoSave) {
+            localStorage.removeItem('storyDraft');
             this.router.navigate(['/write']);
-          },
-          error: (err) => {
-            console.error('Failed to save chapter', err);
-            this.errorMessage = 'Failed to save chapter. Please try again.';
-            this.isSaving = false;
           }
-        });
-      },
-      error: (err) => {
-        console.error('Failed to create book', err);
-        this.errorMessage = 'Failed to create story. Please try again.';
-        this.isSaving = false;
-      }
-    });
+        },
+        error: (err) => {
+          console.error('Failed to update chapter', err);
+          if (!isAutoSave) this.errorMessage = 'Failed to update chapter. Please try again.';
+          this.isSaving = false;
+        }
+      });
+    } else {
+      this.bookService.createChapter(this.bookId!, chapterData).subscribe({
+        next: (chapter) => {
+          this.chapterId = chapter._id;
+          this.isSaving = false;
+          this.lastSaved = new Date();
+          if (!isAutoSave) {
+            localStorage.removeItem('storyDraft');
+            this.router.navigate(['/write']);
+          }
+        },
+        error: (err) => {
+          console.error('Failed to save chapter', err);
+          if (!isAutoSave) this.errorMessage = 'Failed to save chapter. Please try again.';
+          this.isSaving = false;
+        }
+      });
+    }
+  }
+  
+  onContentChange() {
+    // Save to local storage on every keystroke
+    this.saveToLocal();
+
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+    this.saveTimeout = setTimeout(() => {
+      this.autoSave();
+    }, 2000); // Trigger auto-save 2 seconds after typing stops
+  }
+
+  saveToLocal() {
+    const draft = {
+      story: this.story,
+      chapter: this.chapter,
+      bookId: this.bookId,
+      chapterId: this.chapterId,
+      isCoverUploaded: this.isCoverUploaded,
+      coverPreviewUrl: this.coverPreviewUrl()
+    };
+    try {
+      localStorage.setItem('storyDraft', JSON.stringify(draft));
+    } catch (err) {
+      console.warn('Failed to save story draft. Might be out of quota.', err);
+    }
+  }
+
+  autoSave() {
+    if (this.isSaving) return;
+    // Only auto-save if required fields are present
+    if (this.story.title && this.story.genre && this.chapter.title) {
+      this.publishChapter(true, true);
+    }
   }
 }

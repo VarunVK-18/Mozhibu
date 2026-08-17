@@ -62,6 +62,7 @@ import { BookService } from '../../core/services/book.service';
                     <div class="chapter-status">
                       <span class="status-indicator" [ngClass]="chapter.status">{{ chapter.status === 'published' ? 'Published' : 'Draft' }}</span>
                       <button class="btn-outline btn-sm" [routerLink]="['/write/book', book._id, 'chapter', chapter._id]">Edit</button>
+                      <button class="btn-outline btn-sm" style="color: #c62828; border-color: #ef9a9a;" (click)="deleteChapter(chapter._id)">Delete</button>
                     </div>
                   </div>
                 }
@@ -321,6 +322,22 @@ export class StoryDashboardComponent implements OnInit {
       error: (err) => {
         console.error('Failed to update status', err);
         alert('Failed to update book status');
+      }
+    });
+  }
+
+  deleteChapter(chapterId: string) {
+    if (!confirm('Are you sure you want to delete this chapter? This cannot be undone.')) {
+      return;
+    }
+    
+    this.bookService.deleteChapter(this.book._id, chapterId).subscribe({
+      next: () => {
+        this.chapters = this.chapters.filter(c => c._id !== chapterId);
+      },
+      error: (err) => {
+        console.error('Failed to delete chapter', err);
+        alert('Failed to delete chapter. Please try again.');
       }
     });
   }

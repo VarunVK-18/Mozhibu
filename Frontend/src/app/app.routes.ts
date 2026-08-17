@@ -40,14 +40,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reader/reader.component').then(m => m.ReaderComponent),
   },
   {
-    path: 'library',
-    loadComponent: () => import('./features/library/library.component').then(m => m.LibraryComponent),
+    path: 'profile',
+    loadComponent: () => import('./features/user-profile/user-profile.component').then(m => m.UserProfileComponent),
     canActivate: [authGuard]
   },
   {
+    path: 'library',
+    redirectTo: 'profile'
+  },
+  {
     path: 'my-reading',
-    loadComponent: () => import('./features/my-reading/my-reading.component').then(m => m.MyReadingComponent),
-    canActivate: [authGuard]
+    redirectTo: 'profile'
   },
   {
     path: 'write',

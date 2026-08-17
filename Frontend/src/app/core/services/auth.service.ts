@@ -12,6 +12,7 @@ export interface User {
   authorStatus?: string;
   avatar?: string;
   followersCount?: number;
+  bio?: string;
 }
 
 @Injectable({
@@ -87,6 +88,21 @@ export class AuthService {
           const currentUser = this.user();
           if (currentUser) {
             const updatedUser = { ...currentUser, avatar: res.avatar };
+            this.user.set(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+      })
+    );
+  }
+
+  updateProfile(data: { bio: string }): Observable<any> {
+    return this.api.put('/users/me/profile', data).pipe(
+      tap((res: any) => {
+        if (res && res.user) {
+          const currentUser = this.user();
+          if (currentUser) {
+            const updatedUser = { ...currentUser, bio: res.user.bio };
             this.user.set(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
           }

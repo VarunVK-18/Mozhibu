@@ -12,6 +12,8 @@ const UserSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'suspended'], default: 'active' },
   authorStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
   followersCount: { type: Number, default: 0 },
+  avatar: { type: String },
+  bio: { type: String, default: '' },
   savedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, {

@@ -76,9 +76,24 @@
     "write": "Write",
     "company": "Company",
     "readIn": "Read in",
-    "exploreLinks": ["Discover", "Trending", "New releases", "Competitions"],
-    "writeLinks": ["Start a story", "Writer dashboard", "Editor guide", "Analytics"],
-    "companyLinks": ["About Mozhibu", "Community guidelines", "Support", "Careers"],
+    "exploreLinks": [
+      "Discover",
+      "Trending",
+      "New releases",
+      "Competitions"
+    ],
+    "writeLinks": [
+      "Start a story",
+      "Writer dashboard",
+      "Editor guide",
+      "Analytics"
+    ],
+    "companyLinks": [
+      "About Mozhibu",
+      "Community guidelines",
+      "Support",
+      "Careers"
+    ],
     "copyright": "© 2026 Mozhibu. All rights reserved.",
     "instagram": "Instagram",
     "x": "X",
@@ -89,5 +104,9 @@
     "subtitle": "Your personal collection of saved stories and favorite authors.",
     "savedStories": "Saved Stories",
     "followedAuthors": "Followed Authors"
+  },
+  "brand": {
+    "name": "Mozhibu",
+    "tagline": "It's a novel idea"
   }
 }

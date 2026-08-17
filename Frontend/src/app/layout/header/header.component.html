@@ -15,28 +15,26 @@
       <!-- Logo -->
       <a href="#" class="logo">
         <img src="assets/logo.png" alt="Mozhibu logo" class="logo-img">
-        Mozhibu
+        <div class="logo-text-wrapper">
+          <span class="brand-name">{{ 'brand.name' | translate }}</span>
+          <span class="brand-tagline">
+            <span class="tag-line"></span>
+            {{ 'brand.tagline' | translate }}
+            <span class="tag-line"></span>
+          </span>
+        </div>
       </a>
 
       <!-- Nav -->
       <nav class="main-nav">
-        @if (authService.user()) {
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">{{ 'nav.home' | translate }}</a>
-        } @else {
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">{{ 'nav.discover' | translate }}</a>
-        }
-        
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">{{ authService.user() ? ('nav.home' | translate) : ('nav.discover' | translate) }}</a>
         <a routerLink="/categories" routerLinkActive="active">{{ 'nav.categories' | translate }}</a>
-
+        
         @if (authService.user()) {
-          <a routerLink="/library" routerLinkActive="active">{{ 'nav.library' | translate }}</a>
-          <a routerLink="/my-reading" routerLinkActive="active">{{ 'nav.myReading' | translate }}</a>
+          <a routerLink="/profile" routerLinkActive="active">Profile</a>
           <a href="#" (click)="onWriteClick($event)" [class.active]="router.url.startsWith('/write')">{{ 'nav.write' | translate }}</a>
         } @else {
-          <a routerLink="/library" routerLinkActive="active">{{ 'nav.library' | translate }}</a>
           <a routerLink="/write" routerLinkActive="active">{{ 'nav.write' | translate }}</a>
-          <a routerLink="/community" routerLinkActive="active">{{ 'nav.community' | translate }}</a>
-          <a routerLink="/competitions" routerLinkActive="active">{{ 'nav.competitions' | translate }}</a>
         }
       </nav>
     </div>
@@ -166,29 +164,24 @@
 
   <!-- Mobile Menu Overlay -->
   <div class="mobile-menu-container" [class.open]="mobileMenuOpen()">
-    <nav class="mobile-nav">
-      @if (authService.user()) {
-        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="mobileMenuOpen.set(false)">{{ 'nav.home' | translate }}</a>
-      } @else {
-        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="mobileMenuOpen.set(false)">{{ 'nav.discover' | translate }}</a>
-      }
-      
-      <a routerLink="/categories" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.categories' | translate }}</a>
+      <nav class="mobile-nav">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="mobileMenuOpen.set(false)">{{ authService.user() ? ('nav.home' | translate) : ('nav.discover' | translate) }}</a>
+        <a routerLink="/categories" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.categories' | translate }}</a>
 
-      @if (authService.user()) {
-        <a routerLink="/library" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.library' | translate }}</a>
-        <a routerLink="/my-reading" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.myReading' | translate }}</a>
-        <a href="#" (click)="onWriteClick($event); mobileMenuOpen.set(false)" [class.active]="router.url.startsWith('/write')">{{ 'nav.write' | translate }}</a>
-      } @else {
-        <a routerLink="/library" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.library' | translate }}</a>
-        <a href="#" (click)="onWriteClick($event); mobileMenuOpen.set(false)">{{ 'nav.write' | translate }}</a>
-        <a routerLink="/community" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.community' | translate }}</a>
-        <a routerLink="/competitions" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.competitions' | translate }}</a>
-        
-        <div class="mobile-divider"></div>
-        <a routerLink="/login" (click)="mobileMenuOpen.set(false)">Log In</a>
-        <a routerLink="/signup" (click)="mobileMenuOpen.set(false)">Sign Up</a>
-      }
+        @if (authService.user()) {
+          <a routerLink="/profile" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">Profile</a>
+          <a href="#" (click)="onWriteClick($event); mobileMenuOpen.set(false)" [class.active]="router.url.startsWith('/write')">{{ 'nav.write' | translate }}</a>
+          
+          <div class="mobile-divider"></div>
+          <a routerLink="/community" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.community' | translate }}</a>
+          <a routerLink="/competitions" routerLinkActive="active" (click)="mobileMenuOpen.set(false)">{{ 'nav.competitions' | translate }}</a>
+        } @else {
+          <a href="#" (click)="onWriteClick($event); mobileMenuOpen.set(false)">{{ 'nav.write' | translate }}</a>
+          
+          <div class="mobile-divider"></div>
+          <a routerLink="/login" (click)="mobileMenuOpen.set(false)">Log In</a>
+          <a routerLink="/signup" (click)="mobileMenuOpen.set(false)">Sign Up</a>
+        }
       
       @if (authService.user()) {
         <div class="mobile-divider"></div>
