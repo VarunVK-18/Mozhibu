@@ -1,17 +1,21 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AdminService, AdminUser } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="admin-page">
       <header class="page-header">
         <div class="header-left">
           <h1>User Management</h1>
           <p>View and manage all registered platform users.</p>
+        </div>
+        <div class="header-right">
+          <input type="text" [(ngModel)]="searchQuery" placeholder="Search users by name or email..." class="search-input">
         </div>
       </header>
 
@@ -30,7 +34,7 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
               </tr>
             </thead>
             <tbody>
-              @for (user of users(); track user._id) {
+              @for (user of filteredUsers(); track user._id) {
                 <tr>
                   <td>
                     <div class="title-cell">
@@ -50,6 +54,9 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
                       } @else if (user.status === 'suspended') {
                         <button class="btn-approve" (click)="toggleStatus(user, 'active')">Reactivate</button>
                       }
+                      @if (user.role !== 'superadmin') {
+                        <button class="btn-delete" (click)="deleteUser(user)">Delete</button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -65,6 +72,10 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
     .page-header { margin-bottom: 32px; }
     .page-header h1 { font-family: var(--display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
     .page-header p { color: var(--ink-soft); font-size: 15px; }
+    
+    .page-header { display: flex; justify-content: space-between; align-items: center; }
+    .search-input { padding: 10px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius-m); width: 300px; font-size: 14px; outline: none; }
+    .search-input:focus { border-color: var(--forest); }
     
     .loading-state { padding: 48px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
     
@@ -92,12 +103,21 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
     .btn-approve:hover { background: var(--forest-deep); }
     .btn-reject { background: #fff; border-color: var(--border-soft); color: var(--rose); }
     .btn-reject:hover { border-color: var(--rose); background: var(--rose-tint); }
+    .btn-delete { background: #dc2626; color: #fff; }
+    .btn-delete:hover { background: #b91c1c; }
   `]
 })
 export class UsersComponent implements OnInit {
   adminService = inject(AdminService);
   users = signal<AdminUser[]>([]);
+  searchQuery = signal('');
   loading = signal(true);
+  
+  filteredUsers = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q) return this.users();
+    return this.users().filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  });
 
   ngOnInit() {
     this.loadUsers();
@@ -119,6 +139,16 @@ export class UsersComponent implements OnInit {
       this.adminService.updateUserStatus(user._id, status).subscribe(() => {
         this.loadUsers();
       });
+    }
+  }
+
+  deleteUser(user: AdminUser) {
+    if (confirm(`Are you absolutely sure you want to permanently delete user "${user.username}"? All their books, chapters, and records will be deleted forever.`)) {
+      if (confirm(`FINAL CONFIRMATION: Permanently delete "${user.username}"?`)) {
+        this.adminService.deleteUser(user._id).subscribe(() => {
+          this.loadUsers();
+        });
+      }
     }
   }
 }

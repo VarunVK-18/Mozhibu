@@ -76,6 +76,11 @@ import * as Sanscript from '@indic-transliteration/sanscript';
               <option value="premium">Premium (Subscribers Only)</option>
             </select>
           </div>
+          
+          <div class="form-group">
+            <label>Season</label>
+            <input type="number" min="1" [(ngModel)]="season" class="input-field" (ngModelChange)="onContentChange()">
+          </div>
         </div>
       </aside>
 
@@ -235,6 +240,7 @@ export class ChapterEditorComponent implements OnInit {
   chapterTitle = '';
   editorContent = '';
   accessType = 'inherit';
+  season = 1;
   
   isSaving = false;
   lastSaved: Date | null = null;
@@ -279,6 +285,7 @@ export class ChapterEditorComponent implements OnInit {
         this.chapterTitle = parsedDraft.title || this.chapterTitle;
         this.editorContent = parsedDraft.content || this.editorContent;
         this.accessType = parsedDraft.accessType || this.accessType;
+        this.season = parsedDraft.season || this.season;
         this.chapterId = parsedDraft.chapterId || this.chapterId;
         this.isCoverUploaded = parsedDraft.isCoverUploaded || false;
         
@@ -321,6 +328,7 @@ export class ChapterEditorComponent implements OnInit {
         this.chapterTitle = chapter.title;
         this.editorContent = chapter.content;
         this.accessType = chapter.accessType || 'inherit';
+        this.season = chapter.season || 1;
         if (chapter.cover) {
           this.coverPreviewUrl.set(chapter.cover);
           this.isCoverUploaded = true;
@@ -400,7 +408,24 @@ export class ChapterEditorComponent implements OnInit {
       this.coverPreviewUrl.set(this.croppedImage);
       this.croppedBlob = this.activeBlob;
       this.isCoverUploaded = false;
-      this.onContentChange();
+      
+      if (this.croppedBlob) {
+        const file = new File([this.croppedBlob], 'chapter-cover.jpg', { type: 'image/jpeg' });
+        this.bookService.uploadCover(file).subscribe({
+          next: (res) => {
+            this.isCoverUploaded = true;
+            const baseUrl = environment.apiUrl.replace('/api', '');
+            this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+            this.onContentChange();
+          },
+          error: (err) => {
+            console.error('Failed to upload chapter cover', err);
+            this.onContentChange();
+          }
+        });
+      } else {
+        this.onContentChange();
+      }
     }
     this.imageChangedEvent = '';
   }
@@ -428,6 +453,7 @@ export class ChapterEditorComponent implements OnInit {
       title: this.chapterTitle,
       content: this.editorContent,
       accessType: this.accessType,
+      season: this.season,
       chapterId: this.chapterId,
       isCoverUploaded: this.isCoverUploaded,
       coverPreviewUrl: this.coverPreviewUrl()
@@ -477,6 +503,11 @@ export class ChapterEditorComponent implements OnInit {
       let currentCover = this.coverPreviewUrl();
       if (currentCover && currentCover.startsWith('data:image')) {
          currentCover = null; // Don't send base64 string to backend as cover URL
+      } else if (currentCover) {
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        if (currentCover.startsWith(baseUrl)) {
+          currentCover = currentCover.substring(baseUrl.length);
+        }
       }
       this.submitChapterData(currentCover, isDraft, isAutoSave);
     }
@@ -487,6 +518,7 @@ export class ChapterEditorComponent implements OnInit {
       title: this.chapterTitle,
       content: this.editorContent,
       accessType: this.accessType,
+      season: this.season,
       status: isDraft ? 'draft' : 'published'
     };
 
@@ -517,6 +549,7 @@ export class ChapterEditorComponent implements OnInit {
           this.isSaving = false;
           this.lastSaved = new Date();
           
+          localStorage.removeItem(`chapterDraft_${this.bookId}_new`); // Clear the 'new' draft
           // Re-save local immediately with new chapterId so further autosaves update instead of create
           this.saveToLocal(); 
           

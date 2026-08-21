@@ -61,9 +61,9 @@ import { environment } from '../../../environments/environment';
           } @else {
             <div class="results-grid">
               @for (item of profile.books; track item._id) {
-                <div class="book-card" [routerLink]="['/book', item._id]">
+                <div class="book-card" [routerLink]="['/story', item._id]">
                   <div class="cover-wrapper">
-                    <img [src]="item.cover || 'assets/default-cover.png'" alt="Book cover" class="book-cover" onerror="this.src='https://placehold.co/400x600/3F6259/FFFFFF?text='+item.title">
+                    <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.onerror=null; this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';">
                     @if (item.completionStatus === 'completed') {
                       <span class="status-badge completed">Completed</span>
                     } @else {
@@ -370,6 +370,13 @@ export class AuthorProfileComponent implements OnInit {
     }
     const initial = author.username ? author.username.charAt(0).toUpperCase() : 'U';
     return `https://placehold.co/100x100/333333/999999?text=${initial}`;
+  }
+
+  getCoverUrl(cover: string | undefined): string {
+    if (!cover) return 'https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    if (cover.startsWith('http')) return cover;
+    return `${baseUrl}${cover}`;
   }
 
   isCurrentUser(): boolean {

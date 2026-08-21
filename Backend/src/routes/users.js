@@ -129,11 +129,24 @@ router.get('/me/following', protect, async (req, res) => {
   }
 });
 
+// @route GET /api/users/me/followers
+// @desc Get current user's followers
+router.get('/me/followers', protect, async (req, res) => {
+  try {
+    const followers = await User.find({ following: req.user.id })
+      .select('username avatar followersCount');
+    res.json(followers);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // @route GET /api/users/authors
 // @desc Get all platform authors
 router.get('/authors', async (req, res) => {
   try {
-    const authors = await User.find({ role: { $in: ['writer', 'superadmin'] } })
+    const authors = await User.find({ role: { $in: ['writer', 'superadmin'] }, status: 'active' })
       .select('username avatar followersCount bio role')
       .sort({ followersCount: -1 });
     res.json(authors);
@@ -149,7 +162,8 @@ router.get('/author/:id', async (req, res) => {
   try {
     const author = await User.findOne({ 
       _id: req.params.id, 
-      role: { $in: ['writer', 'superadmin'] } 
+      role: { $in: ['writer', 'superadmin'] },
+      status: 'active'
     }).select('username avatar followersCount bio role createdAt');
 
     if (!author) {
@@ -377,6 +391,63 @@ router.put('/me/profile', protect, async (req, res) => {
         bio: user.bio
       }
     });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route PUT /api/users/me/deactivate
+// @desc Deactivate user's own account
+router.put('/me/deactivate', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    user.status = 'deactivated';
+    await user.save();
+
+    res.json({ msg: 'Account deactivated successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route DELETE /api/users/me
+// @desc Delete user's own account permanently
+router.delete('/me', protect, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    // Find and delete all books of the user
+    const books = await Book.find({ author: userId });
+    const bookIds = books.map(b => b._id);
+    
+    // Delete chapters
+    const Chapter = require('../models/Chapter');
+    await Chapter.deleteMany({ book: { $in: bookIds } });
+    
+    // Delete reviews on author's books or written by user
+    const Review = require('../models/Review');
+    await Review.deleteMany({ book: { $in: bookIds } });
+    await Review.deleteMany({ user: userId });
+    
+    // Delete reading progress
+    await ReadingProgress.deleteMany({ $or: [{ user: userId }, { book: { $in: bookIds } }] });
+
+    // Delete books
+    await Book.deleteMany({ author: userId });
+
+    // Remove user from other users' following arrays
+    await User.updateMany({}, { $pull: { following: userId } });
+
+    // Delete the user itself
+    await User.findByIdAndDelete(userId);
+
+    res.json({ msg: 'Account deleted successfully' });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server Error' });

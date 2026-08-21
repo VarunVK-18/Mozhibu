@@ -6,6 +6,7 @@ const Chapter = require('../models/Chapter');
 const Review = require('../models/Review');
 const Report = require('../models/Report');
 const UserSubscription = require('../models/UserSubscription');
+const User = require('../models/User');
 const { protect, protectOptional, author } = require('../middleware/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { translateBooks, translateChapters } = require('../services/translationService');
@@ -110,7 +111,11 @@ router.put('/:id/status', protect, author, async (req, res) => {
 // @desc Get all published books
 router.get('/', async (req, res) => {
   try {
-    let query = { status: 'published' };
+    // Get all active users
+    const activeUsers = await User.find({ status: 'active' }).select('_id');
+    const activeUserIds = activeUsers.map(u => u._id);
+
+    let query = { status: 'published', author: { $in: activeUserIds } };
     
     // Search query
     if (req.query.q) {
@@ -156,12 +161,12 @@ router.get('/', async (req, res) => {
 // @desc Get a single published book (or unpublished if requested by author)
 router.get('/:id', protectOptional, async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id).populate('author', 'username avatar');
+    const book = await Book.findById(req.params.id).populate('author', 'username avatar status');
     
     if (!book) return res.status(404).json({ msg: 'Book not found' });
     
     const isAuthor = req.user && book.author && book.author._id.toString() === req.user.id;
-    if (book.status !== 'published' && !isAuthor) {
+    if (!isAuthor && (book.status !== 'published' || !book.author || book.author.status !== 'active')) {
       return res.status(404).json({ msg: 'Book not found or not published' });
     }
 

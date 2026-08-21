@@ -173,6 +173,47 @@ router.put('/users/:id/status', async (req, res) => {
   }
 });
 
+// @route DELETE /api/admin/users/:id
+// @desc Delete user/author account permanently by admin
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    // Find and delete all books of the user
+    const books = await Book.find({ author: userId });
+    const bookIds = books.map(b => b._id);
+    
+    // Delete chapters
+    const Chapter = require('../models/Chapter');
+    await Chapter.deleteMany({ book: { $in: bookIds } });
+    
+    // Delete reviews on author's books or written by user
+    const Review = require('../models/Review');
+    await Review.deleteMany({ book: { $in: bookIds } });
+    await Review.deleteMany({ user: userId });
+    
+    // Delete reading progress
+    const ReadingProgress = require('../models/ReadingProgress');
+    await ReadingProgress.deleteMany({ $or: [{ user: userId }, { book: { $in: bookIds } }] });
+
+    // Delete books
+    await Book.deleteMany({ author: userId });
+
+    // Remove user from other users' following arrays
+    await User.updateMany({}, { $pull: { following: userId } });
+
+    // Delete the user itself
+    await User.findByIdAndDelete(userId);
+
+    res.json({ msg: 'User account and all related content deleted successfully' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // @route GET /api/admin/authors
 // @desc Get authors with their published book count
 router.get('/authors', async (req, res) => {

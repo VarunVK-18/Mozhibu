@@ -65,6 +65,17 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ msg: 'Email not registered' });
     }
 
+    // Check status
+    if (user.status === 'suspended') {
+      return res.status(403).json({ msg: 'Your account has been suspended. Please contact support.' });
+    }
+
+    if (user.status === 'deactivated') {
+      user.status = 'active';
+      await user.save();
+      console.log(`User ${user.email} reactivated upon login`);
+    }
+
     if (user.authProvider !== 'normal') {
       return res.status(400).json({ msg: `Please sign in using your ${user.authProvider} account` });
     }

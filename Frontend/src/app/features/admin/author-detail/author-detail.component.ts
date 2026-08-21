@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { AdminService, AdminAuthorDetail } from '../../../core/services/admin.service';
 
 @Component({
@@ -29,6 +29,13 @@ import { AdminService, AdminAuthorDetail } from '../../../core/services/admin.se
               
               <div class="status-badge" [ngClass]="authorDetail()!.author.status">
                 {{ authorDetail()!.author.status }}
+              </div>
+
+              <!-- Admin controls -->
+              <div class="admin-controls" *ngIf="authorDetail()!.author.role !== 'superadmin'">
+                <button *ngIf="authorDetail()!.author.status === 'active'" class="btn-suspend" (click)="suspendAuthor()">Suspend</button>
+                <button *ngIf="authorDetail()!.author.status === 'suspended'" class="btn-reactivate" (click)="reactivateAuthor()">Reactivate</button>
+                <button class="btn-delete" (click)="deleteAuthor()">Delete Account</button>
               </div>
 
               <div class="profile-stats">
@@ -122,6 +129,15 @@ import { AdminService, AdminAuthorDetail } from '../../../core/services/admin.se
     .status-badge.active { background: var(--forest-tint); color: var(--forest-deep); }
     .status-badge.suspended { background: var(--rose-tint); color: var(--rose); }
     
+    .admin-controls { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-bottom: 24px; }
+    .admin-controls button { padding: 8px 12px; border-radius: var(--radius-s); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; width: 100%; text-align: center; }
+    .btn-suspend { background: #fff; border: 1px solid var(--border-soft) !important; color: var(--rose) !important; }
+    .btn-suspend:hover { border-color: var(--rose) !important; background: var(--rose-tint); }
+    .btn-reactivate { background: var(--forest); color: #fff; }
+    .btn-reactivate:hover { background: var(--forest-deep); }
+    .btn-delete { background: #dc2626; color: #fff; }
+    .btn-delete:hover { background: #b91c1c; }
+    
     .profile-stats { display: flex; width: 100%; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); padding: 16px 0; margin-bottom: 24px; }
     .stat-box { flex: 1; display: flex; flex-direction: column; }
     .stat-box:first-child { border-right: 1px solid var(--border-soft); }
@@ -161,11 +177,17 @@ import { AdminService, AdminAuthorDetail } from '../../../core/services/admin.se
 export class AuthorDetailComponent implements OnInit {
   route = inject(ActivatedRoute);
   adminService = inject(AdminService);
+  router = inject(Router);
   
   authorDetail = signal<AdminAuthorDetail | null>(null);
   loading = signal(true);
 
   ngOnInit() {
+    this.loadAuthorDetails();
+  }
+
+  loadAuthorDetails() {
+    this.loading.set(true);
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.adminService.getAuthorDetails(id).subscribe({
@@ -175,6 +197,38 @@ export class AuthorDetailComponent implements OnInit {
         },
         error: () => this.loading.set(false)
       });
+    }
+  }
+
+  suspendAuthor() {
+    const author = this.authorDetail()?.author;
+    if (!author) return;
+    if (confirm(`Are you sure you want to suspend author "${author.username}"? Their published contents and profile will disappear from public views.`)) {
+      this.adminService.updateUserStatus(author._id, 'suspended').subscribe(() => {
+        this.loadAuthorDetails();
+      });
+    }
+  }
+
+  reactivateAuthor() {
+    const author = this.authorDetail()?.author;
+    if (!author) return;
+    if (confirm(`Are you sure you want to reactivate author "${author.username}"?`)) {
+      this.adminService.updateUserStatus(author._id, 'active').subscribe(() => {
+        this.loadAuthorDetails();
+      });
+    }
+  }
+
+  deleteAuthor() {
+    const author = this.authorDetail()?.author;
+    if (!author) return;
+    if (confirm(`Are you absolutely sure you want to permanently delete author "${author.username}"? All their books, chapters, and records will be deleted forever.`)) {
+      if (confirm(`FINAL CONFIRMATION: Permanently delete author "${author.username}"?`)) {
+        this.adminService.deleteUser(author._id).subscribe(() => {
+          this.router.navigate(['/admin/authors']);
+        });
+      }
     }
   }
 }

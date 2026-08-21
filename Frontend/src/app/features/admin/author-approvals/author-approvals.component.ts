@@ -1,17 +1,21 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AdminService, PendingAuthor } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-author-approvals',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="admin-page">
       <header class="page-header">
         <div class="header-left">
           <h1>Author Approvals</h1>
           <p>Review users requesting to become authors on the platform.</p>
+        </div>
+        <div class="header-right">
+          <input type="text" [(ngModel)]="searchQuery" placeholder="Search by name or email..." class="search-input">
         </div>
       </header>
 
@@ -40,7 +44,7 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
               </tr>
             </thead>
             <tbody>
-              @for (author of pendingAuthors(); track author._id) {
+              @for (author of filteredAuthors(); track author._id) {
                 <tr>
                   <td>
                     <div class="title-cell">
@@ -76,6 +80,10 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
     .page-header h1 { font-family: var(--display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
     .page-header p { color: var(--ink-soft); font-size: 15px; }
     
+    .page-header { display: flex; justify-content: space-between; align-items: center; }
+    .search-input { padding: 10px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius-m); width: 300px; font-size: 14px; outline: none; }
+    .search-input:focus { border-color: var(--forest); }
+    
     .loading-state, .empty-state { padding: 64px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
     .empty-icon { display: flex; justify-content: center; margin-bottom: 16px; color: var(--forest); }
     .empty-icon svg { width: 48px; height: 48px; }
@@ -106,8 +114,15 @@ export class AuthorApprovalsComponent implements OnInit {
   adminService = inject(AdminService);
   
   pendingAuthors = signal<PendingAuthor[]>([]);
+  searchQuery = signal('');
   loading = signal(true);
   processingId = signal<string | null>(null);
+  
+  filteredAuthors = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q) return this.pendingAuthors();
+    return this.pendingAuthors().filter(a => a.username.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+  });
 
   ngOnInit() {
     this.loadPendingAuthors();

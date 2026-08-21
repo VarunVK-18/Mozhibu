@@ -248,7 +248,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.isPremium.set(false);
       this.socketService.disconnect();
       this.profileMenuOpen.set(false);
-      this.router.navigate(['/']);
+      window.location.href = '/';
     }
   }
 

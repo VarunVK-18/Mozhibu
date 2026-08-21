@@ -117,9 +117,35 @@ import { AuthService } from '../../../core/services/auth.service';
               </div>
               <h3>Author Studio Active</h3>
               <p>You already have author privileges! Head over to the Author Studio to publish and manage your books.</p>
-              <button class="btn btn-outline" disabled>Go to Studio (Coming Soon)</button>
+              <button class="btn-outline" disabled>Go to Studio (Coming Soon)</button>
             </div>
           }
+
+          <!-- Account Controls (Danger Zone) -->
+          <div class="settings-card danger-zone">
+            <h3>Danger Zone</h3>
+            <p class="section-desc">Temporary deactivation or permanent deletion of your account. These actions cannot be easily undone.</p>
+            
+            <div class="control-row">
+              <div class="control-text">
+                <h4>Deactivate Account</h4>
+                <p>Temporarily disable your account. Your profile and published stories will be hidden. You can reactivate anytime by logging back in.</p>
+              </div>
+              <button class="btn btn-warning" (click)="deactivateAccount()" [disabled]="deactivating() || deleting()">
+                {{ deactivating() ? 'Deactivating...' : 'Deactivate Account' }}
+              </button>
+            </div>
+
+            <div class="control-row border-top">
+              <div class="control-text">
+                <h4>Delete Account</h4>
+                <p>Permanently delete your account. All books, chapters, progress, bookmarks, and reviews will be permanently removed. This is irreversible.</p>
+              </div>
+              <button class="btn btn-danger" (click)="deleteAccount()" [disabled]="deactivating() || deleting()">
+                {{ deleting() ? 'Deleting...' : 'Delete Account' }}
+              </button>
+            </div>
+          </div>
 
         </div>
       </div>
@@ -341,6 +367,90 @@ import { AuthService } from '../../../core/services/auth.service';
       font-size: 13px;
     }
 
+    .danger-zone {
+      border: 1px solid #fca5a5 !important;
+      background: #fff5f5;
+    }
+    .danger-zone h3 {
+      color: #991b1b !important;
+      border-bottom: 1px solid #fee2e2 !important;
+    }
+    .section-desc {
+      font-size: 14px;
+      color: #7f1d1d;
+      margin-bottom: 24px;
+      opacity: 0.8;
+      text-align: left;
+    }
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      gap: 24px;
+    }
+    .control-row.border-top {
+      border-top: 1px solid #fee2e2;
+      margin-top: 16px;
+      padding-top: 24px;
+    }
+    .control-text {
+      flex: 1;
+      text-align: left;
+    }
+    .control-text h4 {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .control-text p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+      margin: 0;
+    }
+    .btn-warning {
+      background: #d97706;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-warning:hover:not(:disabled) {
+      background: #b45309;
+    }
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+    @media (max-width: 600px) {
+      .control-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .control-row button {
+        width: 100%;
+      }
+    }
+
     @media (max-width: 480px) {
       .settings-page {
         padding: 24px 16px;
@@ -363,6 +473,8 @@ export class SettingsComponent implements OnInit {
   router = inject(Router);
   
   loading = signal(false);
+  deactivating = signal(false);
+  deleting = signal(false);
   errorMsg = signal<string | null>(null);
   uploading = signal(false);
   uploadError = signal<string | null>(null);
@@ -437,6 +549,44 @@ export class SettingsComponent implements OnInit {
           this.uploadError.set(err.error?.msg || 'Failed to upload image. Make sure it is an image under 5MB.');
         }
       });
+    }
+  }
+
+  deactivateAccount() {
+    if (confirm('Are you sure you want to deactivate your account? This will temporarily hide your profile and all your books. You can reactivate anytime by logging back in.')) {
+      this.deactivating.set(true);
+      this.auth.deactivateAccount().subscribe({
+        next: () => {
+          this.deactivating.set(false);
+          alert('Account deactivated successfully.');
+          this.auth.logout();
+          this.router.navigate(['/']);
+        },
+        error: (err) => {
+          this.deactivating.set(false);
+          alert(err.error?.msg || 'Failed to deactivate account.');
+        }
+      });
+    }
+  }
+
+  deleteAccount() {
+    if (confirm('WARNING: Are you absolutely sure you want to permanently delete your account? All your books, chapters, reading history, bookmarks, and reviews will be permanently removed. This action CANNOT be undone!')) {
+      if (confirm('This is your final warning: Do you really want to delete your account permanently?')) {
+        this.deleting.set(true);
+        this.auth.deleteAccount().subscribe({
+          next: () => {
+            this.deleting.set(false);
+            alert('Account permanently deleted.');
+            this.auth.logout();
+            this.router.navigate(['/']);
+          },
+          error: (err) => {
+            this.deleting.set(false);
+            alert(err.error?.msg || 'Failed to delete account.');
+          }
+        });
+      }
     }
   }
 }

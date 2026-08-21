@@ -339,7 +339,24 @@ export class StoryEditorComponent implements OnInit {
       this.coverPreviewUrl.set(this.croppedImage);
       this.croppedBlob = this.activeBlob;
       this.isCoverUploaded = false;
-      this.onContentChange();
+      
+      if (this.croppedBlob) {
+        const file = new File([this.croppedBlob], 'cover.jpg', { type: 'image/jpeg' });
+        this.bookService.uploadCover(file).subscribe({
+          next: (res) => {
+            this.isCoverUploaded = true;
+            const baseUrl = environment.apiUrl.replace('/api', '');
+            this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+            this.onContentChange();
+          },
+          error: (err) => {
+            console.error('Failed to upload cover', err);
+            this.onContentChange();
+          }
+        });
+      } else {
+        this.onContentChange();
+      }
     }
     this.imageChangedEvent = '';
   }
@@ -359,6 +376,13 @@ export class StoryEditorComponent implements OnInit {
     if (!this.story.title || !this.story.genre || !this.chapter.title) {
       if (!isAutoSave) {
         this.errorMessage = 'Please fill out the story title, genre, and chapter title.';
+      }
+      return;
+    }
+
+    if (!isDraft && !this.coverPreviewUrl()) {
+      if (!isAutoSave) {
+        this.errorMessage = 'Please upload a cover image before publishing.';
       }
       return;
     }
@@ -402,6 +426,14 @@ export class StoryEditorComponent implements OnInit {
         }
       });
     } else {
+      let currentCover = this.coverPreviewUrl();
+      if (currentCover && !currentCover.startsWith('data:image')) {
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        if (currentCover.startsWith(baseUrl)) {
+          currentCover = currentCover.substring(baseUrl.length);
+        }
+        bookData.cover = currentCover;
+      }
       this.submitBook(bookData, isDraft, isAutoSave);
     }
   }
@@ -422,6 +454,7 @@ export class StoryEditorComponent implements OnInit {
       this.bookService.createBook(bookData).subscribe({
         next: (book) => {
           this.bookId = book._id;
+          this.saveToLocal();
           this.submitChapter(isDraft, isAutoSave);
         },
         error: (err) => {
@@ -437,6 +470,7 @@ export class StoryEditorComponent implements OnInit {
     const chapterData = {
       title: this.chapter.title,
       content: this.chapter.content,
+      season: 1,
       status: isDraft ? 'draft' : 'published'
     };
 
@@ -462,6 +496,7 @@ export class StoryEditorComponent implements OnInit {
           this.chapterId = chapter._id;
           this.isSaving = false;
           this.lastSaved = new Date();
+          this.saveToLocal();
           if (!isAutoSave) {
             localStorage.removeItem('storyDraft');
             this.router.navigate(['/write']);

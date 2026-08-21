@@ -117,14 +117,14 @@ import { environment } from '../../../environments/environment';
                 
                 @if (activeTab === 'authors') {
                   <div class="author-card" [routerLink]="['/author', item._id]">
-                    <img [src]="getAvatarUrl(item.avatar)" alt="Author avatar" class="author-avatar">
+                    <img [src]="getAvatarUrl(item.avatar, item.username)" alt="Author avatar" class="author-avatar">
                     <h4 class="author-name">{{ item.username }}</h4>
                     <p class="author-followers">{{ item.followersCount }} Followers</p>
                   </div>
                 } @else {
                   <div class="book-card" [routerLink]="['/story', item._id]">
                     <div class="cover-wrapper">
-                      <img [src]="item.cover || 'assets/default-cover.png'" alt="Book cover" class="book-cover" onerror="this.src='assets/default-cover.png'">
+                      <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.onerror=null; this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';">
                       @if (item.accessType === 'premium') {
                         <div class="paid-badge">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -721,10 +721,20 @@ export class SearchComponent implements OnInit {
     });
   }
 
-  getAvatarUrl(avatar: string | undefined): string {
+  getAvatarUrl(avatar: string | undefined, username?: string): string {
+    if (!avatar) {
+      const initial = username ? username.charAt(0).toUpperCase() : 'U';
+      return `https://placehold.co/100x100/333333/999999?text=${initial}`;
+    }
     const baseUrl = environment.apiUrl.replace('/api', '');
-    if (!avatar) return 'assets/default-avatar.png';
     if (avatar.startsWith('http')) return avatar;
     return `${baseUrl}${avatar}`;
+  }
+
+  getCoverUrl(cover: string | undefined): string {
+    if (!cover) return 'https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    if (cover.startsWith('http')) return cover;
+    return `${baseUrl}${cover}`;
   }
 }

@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema({
   favoriteGenres: { type: [String], required: true },
   authProvider: { type: String, enum: ['normal', 'google', 'facebook'], default: 'normal' },
   role: { type: String, enum: ['reader', 'writer', 'superadmin'], default: 'reader' },
-  status: { type: String, enum: ['active', 'suspended'], default: 'active' },
+  status: { type: String, enum: ['active', 'suspended', 'deactivated'], default: 'active' },
   authorStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
   followersCount: { type: Number, default: 0 },
   avatar: { type: String },

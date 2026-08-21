@@ -27,7 +27,8 @@ export interface StoryComment {
   dislikes: number;
   isLiked: boolean;
   isDisliked: boolean;
-  replies: StoryComment[];
+  rating?: number;
+  replies?: StoryComment[];
 }
 
 export interface StoryDetail {
@@ -116,8 +117,8 @@ export class StoryService {
           rating: book.rating || 0,
           reviewCount: book.reviews?.length || 0,
           chapterCount: book.chapters?.length || 0,
-          status: 'Ongoing',
-          language: 'English',
+          status: book.completionStatus === 'completed' ? 'Completed' : 'Ongoing',
+          language: book.originalLanguage || 'English',
           publishedDate: book.createdAt,
           updatedDate: book.updatedAt,
           synopsis: book.description || 'No synopsis available.',
@@ -136,40 +137,70 @@ export class StoryService {
     this.bookService.getChapters(id).subscribe(chapters => {
       const story = this.activeStory();
       const coverImage = story?.coverImage || 'assets/default-cover.png';
-      this.storyEpisodes.set(chapters.map((c: any) => ({
-        id: c._id,
-        season: 1,
-        episode: c.order,
-        title: c.title,
-        thumbnail: c.cover ? (c.cover.startsWith('http') ? c.cover : `${baseUrl}${c.cover}`) : coverImage,
-        readingTime: '15 min',
-        synopsis: (c.content || '').substring(0, 100) + '...',
-        isRead: false,
-        isUnlocked: !c.isLocked,
-        content: c.content
-      })));
+      
+      const episodes = chapters.map((c: any) => {
+        const wordCount = c.content ? c.content.split(/\s+/).length : 0;
+        const readTime = Math.max(1, Math.ceil(wordCount / 200));
+        return {
+          id: c._id,
+          season: c.season || 1,
+          episode: c.order,
+          title: c.title,
+          thumbnail: c.cover ? (c.cover.startsWith('http') ? c.cover : `${baseUrl}${c.cover}`) : coverImage,
+          readingTime: `${readTime} min`,
+          synopsis: (c.content || '').substring(0, 100) + '...',
+          isRead: false,
+          isUnlocked: !c.isLocked,
+          content: c.content
+        };
+      });
+      
+      this.storyEpisodes.set(episodes);
+      
+      const totalMinutes = episodes.reduce((total, ep) => total + parseInt(ep.readingTime), 0);
+      
+      this.activeStory.update(s => {
+        if (!s) return s;
+        return { 
+          ...s, 
+          chapterCount: chapters.length,
+          readingTime: totalMinutes > 0 ? `${totalMinutes} min read` : '1 min read'
+        };
+      });
     });
 
     this.bookService.getReviews(id).subscribe(reviews => {
       const currentUser = this.authService.user();
       
-      const mapReview = (r: any): StoryComment => {
-        const authorName = r.user?.username || 'Unknown';
-        return {
-          id: r._id,
-          authorName,
-          authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
-          timestamp: new Date(r.createdAt).toLocaleDateString(),
-        text: r.comment,
+      const formattedComments = reviews.map((r: any) => ({
+        id: r._id,
+        authorName: r.user?.username || 'Unknown',
+        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+        timestamp: new Date(r.createdAt).toLocaleDateString(),
+        text: r.text,
         likes: r.likes?.length || 0,
         dislikes: r.dislikes?.length || 0,
-        isLiked: currentUser ? (r.likes || []).includes(currentUser.id) : false,
-          isDisliked: currentUser ? (r.dislikes || []).includes(currentUser.id) : false,
-          replies: r.replies ? r.replies.map((reply: any) => mapReview(reply)) : []
-        };
-      };
+        isLiked: currentUser ? r.likes?.includes(currentUser.id) : false,
+        isDisliked: currentUser ? r.dislikes?.includes(currentUser.id) : false,
+        rating: r.rating,
+        replies: r.replies ? r.replies.map((reply: any) => ({
+          id: reply._id,
+          authorName: reply.user?.username || 'Unknown',
+          authorAvatar: reply.user?.avatar ? (reply.user.avatar.startsWith('http') ? reply.user.avatar : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+          timestamp: new Date(reply.createdAt).toLocaleDateString(),
+          text: reply.text,
+          likes: reply.likes?.length || 0,
+          dislikes: reply.dislikes?.length || 0,
+          isLiked: currentUser ? reply.likes?.includes(currentUser.id) : false,
+          isDisliked: currentUser ? reply.dislikes?.includes(currentUser.id) : false,
+        })) : []
+      }));
 
-      this.storyComments.set(reviews.map(mapReview));
+      this.storyComments.set(formattedComments);
+      this.activeStory.update(s => {
+        if (!s) return s;
+        return { ...s, reviewCount: reviews.length };
+      });
     });
   }
 
@@ -255,6 +286,7 @@ export class StoryService {
       dislikes: 0,
       isLiked: false,
       isDisliked: false,
+      rating,
       replies: []
     };
     
@@ -342,7 +374,7 @@ export class StoryService {
     this.storyComments.update(comments => 
       comments.map(c => {
         if (c.id === commentId) {
-          return { ...c, replies: [...c.replies, newReply] };
+          return { ...c, replies: [...(c.replies || []), newReply] };
         }
         return c;
       })

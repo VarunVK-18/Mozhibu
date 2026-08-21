@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +16,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
           <p>Review pending books or manage published ones.</p>
         </div>
         <div class="header-actions">
+          <input type="text" [(ngModel)]="searchQuery" placeholder="Search by title or author..." class="search-input">
           <select [(ngModel)]="statusFilter" (change)="loadBooks()" class="filter-select">
             <option value="all">All Books</option>
             <option value="pending">Pending Review</option>
@@ -45,7 +46,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
               </tr>
             </thead>
             <tbody>
-              @for (book of books(); track book._id) {
+              @for (book of filteredBooks(); track book._id) {
                 <tr>
                   <td>
                     <div class="title-cell">
@@ -89,6 +90,9 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
     .page-header h1 { font-family: var(--display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
     .page-header p { color: var(--ink-soft); font-size: 15px; }
     
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .search-input { padding: 8px 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-s); width: 250px; font-family: var(--body); font-size: 14px; outline: none; }
+    .search-input:focus { border-color: var(--forest); }
     .filter-select { padding: 8px 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-s); font-family: var(--body); font-size: 14px; outline: none; background: #fff; cursor: pointer; }
     
     .loading-state, .empty-state { padding: 48px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
@@ -123,8 +127,15 @@ export class BooksComponent implements OnInit {
   adminService = inject(AdminService);
   
   books = signal<AdminBook[]>([]);
+  searchQuery = signal('');
   loading = signal(true);
   statusFilter = 'pending';
+  
+  filteredBooks = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q) return this.books();
+    return this.books().filter(b => b.title.toLowerCase().includes(q) || (b.author && b.author.username.toLowerCase().includes(q)));
+  });
 
   ngOnInit() {
     this.loadBooks();

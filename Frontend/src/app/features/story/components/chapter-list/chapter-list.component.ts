@@ -1,21 +1,30 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { StoryEpisode } from '../../../../core/services/story.service';
 
 @Component({
   selector: 'app-chapter-list',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="chapters-container">
       <div class="chapters-header">
-        <h2>Episodes</h2>
-        <span class="season-selector">Season 1 ⌄</span>
+        <h2>Chapters</h2>
+        @if (availableSeasons.length > 1) {
+          <select [(ngModel)]="activeSeason" class="season-selector">
+            @for (s of availableSeasons; track s) {
+              <option [value]="s">Season {{ s }}</option>
+            }
+          </select>
+        } @else if (availableSeasons.length === 1 && availableSeasons[0] !== 1) {
+          <span class="season-selector-label">Season {{ availableSeasons[0] }}</span>
+        }
       </div>
 
       <div class="episodes-list">
-        @for (ep of episodes; track ep.id) {
+        @for (ep of filteredEpisodes; track ep.id) {
           <a [routerLink]="['/read', storyId]" [queryParams]="{chapter: ep.episode}" class="episode-card" [class.locked]="!ep.isUnlocked">
             <div class="ep-number">{{ ep.episode }}</div>
             
@@ -62,10 +71,23 @@ import { StoryEpisode } from '../../../../core/services/story.service';
       color: var(--ink);
     }
     .season-selector {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--ink-soft);
       cursor: pointer;
+      background: var(--paper-soft);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      outline: none;
+    }
+    .season-selector-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      background: var(--paper-soft);
+      padding: 6px 12px;
+      border-radius: 6px;
     }
     
     .episodes-list {
@@ -179,7 +201,30 @@ import { StoryEpisode } from '../../../../core/services/story.service';
     }
   `]
 })
-export class ChapterListComponent {
+export class ChapterListComponent implements OnChanges {
   @Input() episodes: StoryEpisode[] = [];
   @Input() storyId: string = '';
+  
+  activeSeason = 1;
+  availableSeasons: number[] = [1];
+  
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['episodes']) {
+      const seasons = new Set<number>();
+      this.episodes.forEach(ep => {
+        if (ep.season) seasons.add(ep.season);
+      });
+      
+      if (seasons.size > 0) {
+        this.availableSeasons = Array.from(seasons).sort((a, b) => a - b);
+        if (!this.availableSeasons.includes(this.activeSeason)) {
+          this.activeSeason = this.availableSeasons[0];
+        }
+      }
+    }
+  }
+  
+  get filteredEpisodes() {
+    return this.episodes.filter(ep => ep.season === this.activeSeason);
+  }
 }

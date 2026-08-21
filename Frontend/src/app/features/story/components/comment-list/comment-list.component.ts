@@ -60,6 +60,15 @@ import { StoryComment } from '../../../../core/services/story.service';
                 <div class="comment-header">
                   <span class="author-name">{{ comment.authorName }}</span>
                   <span class="timestamp">{{ comment.timestamp }}</span>
+                  @if (comment.rating) {
+                    <div class="comment-rating">
+                      @for (star of [1,2,3,4,5]; track star) {
+                        <svg viewBox="0 0 24 24" [attr.fill]="star <= comment.rating ? 'currentColor' : 'none'" [attr.stroke]="star <= comment.rating ? 'none' : 'currentColor'" stroke-width="2" class="mini-star-icon">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                      }
+                    </div>
+                  }
                 </div>
                 <p class="comment-text">{{ comment.text }}</p>
                 <div class="comment-actions">
@@ -126,6 +135,32 @@ import { StoryComment } from '../../../../core/services/story.service';
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
+    }
+    
+    .rating-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .rating-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .stars {
+      display: flex;
+      gap: 4px;
+    }
+    .star-icon {
+      width: 24px;
+      height: 24px;
+      color: #FFB800;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .star-icon:hover {
+      transform: scale(1.1);
     }
     
     .comment-input-area {
@@ -196,9 +231,19 @@ import { StoryComment } from '../../../../core/services/story.service';
     }
     .comment-header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 8px;
       margin-bottom: 4px;
+    }
+    .comment-rating {
+      display: flex;
+      gap: 2px;
+      margin-left: 8px;
+    }
+    .mini-star-icon {
+      width: 14px;
+      height: 14px;
+      color: #FFB800;
     }
     .author-name {
       font-weight: 600;

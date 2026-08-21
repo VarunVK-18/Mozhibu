@@ -150,6 +150,10 @@ export class AdminService {
     return this.api.put(`/admin/users/${id}/status`, { status });
   }
 
+  deleteUser(id: string): Observable<any> {
+    return this.api.delete(`/admin/users/${id}`);
+  }
+
   getAuthors(): Observable<AdminAuthor[]> {
     return this.api.get('/admin/authors');
   }

@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
     };
 
     if (type === 'authors') {
-      const authorQuery = { role: { $in: ['writer', 'superadmin'] } };
+      const authorQuery = { role: { $in: ['writer', 'superadmin'] }, status: 'active' };
       if (q) {
         authorQuery.username = { $regex: q, $options: 'i' };
       }
@@ -68,7 +68,12 @@ router.get('/', async (req, res) => {
     }
 
     // For stories, series, and tags, we ultimately query the Book model
+    const activeUsers = await User.find({ status: 'active' }).select('_id');
+    const activeUserIds = activeUsers.map(u => u._id);
+
     const query = buildBookQuery();
+    query.author = { $in: activeUserIds };
+
     const sortObj = getSortObj();
 
     let books = await Book.find(query)

@@ -50,13 +50,16 @@ import { HttpClient } from '@angular/common/http';
             Published Contents ({{ publishedStories().length }})
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'library'" (click)="activeTab.set('library')">
-            Library ({{ savedStories().length }})
+            Saved ({{ savedStories().length }})
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'history'" (click)="activeTab.set('history')">
             Reading History ({{ readingHistory().length }})
           </button>
           <button class="tab-btn" [class.active]="activeTab() === 'following'" (click)="activeTab.set('following')">
             Following ({{ following().length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'followers'" (click)="activeTab.set('followers')">
+            Followers ({{ followers().length }})
           </button>
         </nav>
       </div>
@@ -74,7 +77,7 @@ import { HttpClient } from '@angular/common/http';
               @if (publishedStories().length > 0) {
                 <div class="results-grid">
                   @for (item of publishedStories(); track item._id) {
-                    <div class="book-card" [routerLink]="['/book', item._id]">
+                    <div class="book-card" [routerLink]="['/story', item._id]">
                       <div class="cover-wrapper">
                         <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover'">
                         <span class="status-badge" [class.completed]="item.completionStatus === 'completed'">
@@ -109,7 +112,7 @@ import { HttpClient } from '@angular/common/http';
             }
           </div>
 
-          <!-- LIBRARY (SAVED STORIES) -->
+          <!-- SAVED (LIBRARY) -->
           <div *ngIf="activeTab() === 'library'" class="tab-pane">
             @if (savedStories().length > 0) {
               <div class="results-grid">
@@ -120,7 +123,7 @@ import { HttpClient } from '@angular/common/http';
             } @else {
               <div class="empty-state">
                 <p>No saved stories yet. Explore the discovery page and bookmark stories to build your collection.</p>
-                <button class="btn-primary" routerLink="/">Discover Stories</button>
+                <button class="btn-primary" routerLink="/search">Discover Stories</button>
               </div>
             }
           </div>
@@ -153,7 +156,7 @@ import { HttpClient } from '@angular/common/http';
             } @else {
               <div class="empty-state">
                 <p>You haven't read any books yet. Head over to the discovery page to start exploring!</p>
-                <button class="btn-primary" routerLink="/">Discover Books</button>
+                <button class="btn-primary" routerLink="/search">Discover Books</button>
               </div>
             }
           </div>
@@ -178,7 +181,30 @@ import { HttpClient } from '@angular/common/http';
             } @else {
               <div class="empty-state">
                 <p>You aren't following anyone yet. Follow authors you love to get notified when they publish new stories.</p>
-                <button class="btn-primary" routerLink="/">Find Authors</button>
+                <button class="btn-primary" [routerLink]="['/search']" [queryParams]="{ type: 'authors' }">Find Authors</button>
+              </div>
+            }
+          </div>
+
+          <!-- FOLLOWERS -->
+          <div *ngIf="activeTab() === 'followers'" class="tab-pane">
+            @if (followers().length > 0) {
+              <div class="authors-list">
+                @for (follower of followers(); track follower.id) {
+                  <div class="author-card" [routerLink]="['/author', follower.id]">
+                    <div class="author-info">
+                      <img [src]="follower.avatar" [alt]="follower.name" class="author-avatar-sm" />
+                      <div>
+                        <h3>{{ follower.name }}</h3>
+                        <p>{{ follower.followers }} followers</p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <p>You don't have any followers yet. Keep writing and sharing your stories to grow your audience!</p>
               </div>
             }
           </div>
@@ -275,7 +301,7 @@ export class UserProfileComponent implements OnInit {
   user = this.authService.user;
   authorStatus = signal<string>('');
   
-  activeTab = signal<'published' | 'library' | 'history' | 'following'>('published');
+  activeTab = signal<'published' | 'library' | 'history' | 'following' | 'followers'>('published');
   isLoading = signal<boolean>(true);
   
   publishedStories = signal<any[]>([]);
@@ -284,6 +310,7 @@ export class UserProfileComponent implements OnInit {
   savedStories = signal<any[]>([]);
   readingHistory = signal<any[]>([]);
   following = signal<any[]>([]);
+  followers = signal<any[]>([]);
   
   ngOnInit() {
     this.authorStatus.set(this.user()?.authorStatus || '');
@@ -293,7 +320,7 @@ export class UserProfileComponent implements OnInit {
   loadAllData() {
     this.isLoading.set(true);
     let completedReqs = 0;
-    const totalReqs = 4;
+    const totalReqs = 5;
     
     const checkDone = () => {
       completedReqs++;
@@ -355,6 +382,20 @@ export class UserProfileComponent implements OnInit {
     this.authService.getFollowing().subscribe({
       next: (authors: any[]) => {
         this.following.set(authors.map(a => ({
+          id: a._id,
+          name: a.username,
+          avatar: this.getAvatarUrl(a.avatar, a.username),
+          followers: (a.followersCount / 1000).toFixed(1) + 'K'
+        })));
+        checkDone();
+      },
+      error: () => checkDone()
+    });
+
+    // 5. Load Followers
+    this.authService.getFollowers().subscribe({
+      next: (followers: any[]) => {
+        this.followers.set(followers.map(a => ({
           id: a._id,
           name: a.username,
           avatar: this.getAvatarUrl(a.avatar, a.username),

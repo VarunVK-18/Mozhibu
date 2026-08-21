@@ -1,18 +1,22 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminService, AdminAuthor } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-authors',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="admin-page">
       <header class="page-header">
         <div class="header-left">
           <h1>Author Management</h1>
           <p>Review author statistics and published works.</p>
+        </div>
+        <div class="header-right">
+          <input type="text" [(ngModel)]="searchQuery" placeholder="Search authors by name or email..." class="search-input">
         </div>
       </header>
 
@@ -34,7 +38,7 @@ import { AdminService, AdminAuthor } from '../../../core/services/admin.service'
               </tr>
             </thead>
             <tbody>
-              @for (author of authors(); track author._id) {
+              @for (author of filteredAuthors(); track author._id) {
                 <tr>
                   <td>
                     <div class="title-cell">
@@ -51,6 +55,7 @@ import { AdminService, AdminAuthor } from '../../../core/services/admin.service'
                   <td>
                     <div class="action-buttons">
                       <a [routerLink]="['/admin/authors', author._id]" class="btn-outline">View Profile</a>
+                      <button class="btn-delete" (click)="deleteAuthor(author)">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -66,6 +71,10 @@ import { AdminService, AdminAuthor } from '../../../core/services/admin.service'
     .page-header { margin-bottom: 32px; }
     .page-header h1 { font-family: var(--display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
     .page-header p { color: var(--ink-soft); font-size: 15px; }
+    
+    .page-header { display: flex; justify-content: space-between; align-items: center; }
+    .search-input { padding: 10px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius-m); width: 300px; font-size: 14px; outline: none; }
+    .search-input:focus { border-color: var(--forest); }
     
     .loading-state, .empty-state { padding: 48px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
     
@@ -91,14 +100,28 @@ import { AdminService, AdminAuthor } from '../../../core/services/admin.service'
     .action-buttons { display: flex; gap: 8px; }
     .btn-outline { padding: 6px 12px; border-radius: var(--radius-s); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-soft); background: #fff; color: var(--ink); text-decoration: none; }
     .btn-outline:hover { border-color: var(--forest); color: var(--forest); }
+    .btn-delete { padding: 6px 12px; border-radius: var(--radius-s); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: #dc2626; color: #fff; }
+    .btn-delete:hover { background: #b91c1c; }
   `]
 })
 export class AuthorsComponent implements OnInit {
   adminService = inject(AdminService);
   authors = signal<AdminAuthor[]>([]);
+  searchQuery = signal('');
   loading = signal(true);
+  
+  filteredAuthors = computed(() => {
+    const q = this.searchQuery().toLowerCase();
+    if (!q) return this.authors();
+    return this.authors().filter(a => a.username.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+  });
 
   ngOnInit() {
+    this.loadAuthors();
+  }
+
+  loadAuthors() {
+    this.loading.set(true);
     this.adminService.getAuthors().subscribe({
       next: (data) => {
         this.authors.set(data);
@@ -106,5 +129,15 @@ export class AuthorsComponent implements OnInit {
       },
       error: () => this.loading.set(false)
     });
+  }
+
+  deleteAuthor(author: AdminAuthor) {
+    if (confirm(`Are you absolutely sure you want to permanently delete author "${author.username}" and all their published books?`)) {
+      if (confirm(`FINAL CONFIRMATION: Permanently delete author "${author.username}"?`)) {
+        this.adminService.deleteUser(author._id).subscribe(() => {
+          this.loadAuthors();
+        });
+      }
+    }
   }
 }

@@ -63,6 +63,10 @@ export class AuthService {
     return this.api.get('/users/me/following');
   }
 
+  getFollowers(): Observable<any[]> {
+    return this.api.get('/users/me/followers');
+  }
+
   getAuthors(): Observable<any[]> {
     return this.api.get('/users/authors');
   }
@@ -113,6 +117,14 @@ export class AuthService {
 
   updateReadingProgress(bookId: string, chapterId?: string, progressPercentage?: number): Observable<any> {
     return this.api.post('/users/me/progress', { bookId, chapterId, progressPercentage });
+  }
+
+  deactivateAccount(): Observable<any> {
+    return this.api.put('/users/me/deactivate', {});
+  }
+
+  deleteAccount(): Observable<any> {
+    return this.api.delete('/users/me');
   }
 
   private handleAuthResponse(res: any) {
