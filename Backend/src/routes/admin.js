@@ -129,15 +129,52 @@ router.put('/books/:id/status', async (req, res) => {
     if (status === 'rejected') {
       book.rejectionReason = rejectionReason || 'No reason provided';
     }
-    if (status === 'published') {
+    if (status === 'published' && book.status !== 'published') {
       book.rejectionReason = undefined;
     }
+    const previousStatus = book.status;
+    book.status = status;
     book.reviewedAt = Date.now();
     book.reviewedBy = req.user.id;
 
     await book.save();
+
+    // If newly published, notify followers
+    if (status === 'published' && previousStatus !== 'published') {
+      const User = require('../models/User');
+      const Notification = require('../models/Notification');
+      
+      const author = await User.findById(book.author);
+      if (author) {
+        const followers = await User.find({ following: author._id }).select('_id');
+        if (followers.length > 0) {
+          const notifications = followers.map(f => ({
+            recipient: f._id,
+            sender: author._id,
+            type: 'new_chapter', // Re-using new_chapter or creating a new type
+            title: 'New Book Published',
+            message: `${author.username} has just published a new book: ${book.title}`,
+            link: `/story/${book._id}`
+          }));
+          await Notification.insertMany(notifications);
+          
+          const io = req.app.get('io');
+          const userSockets = req.app.get('userSockets');
+          if (io && userSockets) {
+            followers.forEach(f => {
+              const socketId = userSockets.get(f._id.toString());
+              if (socketId) {
+                io.to(socketId).emit('incoming_notification');
+              }
+            });
+          }
+        }
+      }
+    }
+
     res.json(book);
   } catch (err) {
+    console.error(err.message);
     res.status(500).json({ msg: 'Server Error' });
   }
 });
@@ -310,7 +347,7 @@ router.post('/broadcast', async (req, res) => {
       return res.status(400).json({ msg: 'Please provide title, message, and audience' });
     }
 
-    let query = {};
+    let query = { _id: { $ne: req.user.id } };
     if (audience === 'readers') {
       query.role = 'reader';
     } else if (audience === 'writers') {

@@ -1,11 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AuthorService, AuthorProfile } from '../../core/services/author.service';
+import { ApiService } from '../../core/services/api.service';
 import { finalize } from 'rxjs/operators';
 import { StoryCardComponent } from '../../shared/components/story-card/story-card.component';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-user-profile',
@@ -16,7 +18,7 @@ import { HttpClient } from '@angular/common/http';
       <!-- Profile Banner -->
       <div class="profile-banner">
         <div class="profile-header">
-          <img [src]="getAvatarUrl(user()?.avatar, user()?.username)" alt="User avatar" class="author-avatar">
+          <img [src]="getAvatarUrl(user()?.avatar, user()?.username)" alt="User avatar" class="author-avatar" (error)="onAvatarError($event, user()?.username)">
           <div class="author-info">
             <h1 class="author-name">{{ user()?.username }}</h1>
             <div class="author-meta">
@@ -38,7 +40,7 @@ import { HttpClient } from '@angular/common/http';
           </div>
           
           <div class="author-actions">
-            <button class="btn-outline" routerLink="/settings">Edit Profile</button>
+            <button class="btn-outline" routerLink="/settings" [queryParams]="{tab: 'profile'}">Edit Profile</button>
           </div>
         </div>
       </div>
@@ -79,7 +81,7 @@ import { HttpClient } from '@angular/common/http';
                   @for (item of publishedStories(); track item._id) {
                     <div class="book-card" [routerLink]="['/story', item._id]">
                       <div class="cover-wrapper">
-                        <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover'">
+                        <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" (error)="onCoverError($event)">
                         <span class="status-badge" [class.completed]="item.completionStatus === 'completed'">
                           {{ item.completionStatus === 'completed' ? 'Completed' : 'Ongoing' }}
                         </span>
@@ -134,7 +136,7 @@ import { HttpClient } from '@angular/common/http';
               <div class="history-list">
                 @for (book of readingHistory(); track book.id) {
                   <div class="history-card-clean" [routerLink]="['/story', book.storyId]">
-                    <img [src]="getCoverUrl(book.cover)" [alt]="book.title" class="history-cover" onerror="this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover'">
+                    <img [src]="getCoverUrl(book.cover)" [alt]="book.title" class="history-cover" (error)="onCoverError($event)">
                     <div class="history-info">
                       <h3>{{ book.title }}</h3>
                       <p class="history-author">By {{ book.author }}</p>
@@ -168,7 +170,7 @@ import { HttpClient } from '@angular/common/http';
                 @for (author of following(); track author.id) {
                   <div class="author-card" [routerLink]="['/author', author.id]">
                     <div class="author-info">
-                      <img [src]="author.avatar" [alt]="author.name" class="author-avatar-sm" />
+                      <img [src]="author.avatar" [alt]="author.name" class="author-avatar-sm" (error)="onAvatarError($event, author.name)" />
                       <div>
                         <h3>{{ author.name }}</h3>
                         <p>{{ author.followers }} followers</p>
@@ -193,7 +195,7 @@ import { HttpClient } from '@angular/common/http';
                 @for (follower of followers(); track follower.id) {
                   <div class="author-card" [routerLink]="['/author', follower.id]">
                     <div class="author-info">
-                      <img [src]="follower.avatar" [alt]="follower.name" class="author-avatar-sm" />
+                      <img [src]="follower.avatar" [alt]="follower.name" class="author-avatar-sm" (error)="onAvatarError($event, follower.name)" />
                       <div>
                         <h3>{{ follower.name }}</h3>
                         <p>{{ follower.followers }} followers</p>
@@ -296,6 +298,7 @@ import { HttpClient } from '@angular/common/http';
 export class UserProfileComponent implements OnInit {
   authService = inject(AuthService);
   authorService = inject(AuthorService);
+  api = inject(ApiService);
   http = inject(HttpClient);
   
   user = this.authService.user;
@@ -381,12 +384,16 @@ export class UserProfileComponent implements OnInit {
     // 4. Load Following
     this.authService.getFollowing().subscribe({
       next: (authors: any[]) => {
-        this.following.set(authors.map(a => ({
-          id: a._id,
-          name: a.username,
-          avatar: this.getAvatarUrl(a.avatar, a.username),
-          followers: (a.followersCount / 1000).toFixed(1) + 'K'
-        })));
+        const currentUser = this.authService.user();
+        this.following.set(authors
+          .filter(a => a._id !== (currentUser as any)?._id && a._id !== currentUser?.id && a.username !== currentUser?.username)
+          .map(a => ({
+            id: a._id,
+            name: a.username,
+            avatar: this.getAvatarUrl(a.avatar, a.username),
+            followers: (a.followersCount / 1000).toFixed(1) + 'K'
+          }))
+        );
         checkDone();
       },
       error: () => checkDone()
@@ -395,12 +402,16 @@ export class UserProfileComponent implements OnInit {
     // 5. Load Followers
     this.authService.getFollowers().subscribe({
       next: (followers: any[]) => {
-        this.followers.set(followers.map(a => ({
-          id: a._id,
-          name: a.username,
-          avatar: this.getAvatarUrl(a.avatar, a.username),
-          followers: (a.followersCount / 1000).toFixed(1) + 'K'
-        })));
+        const currentUser = this.authService.user();
+        this.followers.set(followers
+          .filter(a => a._id !== (currentUser as any)?._id && a._id !== currentUser?.id && a.username !== currentUser?.username)
+          .map(a => ({
+            id: a._id,
+            name: a.username,
+            avatar: this.getAvatarUrl(a.avatar, a.username),
+            followers: (a.followersCount / 1000).toFixed(1) + 'K'
+          }))
+        );
         checkDone();
       },
       error: () => checkDone()
@@ -420,17 +431,21 @@ export class UserProfileComponent implements OnInit {
   }
 
   getAvatarUrl(path: string | undefined, name?: string): string {
-    if (!path) {
-      const initial = name ? name.charAt(0).toUpperCase() : 'U';
-      return `https://placehold.co/100x100/333333/999999?text=${initial}`;
-    }
-    if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    if (!path) return this.api.getFallbackAvatar(name);
+    return this.api.getImageUrl(path);
+  }
+
+  onAvatarError(event: any, name?: string) {
+    event.target.src = this.api.getFallbackAvatar(name);
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   getCoverUrl(path: string | undefined): string {
-    if (!path) return 'https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    if (!path) return this.api.getFallbackCover();
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return this.api.getImageUrl(path);
   }
 }

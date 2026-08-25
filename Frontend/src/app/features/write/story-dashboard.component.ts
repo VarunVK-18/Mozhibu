@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-story-dashboard',
@@ -17,7 +18,9 @@ import { BookService } from '../../core/services/book.service';
         <div class="dashboard-header">
           <div class="wrap">
             <div class="book-summary">
-              <img [src]="book.cover || 'assets/default-cover.png'" [alt]="book.title" class="book-cover">
+              <div class="book-cover-container">
+                <img [src]="api.getImageUrl(book.cover) || 'assets/default-cover.png'" [alt]="book.title" class="book-cover" (error)="onCoverError($event)">
+              </div>
               <div class="book-info">
                 <h1>{{ book.title }}</h1>
                 <div class="meta-row">
@@ -270,10 +273,12 @@ import { BookService } from '../../core/services/book.service';
 export class StoryDashboardComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private bookService = inject(BookService);
+  api = inject(ApiService);
 
   book: any = null;
   chapters: any[] = [];
   isLoading = true;
+  totalWords = 0;
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
@@ -309,6 +314,15 @@ export class StoryDashboardComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  get completionPercentage(): number {
+    if (!this.book || !this.book.targetWordCount || this.book.targetWordCount <= 0) return 0;
+    return Math.min(100, Math.round((this.totalWords / this.book.targetWordCount) * 100));
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   toggleCompletionStatus() {

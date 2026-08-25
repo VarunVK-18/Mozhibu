@@ -115,13 +115,13 @@ export class AuthService {
       })
     );
   }
-  updateProfile(data: { bio: string }): Observable<any> {
+  updateProfile(data: { bio?: string, avatar?: string | null }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {
         if (res && res.user) {
           const currentUser = this.user();
           if (currentUser) {
-            const updatedUser = { ...currentUser, bio: res.user.bio };
+            const updatedUser = { ...currentUser, ...res.user };
             this.user.set(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
           }

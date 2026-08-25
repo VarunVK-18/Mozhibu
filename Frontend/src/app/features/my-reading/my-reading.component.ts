@@ -428,7 +428,7 @@ export class MyReadingComponent implements OnInit {
           storyId: p.book?._id,
           title: p.book?.title || 'Unknown Title',
           author: typeof p.book?.author === 'object' ? p.book?.author?.username : (p.book?.author || 'Unknown Author'),
-          cover: p.book?.cover || 'https://placehold.co/400x600/333333/999999?text=Cover',
+          cover: p.book?.cover || this.api.getFallbackCover(),
           currentChapter: p.currentChapter?.order || p.currentChapter || 1,
           totalChapters: p.book?.chapters?.length || 10,
           progressPercentage: p.progressPercentage || 0,

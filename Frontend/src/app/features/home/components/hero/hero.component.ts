@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { BookService } from '../../../../core/services/book.service';
+import { ApiService } from '../../../../core/services/api.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -542,6 +543,7 @@ export class HeroComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   bookService = inject(BookService);
   router = inject(Router);
+  api = inject(ApiService);
 
   authors: any[] = [];
   isLoadingAuthors = true;
@@ -585,7 +587,7 @@ export class HeroComponent implements OnInit, OnDestroy {
           description: b.description || 'Dive into this epic story.',
           genre: b.genre || 'Fiction',
           author: b.author?.username || 'Unknown Author',
-          coverImage: b.coverImage || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800',
+          coverImage: this.api.getImageUrl(b.cover) || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800',
           tag
         });
 

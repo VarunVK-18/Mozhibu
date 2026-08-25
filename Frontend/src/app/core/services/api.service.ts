@@ -13,6 +13,29 @@ export class ApiService {
   
   // This automatically uses the URL from the correct environment file
   private baseUrl = environment.apiUrl;
+  // The server root (without /api suffix) for serving static files
+  readonly serverUrl = environment.apiUrl.replace(/\/api$/, '');
+
+  /**
+   * Converts a relative /uploads/... path stored in DB to a full URL.
+   * If already a full URL or empty, returns it as-is.
+   */
+  getImageUrl(path: string | undefined | null): string {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `${this.serverUrl}${path}`;
+  }
+
+  getFallbackAvatar(name?: string): string {
+    const initial = name ? name.charAt(0).toUpperCase() : 'U';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#333333"/><text x="50" y="55" font-family="Arial" font-size="40" fill="white" text-anchor="middle" dominant-baseline="middle">${initial}</text></svg>`;
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  }
+
+  getFallbackCover(): string {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600"><rect width="400" height="600" fill="#3F6259"/><text x="200" y="300" font-family="Arial" font-size="40" fill="white" text-anchor="middle" dominant-baseline="middle">Cover</text></svg>`;
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  }
 
   private getHeaders(): HttpHeaders {
     let headers = new HttpHeaders();

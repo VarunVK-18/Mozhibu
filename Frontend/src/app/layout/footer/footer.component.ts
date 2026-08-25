@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <footer class="site-footer">
       <div class="footer-container">
@@ -29,26 +30,27 @@ import { CommonModule } from '@angular/common';
         <div class="footer-links-group">
           <div class="footer-col">
             <h3>Company</h3>
-            <a href="#">About Us</a>
-            <a href="#">Careers</a>
-            <a href="#">Press</a>
-            <a href="#">Blog</a>
+            <a routerLink="/about">About Us</a>
+            <a routerLink="/careers">Careers</a>
+            <a routerLink="/press">Press</a>
+            <a routerLink="/blog">Blog</a>
+            <a routerLink="/contact">Contact Us</a>
           </div>
           
           <div class="footer-col">
             <h3>Resources</h3>
-            <a href="#">Help Center</a>
-            <a href="#">Community Guidelines</a>
-            <a href="#">Writer's Portal</a>
-            <a href="#">Competitions</a>
+            <a routerLink="/help">Help Center</a>
+            <a routerLink="/guidelines">Community Guidelines</a>
+            <a routerLink="/writers">Writer's Portal</a>
+            <a routerLink="/competitions">Competitions</a>
           </div>
           
           <div class="footer-col">
             <h3>Legal</h3>
-            <a href="#">Terms of Service</a>
-            <a href="#">Privacy Policy</a>
-            <a href="#">Cookie Policy</a>
-            <a href="#">Copyright</a>
+            <a routerLink="/terms">Terms of Service</a>
+            <a routerLink="/privacy">Privacy Policy</a>
+            <a routerLink="/cookies">Cookie Policy</a>
+            <a routerLink="/copyright">Copyright</a>
           </div>
         </div>
       </div>

@@ -70,6 +70,7 @@ import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-
       align-items: center; 
       min-height: calc(100vh - 150px);
       background: var(--paper);
+      padding: 40px 20px;
     }
     .login-card { 
       background: var(--card); 

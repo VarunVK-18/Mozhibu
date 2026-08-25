@@ -56,7 +56,8 @@ export const routes: Routes = [
   },
   {
     path: 'library',
-    redirectTo: 'profile'
+    loadComponent: () => import('./features/library/library.component').then(m => m.LibraryComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'my-reading',
@@ -144,6 +145,25 @@ export const routes: Routes = [
       { path: 'revenue', loadComponent: () => import('./features/admin/revenue/admin-revenue.component').then(m => m.AdminRevenueComponent) }
     ]
   },
+  
+  // Static Footer Pages - Distinct Layouts
+  { path: 'about', loadComponent: () => import('./features/company/about.component').then(m => m.AboutComponent) },
+  { path: 'careers', loadComponent: () => import('./features/company/about.component').then(m => m.AboutComponent) },
+  { path: 'press', loadComponent: () => import('./features/company/about.component').then(m => m.AboutComponent) },
+  
+  { path: 'blog', loadComponent: () => import('./features/company/blog.component').then(m => m.BlogComponent) },
+  { path: 'contact', loadComponent: () => import('./features/company/contact.component').then(m => m.ContactComponent) },
+  
+  { path: 'help', loadComponent: () => import('./features/company/community.component').then(m => m.CommunityComponent) },
+  { path: 'guidelines', loadComponent: () => import('./features/company/community.component').then(m => m.CommunityComponent) },
+  { path: 'writers', loadComponent: () => import('./features/company/community.component').then(m => m.CommunityComponent) },
+  
+  // Legal Pages (Shared Template)
+  { path: 'terms', loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent), data: { title: 'Terms of Service' } },
+  { path: 'privacy', loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent), data: { title: 'Privacy Policy' } },
+  { path: 'cookies', loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent), data: { title: 'Cookie Policy' } },
+  { path: 'copyright', loadComponent: () => import('./features/info/info-page.component').then(m => m.InfoPageComponent), data: { title: 'Copyright' } },
+
   { path: '**', redirectTo: '' },
 ];
 // force angular recompile

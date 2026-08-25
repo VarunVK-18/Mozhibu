@@ -5,6 +5,7 @@ import { StoryService } from '../../../core/services/story.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SubscriptionService } from '../../../core/services/subscription.service';
 import { BookService } from '../../../core/services/book.service';
+import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
 
 import { StoryHeroComponent } from '../components/story-hero/story-hero.component';
@@ -62,6 +63,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             (readClicked)="onReadClicked()"
             (bookmarkClicked)="onBookmarkClicked()"
             (likeClicked)="onLikeClicked()"
+            (downloadClicked)="onDownloadClicked()"
             (reportSubmitted)="onReportSubmitted($event)"
           ></app-story-actions>
           
@@ -80,6 +82,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
           <app-comment-list 
             [comments]="comments()"
             [currentUserAvatar]="getAvatarUrl(currentUser()?.avatar)"
+            [storyAuthorName]="story()?.author?.name || ''"
             (postComment)="onPostComment($event)"
             (likeComment)="onLikeComment($event)"
             (dislikeComment)="onDislikeComment($event)"
@@ -180,6 +183,7 @@ export class StoryDetailComponent implements OnInit {
   authService = inject(AuthService);
   subService = inject(SubscriptionService);
   private bookService = inject(BookService);
+  api = inject(ApiService);
   
   story = this.storyService.getActiveStory();
   episodes = this.storyService.getEpisodes();
@@ -229,7 +233,12 @@ export class StoryDetailComponent implements OnInit {
                 id: b._id,
                 title: b.title,
                 author: b.author?.username || 'Unknown',
-                cover: b.cover || 'assets/default-cover.png',
+                cover: (() => {
+                  const c = b.cover;
+                  if (!c) return this.api.getFallbackCover();
+                  if (c.startsWith('http') || c.startsWith('data:')) return c;
+                  return this.api.getImageUrl(c);
+                })(),
                 rating: b.rating || 0,
                 genre: b.genre
               }));
@@ -278,6 +287,24 @@ export class StoryDetailComponent implements OnInit {
   onLikeClicked() {
     if (this.requireAuth()) {
       this.storyService.toggleLike();
+    }
+  }
+
+  onDownloadClicked() {
+    if (this.requireAuth()) {
+      if (!this.isPremiumSubscriber()) {
+        this.router.navigate(['/settings'], { queryParams: { tab: 'subscription' } });
+      } else {
+        const story = this.story();
+        if (story) {
+          const downloads = JSON.parse(localStorage.getItem('downloaded_books') || '[]');
+          if (!downloads.find((b: any) => b.id === story.id)) {
+            downloads.push(story);
+            localStorage.setItem('downloaded_books', JSON.stringify(downloads));
+          }
+          this.router.navigate(['/library'], { queryParams: { tab: 'downloaded' } });
+        }
+      }
     }
   }
 

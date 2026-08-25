@@ -81,9 +81,21 @@ router.post('/test', protect, async (req, res) => {
 // @route GET /api/notifications/broadcasts
 // @desc Get recent broadcast announcements (public, latest 10)
 const Broadcast = require('../models/Broadcast');
-router.get('/broadcasts', async (req, res) => {
+const { protectOptional } = require('../middleware/auth');
+
+router.get('/broadcasts', protectOptional, async (req, res) => {
   try {
-    const broadcasts = await Broadcast.find()
+    let audienceFilter = ['all'];
+    
+    if (req.user) {
+      if (req.user.role === 'reader') {
+        audienceFilter.push('readers');
+      } else if (req.user.role === 'writer' || req.user.role === 'superadmin') {
+        audienceFilter.push('writers');
+      }
+    }
+
+    const broadcasts = await Broadcast.find({ audience: { $in: audienceFilter } })
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();

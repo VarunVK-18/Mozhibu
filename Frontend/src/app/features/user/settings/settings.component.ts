@@ -1,13 +1,16 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../../core/services/api.service';
+import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ImageCropperComponent],
   template: `
     <div class="settings-page">
       <div class="settings-container">
@@ -16,10 +19,25 @@ import { AuthService } from '../../../core/services/auth.service';
           <p>Manage your profile and account preferences.</p>
         </header>
 
+        <div class="settings-tabs">
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'profile'" 
+            (click)="setTab('profile')">
+            Edit Profile
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'account'" 
+            (click)="setTab('account')">
+            Account Settings
+          </button>
+        </div>
+
         <div class="settings-grid">
           
           <!-- Basic Profile Info -->
-          <div class="settings-card">
+          <div class="settings-card" *ngIf="activeTab() === 'profile'">
             <h3>Profile Information</h3>
             
             <div class="avatar-upload-section">
@@ -35,8 +53,30 @@ import { AuthService } from '../../../core/services/auth.service';
               <div class="avatar-info">
                 <h4>Profile Picture</h4>
                 <p>Click the circle to upload a new avatar. Max size: 5MB.</p>
+                <div class="avatar-actions">
+                  <button *ngIf="auth.user()?.avatar" (click)="removeAvatar()" class="btn-text" [disabled]="uploading()">Remove Picture</button>
+                </div>
                 <div *ngIf="uploadError()" class="error-text">{{ uploadError() }}</div>
                 <div *ngIf="uploading()" class="uploading-text">Uploading...</div>
+              </div>
+            </div>
+
+            <!-- Avatar Cropper Modal -->
+            <div class="cropper-modal" *ngIf="imageChangedEvent">
+              <div class="cropper-content">
+                <h3>Crop Profile Picture</h3>
+                <image-cropper
+                  [imageChangedEvent]="imageChangedEvent"
+                  [maintainAspectRatio]="true"
+                  [aspectRatio]="1 / 1"
+                  [roundCropper]="true"
+                  format="jpeg"
+                  (imageCropped)="imageCropped($event)">
+                </image-cropper>
+                <div class="cropper-actions">
+                  <button class="btn-secondary" (click)="cancelCrop()">Cancel</button>
+                  <button class="btn-primary" (click)="saveCroppedAvatar()" [disabled]="!croppedBlob || uploading()">Save</button>
+                </div>
               </div>
             </div>
 
@@ -74,9 +114,12 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
           </div>
 
-          <!-- Become an Author Section -->
-          @if (auth.user()?.role === 'reader' && auth.user()?.authorStatus !== 'pending') {
-            <div class="settings-card author-upgrade">
+          <!-- Account Controls & Upgrade -->
+          <div class="settings-group" *ngIf="activeTab() === 'account'">
+            
+            <!-- Become an Author Section -->
+            @if (auth.user()?.role === 'reader' && auth.user()?.authorStatus !== 'pending') {
+              <div class="settings-card author-upgrade">
               <div class="upgrade-icon">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M10.5502 3C6.69782 3.00694 4.6805 3.10152 3.39128 4.39073C2 5.78202 2 8.02125 2 12.4997C2 16.9782 2 19.2174 3.39128 20.6087C4.78257 22 7.0218 22 11.5003 22C15.9787 22 18.218 22 19.6093 20.6087C20.8985 19.3195 20.9931 17.3022 21 13.4498" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -146,6 +189,7 @@ import { AuthService } from '../../../core/services/auth.service';
               </button>
             </div>
           </div>
+          </div>
 
         </div>
       </div>
@@ -175,7 +219,50 @@ import { AuthService } from '../../../core/services/auth.service';
       font-size: 15px;
     }
     
+    .settings-tabs {
+      display: flex;
+      gap: 32px;
+      border-bottom: 1px solid var(--border-soft);
+      margin-bottom: 32px;
+    }
+    
+    .tab-btn {
+      padding: 12px 0;
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      position: relative;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .tab-btn:hover {
+      color: var(--ink);
+    }
+    
+    .tab-btn.active {
+      color: var(--forest-deep);
+    }
+    
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 2px;
+      background: var(--forest);
+      border-radius: 2px 2px 0 0;
+    }
+    
     .settings-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .settings-group {
       display: flex;
       flex-direction: column;
       gap: 24px;
@@ -236,6 +323,47 @@ import { AuthService } from '../../../core/services/auth.service';
     }
     .avatar-preview:hover .upload-overlay {
       opacity: 1;
+    }
+    .avatar-actions {
+      margin-top: 8px;
+    }
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--error);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .btn-text:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .cropper-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cropper-content {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .cropper-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 16px;
     }
     .avatar-info h4 {
       font-family: var(--display);
@@ -470,7 +598,11 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class SettingsComponent implements OnInit {
   auth = inject(AuthService);
+  api = inject(ApiService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
+  
+  activeTab = signal<'profile' | 'account'>('profile');
   
   loading = signal(false);
   deactivating = signal(false);
@@ -491,6 +623,23 @@ export class SettingsComponent implements OnInit {
     } else {
       this.bioText.set(this.auth.user()?.bio || '');
     }
+
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] === 'account') {
+        this.activeTab.set('account');
+      } else {
+        this.activeTab.set('profile');
+      }
+    });
+  }
+
+  setTab(tab: 'profile' | 'account') {
+    this.activeTab.set(tab);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tab },
+      queryParamsHandling: 'merge',
+    });
   }
 
   upgradeToAuthor() {
@@ -528,25 +677,60 @@ export class SettingsComponent implements OnInit {
 
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
-    if (path.startsWith('http')) return path;
-    // Base URL is typically localhost:5000 in dev
-    // We should ideally get this from environment, but for now we hardcode or rely on proxy
-    return `http://localhost:5000${path}`;
+    return this.api.getImageUrl(path);
   }
+
+  imageChangedEvent: any = '';
+  croppedBlob: Blob | null = null;
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        this.uploadError.set('Please select an image file.');
+        return;
+      }
+      this.imageChangedEvent = event;
+    }
+  }
+
+  imageCropped(event: ImageCroppedEvent) {
+    this.croppedBlob = event.blob || null;
+  }
+
+  cancelCrop() {
+    this.imageChangedEvent = '';
+    this.croppedBlob = null;
+  }
+
+  saveCroppedAvatar() {
+    if (this.croppedBlob) {
       this.uploading.set(true);
       this.uploadError.set(null);
-
+      const file = new File([this.croppedBlob], 'avatar.jpg', { type: 'image/jpeg' });
       this.auth.uploadAvatar(file).subscribe({
         next: (res) => {
+          this.uploading.set(false);
+          this.cancelCrop();
+        },
+        error: (err) => {
+          this.uploading.set(false);
+          this.uploadError.set(err.error?.msg || 'Failed to upload image.');
+        }
+      });
+    }
+  }
+
+  removeAvatar() {
+    if (confirm('Are you sure you want to remove your profile picture?')) {
+      this.uploading.set(true);
+      this.auth.updateProfile({ bio: this.bioText(), avatar: null }).subscribe({
+        next: () => {
           this.uploading.set(false);
         },
         error: (err) => {
           this.uploading.set(false);
-          this.uploadError.set(err.error?.msg || 'Failed to upload image. Make sure it is an image under 5MB.');
+          this.uploadError.set('Failed to remove avatar');
         }
       });
     }

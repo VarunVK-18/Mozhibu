@@ -18,16 +18,27 @@ import { StoryService } from '../../core/services/story.service';
       
       <!-- Topbar -->
       <header class="reader-header" [class.hidden]="!showControls()">
-        <button class="back-btn" (click)="goBack()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Back
-        </button>
-        <div class="chapter-info">
-          <span class="story-title">{{ storyTitle }}</span>
-          <span class="chapter-title">{{ chapterTitle }}</span>
-        </div>
+        <nav class="breadcrumbs">
+          <a routerLink="/" class="breadcrumb-item home-link" title="Home">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </a>
+          <span class="separator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </span>
+          <a [routerLink]="['/story', storyId]" class="breadcrumb-item story-link">{{ storyTitle }}</a>
+          <span class="separator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </span>
+          <span class="breadcrumb-item current">{{ chapterTitle }}</span>
+        </nav>
+        
         <div class="header-actions">
           <select (change)="onLangChange($event)" class="lang-select-reader" [value]="langService.currentLang()">
             @for (lang of langService.languages; track lang.code) {
@@ -102,7 +113,7 @@ import { StoryService } from '../../core/services/story.service';
             </button>
           </div>
 
-          <button class="nav-btn" (click)="nextChapter()">
+          <button class="nav-btn" (click)="nextChapter()" [disabled]="currentChapterNum() >= storyEpisodes().length" [style.opacity]="currentChapterNum() >= storyEpisodes().length ? '0.3' : '1'">
             Next
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -159,46 +170,55 @@ import { StoryService } from '../../core/services/story.service';
       transform: translateY(-100%);
     }
 
-    .back-btn {
+    .breadcrumbs {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: none;
-      border: none;
-      color: var(--reader-text);
       font-family: var(--display);
+      font-size: 14px;
       font-weight: 500;
-      font-size: 15px;
-      cursor: pointer;
-      padding: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      flex: 1;
+      margin-right: 16px;
     }
 
-    .chapter-info {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    .story-title {
-      font-size: 12px;
-      font-weight: 600;
+    .breadcrumb-item {
       color: var(--reader-text);
-      opacity: 0.6;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      text-decoration: none;
+      transition: color 0.2s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
     }
 
-    .chapter-title {
-      font-family: var(--display);
-      font-size: 16px;
-      font-weight: 600;
+    .breadcrumb-item:hover:not(.current) {
+      color: var(--reader-accent);
     }
-    
-    .chapter-title {
-      font-family: var(--display);
-      font-size: 16px;
-      font-weight: 600;
+
+    .breadcrumb-item.home-link {
+      opacity: 0.7;
+    }
+
+    .breadcrumb-item.story-link {
+      opacity: 0.85;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .breadcrumb-item.current {
+      font-weight: 700;
+      cursor: default;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .separator {
+      color: var(--reader-border);
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
     }
     
     .header-actions {
@@ -246,6 +266,10 @@ import { StoryService } from '../../core/services/story.service';
       margin: 0 auto;
       line-height: 1.8;
       white-space: pre-wrap;
+    }
+
+    .content-wrapper p, .content-wrapper span, .content-wrapper div {
+      font-size: inherit;
     }
 
     .content-wrapper p {
@@ -381,8 +405,8 @@ import { StoryService } from '../../core/services/story.service';
     
     @media (max-width: 600px) {
       .reading-area { padding: 80px 20px; }
-      .chapter-title { font-size: 14px; }
-      .story-title { font-size: 10px; }
+      .breadcrumb-item.story-link { max-width: 100px; font-size: 12px; }
+      .breadcrumb-item.current { font-size: 12px; }
       .toolbar-content { padding: 0 16px; }
     }
   `]
@@ -550,13 +574,15 @@ export class ReaderComponent implements OnInit, OnDestroy {
   }
 
   nextChapter() {
-    this.currentChapterNum.update(n => n + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { chapter: this.currentChapterNum() },
-      queryParamsHandling: 'merge',
-    });
+    if (this.currentChapterNum() < this.storyEpisodes().length) {
+      this.currentChapterNum.update(n => n + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { chapter: this.currentChapterNum() },
+        queryParamsHandling: 'merge',
+      });
+    }
   }
 
   prevChapter() {

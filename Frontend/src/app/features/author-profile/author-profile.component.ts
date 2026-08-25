@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthorService, AuthorProfile } from '../../core/services/author.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -20,7 +21,7 @@ import { environment } from '../../../environments/environment';
         <!-- Profile Banner -->
         <div class="profile-banner">
           <div class="profile-header">
-            <img [src]="getAvatarUrl(profile.author)" alt="Author avatar" class="author-avatar">
+            <img [src]="getAvatarUrl(profile.author.avatar, profile.author.username)" alt="Author avatar" class="author-avatar" (error)="onAvatarError($event, profile.author.username)">
             <div class="author-info">
               <h1 class="author-name">{{ profile.author.username }}</h1>
               <div class="author-meta">
@@ -63,7 +64,7 @@ import { environment } from '../../../environments/environment';
               @for (item of profile.books; track item._id) {
                 <div class="book-card" [routerLink]="['/story', item._id]">
                   <div class="cover-wrapper">
-                    <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.onerror=null; this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';">
+                    <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" (error)="onCoverError($event)">
                     @if (item.completionStatus === 'completed') {
                       <span class="status-badge completed">Completed</span>
                     } @else {
@@ -333,6 +334,7 @@ export class AuthorProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authorService = inject(AuthorService);
   private authService = inject(AuthService);
+  api = inject(ApiService);
 
   profile: AuthorProfile | null = null;
   isLoading = true;
@@ -362,21 +364,22 @@ export class AuthorProfileComponent implements OnInit {
     });
   }
 
-  getAvatarUrl(author: any): string {
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    if (author.avatar) {
-      if (author.avatar.startsWith('http')) return author.avatar;
-      return `${baseUrl}${author.avatar}`;
-    }
-    const initial = author.username ? author.username.charAt(0).toUpperCase() : 'U';
-    return `https://placehold.co/100x100/333333/999999?text=${initial}`;
+  getAvatarUrl(path: string | undefined, name?: string): string {
+    if (!path) return this.api.getFallbackAvatar(name);
+    return this.api.getImageUrl(path);
+  }
+
+  onAvatarError(event: any, name?: string) {
+    event.target.src = this.api.getFallbackAvatar(name);
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   getCoverUrl(cover: string | undefined): string {
-    if (!cover) return 'https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    if (cover.startsWith('http')) return cover;
-    return `${baseUrl}${cover}`;
+    if (!cover) return this.api.getFallbackCover();
+    return this.api.getImageUrl(cover);
   }
 
   isCurrentUser(): boolean {
@@ -406,17 +409,23 @@ export class AuthorProfileComponent implements OnInit {
     }
     
     if (this.profile) {
+      // Optimistic update for instant feedback
+      this.isFollowing = !this.isFollowing;
+      this.profile.author.followersCount += this.isFollowing ? 1 : -1;
+      
       this.authorService.followAuthor(this.profile.author._id).subscribe({
         next: (res: any) => {
-          this.isFollowing = res.following;
-          if (this.isFollowing) {
-            this.profile!.author.followersCount += 1;
-          } else {
-            this.profile!.author.followersCount -= 1;
+          // Sync with backend if needed
+          if (this.isFollowing !== res.following) {
+             this.isFollowing = res.following;
+             this.profile!.author.followersCount += this.isFollowing ? 1 : -1;
           }
         },
         error: (err) => {
           console.error('Failed to toggle follow', err);
+          // Revert on error
+          this.isFollowing = !this.isFollowing;
+          this.profile!.author.followersCount += this.isFollowing ? 1 : -1;
           alert(err.error?.msg || 'Failed to follow author');
         }
       });

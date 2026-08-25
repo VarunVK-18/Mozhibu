@@ -3,6 +3,7 @@ const { protect } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 const User = require('../models/User');
 const Book = require('../models/Book');
 const ReadingProgress = require('../models/ReadingProgress');
@@ -11,16 +12,8 @@ const { translateBooks } = require('../services/translationService');
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 
-// Configure Multer for Avatar Uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads/avatars'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure Multer for Avatar Uploads (Memory Storage)
+const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -219,6 +212,17 @@ router.post('/follow/:authorId', protect, async (req, res) => {
       authorToFollow.followersCount += 1;
       await user.save();
       await authorToFollow.save();
+
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        recipient: authorToFollow._id,
+        sender: user._id,
+        type: 'follower',
+        title: 'New Follower',
+        message: `${user.username} started following you.`,
+        link: `/profile/${user._id}`
+      });
+
       res.json({ msg: 'Followed successfully', following: true });
     }
   } catch (err) {
@@ -343,10 +347,13 @@ router.post('/me/avatar', protect, upload.single('avatar'), async (req, res) => 
       return res.status(404).json({ msg: 'User not found' });
     }
 
-    // The URL where the frontend can access the image
-    // Note: In production this would be a full URL like https://api.mozhibu.com/uploads/...
-    // For local dev, we just use the relative path so the frontend API interceptor appends the base URL
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // Compress the image and convert to base64
+    const buffer = await sharp(req.file.buffer)
+      .resize(256, 256, { fit: 'cover' }) // Avatars are small
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    
+    const avatarUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
     
     user.avatar = avatarUrl;
     await user.save();
@@ -376,6 +383,9 @@ router.put('/me/profile', protect, async (req, res) => {
 
     if (bio !== undefined) {
       user.bio = bio;
+    }
+    if (req.body.avatar === null || req.body.avatar === '') {
+      user.avatar = '';
     }
 
     await user.save();

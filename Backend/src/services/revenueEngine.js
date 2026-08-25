@@ -78,9 +78,8 @@ const computeMonthlyRevenue = async (year, month, adminUserId, force = false) =>
   // Persist author earnings
   const authorResults = [];
   for (const [authorId, reads] of Object.entries(authorReadsMap)) {
-    // Integer math: multiply then divide to avoid float
     const earnings = totalQualifiedReads > 0
-      ? Math.floor(BigInt(reads) * BigInt(authorsPool) / BigInt(totalQualifiedReads))
+      ? Number(BigInt(reads) * BigInt(authorsPool) / BigInt(totalQualifiedReads))
       : 0;
 
     const status = earnings >= config.minAuthorPayoutInPaise ? 'pending' : 'rolled_over';
@@ -113,7 +112,7 @@ const computeMonthlyRevenue = async (year, month, adminUserId, force = false) =>
   const readerResults = [];
   for (const scoreDoc of engagementScores) {
     const reward = totalPlatformScore > 0
-      ? Math.floor(BigInt(scoreDoc.totalScore) * BigInt(readersPool) / BigInt(totalPlatformScore))
+      ? Number(BigInt(scoreDoc.totalScore) * BigInt(readersPool) / BigInt(totalPlatformScore))
       : 0;
 
     const status = reward >= config.minReaderPayoutInPaise ? 'pending' : 'rolled_over';

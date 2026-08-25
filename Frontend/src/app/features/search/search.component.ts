@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SearchService, SearchParams } from '../../core/services/search.service';
+import { ApiService } from '../../core/services/api.service';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -117,14 +118,14 @@ import { environment } from '../../../environments/environment';
                 
                 @if (activeTab === 'authors') {
                   <div class="author-card" [routerLink]="['/author', item._id]">
-                    <img [src]="getAvatarUrl(item.avatar, item.username)" alt="Author avatar" class="author-avatar">
+                    <img [src]="getAvatarUrl(item.avatar, item.username)" alt="Author avatar" class="author-avatar" (error)="onAvatarError($event, item.username)">
                     <h4 class="author-name">{{ item.username }}</h4>
                     <p class="author-followers">{{ item.followersCount }} Followers</p>
                   </div>
                 } @else {
                   <div class="book-card" [routerLink]="['/story', item._id]">
                     <div class="cover-wrapper">
-                      <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" onerror="this.onerror=null; this.src='https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';">
+                      <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" (error)="onCoverError($event)">
                       @if (item.accessType === 'premium') {
                         <div class="paid-badge">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -620,10 +621,11 @@ import { environment } from '../../../environments/environment';
     }
   `]
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent implements OnInit, OnDestroy {
   private searchService = inject(SearchService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private api = inject(ApiService);
 
   searchQuery = '';
   activeTab = 'stories';
@@ -658,6 +660,10 @@ export class SearchComponent implements OnInit {
     ).subscribe(() => {
       this.onSearch();
     });
+  }
+
+  ngOnDestroy() {
+    this.searchSubject.complete();
   }
 
   onSearchInput(value: string) {
@@ -722,19 +728,20 @@ export class SearchComponent implements OnInit {
   }
 
   getAvatarUrl(avatar: string | undefined, username?: string): string {
-    if (!avatar) {
-      const initial = username ? username.charAt(0).toUpperCase() : 'U';
-      return `https://placehold.co/100x100/333333/999999?text=${initial}`;
-    }
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    if (avatar.startsWith('http')) return avatar;
-    return `${baseUrl}${avatar}`;
+    if (!avatar) return this.api.getFallbackAvatar(username);
+    return this.api.getImageUrl(avatar);
+  }
+
+  onAvatarError(event: any, username?: string) {
+    event.target.src = this.api.getFallbackAvatar(username);
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   getCoverUrl(cover: string | undefined): string {
-    if (!cover) return 'https://placehold.co/400x600/3F6259/FFFFFF?text=Cover';
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    if (cover.startsWith('http')) return cover;
-    return `${baseUrl}${cover}`;
+    if (!cover) return this.api.getFallbackCover();
+    return this.api.getImageUrl(cover);
   }
 }

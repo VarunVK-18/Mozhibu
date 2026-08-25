@@ -9,6 +9,7 @@ import { AdminBook } from '../../core/services/admin.service';
 import { NotificationService, NotificationItem } from '../../core/services/notification.service';
 import { SocketService } from '../../core/services/socket.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
+import { ApiService } from '../../core/services/api.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -24,7 +25,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   mobileMenuOpen = signal(false);
   searchOpen = signal(false);
   notificationsOpen = signal(false);
+  engagementOpen = signal(false);
   showAuthorModal = signal(false);
+  isHeaderHidden = signal(false);
+  private lastScrollY = 0;
   
   notifications = signal<NotificationItem[]>([]);
   unreadCount = signal(0);
@@ -41,6 +45,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private socketService = inject(SocketService);
   private subService = inject(SubscriptionService);
+  private api = inject(ApiService);
 
   onSearchInput(event: Event): void {
     const query = (event.target as HTMLInputElement).value;
@@ -53,11 +58,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.searchResults = [];
     }
   }
-
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    return this.api.getImageUrl(path);
+  }
+
+  onAvatarError(event: any, name?: string, isCover: boolean = false) {
+    if (isCover) {
+      event.target.src = this.api.getFallbackCover();
+    } else {
+      event.target.src = this.api.getFallbackAvatar(name);
+    }
   }
 
   onWriteClick(event: Event) {
@@ -108,6 +119,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.searchOpen.update(v => !v);
     if (this.searchOpen()) {
       this.notificationsOpen.set(false);
+      this.engagementOpen.set(false);
       this.profileMenuOpen.set(false);
       this.langMenuOpen.set(false);
     }
@@ -117,6 +129,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notificationsOpen.update(v => !v);
     if (this.notificationsOpen()) {
       this.searchOpen.set(false);
+      this.engagementOpen.set(false);
+      this.profileMenuOpen.set(false);
+      this.langMenuOpen.set(false);
+    }
+  }
+
+  toggleEngagement(): void {
+    this.engagementOpen.update(v => !v);
+    if (this.engagementOpen()) {
+      this.searchOpen.set(false);
+      this.notificationsOpen.set(false);
       this.profileMenuOpen.set(false);
       this.langMenuOpen.set(false);
     }
@@ -143,15 +166,48 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!target.closest('.lang-dropdown-wrapper')) {
       this.langMenuOpen.set(false);
     }
+    if (!target.closest('.search-wrapper') && !target.closest('.icon-btn[aria-label="Search"]')) {
+      this.searchOpen.set(false);
+    }
     if (!target.closest('.user-profile-wrapper')) {
       this.profileMenuOpen.set(false);
     }
     if (!target.closest('.notifications-wrapper') && !target.closest('.icon-btn[aria-label="Notifications"]')) {
       this.notificationsOpen.set(false);
     }
+    if (!target.closest('.engagement-wrapper') && !target.closest('.icon-btn[aria-label="Engagement"]')) {
+      this.engagementOpen.set(false);
+    }
     if (!target.closest('.mobile-menu-container') && !target.closest('.hamburger-btn')) {
       this.mobileMenuOpen.set(false);
     }
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    
+    // If scrolling down and past the header height, hide it
+    if (currentScrollY > this.lastScrollY && currentScrollY > 80) {
+      if (!this.isHeaderHidden()) {
+        this.isHeaderHidden.set(true);
+        // Close dropdowns when hiding header
+        this.searchOpen.set(false);
+        this.langMenuOpen.set(false);
+        this.profileMenuOpen.set(false);
+        this.notificationsOpen.set(false);
+        this.engagementOpen.set(false);
+      }
+    } 
+    // If scrolling up, show it
+    else if (currentScrollY < this.lastScrollY) {
+      if (this.isHeaderHidden()) {
+        this.isHeaderHidden.set(false);
+      }
+    }
+    
+    // For Mobile or negative scrolling
+    this.lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
   }
 
   constructor() {}

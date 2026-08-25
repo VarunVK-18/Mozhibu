@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Announcement {
@@ -20,9 +20,28 @@ export interface Announcement {
         <span class="date">{{ announcement.date }}</span>
       </div>
       <h4 class="title">{{ announcement.title }}</h4>
-      <p class="content">{{ announcement.content }}</p>
-      <button class="read-more">Read More →</button>
+      <div class="content-wrapper">
+        <div class="content" [innerHTML]="announcement.content"></div>
+        <div class="fade-out"></div>
+      </div>
+      <button class="read-more" (click)="openModal()">Read More →</button>
     </div>
+
+    <!-- Read More Modal -->
+    @if (isModalOpen()) {
+      <div class="modal-overlay" (click)="closeModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <button class="close-btn" (click)="closeModal()">×</button>
+          
+          <div class="modal-header">
+            <span class="type-badge" [ngClass]="announcement.type">{{ announcement.type }}</span>
+            <span class="date">{{ announcement.date }}</span>
+          </div>
+          <h2 class="modal-title">{{ announcement.title }}</h2>
+          <div class="modal-body" [innerHTML]="announcement.content"></div>
+        </div>
+      </div>
+    }
   `,
   styles: [`
     .announcement-card {
@@ -70,12 +89,29 @@ export interface Announcement {
       margin-bottom: 8px;
       line-height: 1.3;
     }
+    .content-wrapper {
+      position: relative;
+      flex-grow: 1;
+      margin-bottom: 16px;
+    }
     .content {
       font-size: 13.5px;
       color: var(--ink-soft);
       line-height: 1.6;
-      margin-bottom: 20px;
-      flex-grow: 1;
+      max-height: 80px;
+      overflow: hidden;
+    }
+    /* Simple styling for rendered HTML */
+    .content ::ng-deep p { margin-bottom: 8px; }
+    .content ::ng-deep a { color: var(--forest); text-decoration: none; }
+    
+    .fade-out {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0), var(--card));
     }
     .read-more {
       align-self: flex-start;
@@ -92,8 +128,69 @@ export interface Announcement {
     .read-more:hover {
       color: var(--gold);
     }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-content {
+      background: var(--paper);
+      border-radius: var(--radius-l);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--ink-soft);
+    }
+    .modal-header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-title {
+      font-size: 28px;
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+    .modal-body {
+      font-size: 16px;
+      color: var(--ink);
+      line-height: 1.8;
+    }
+    .modal-body ::ng-deep p { margin-bottom: 16px; }
+    .modal-body ::ng-deep a { color: var(--forest); text-decoration: underline; }
+    .modal-body ::ng-deep ul { padding-left: 20px; margin-bottom: 16px; }
   `]
 })
 export class AnnouncementCardComponent {
   @Input() announcement!: Announcement;
+  isModalOpen = signal(false);
+
+  openModal() {
+    this.isModalOpen.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeModal() {
+    this.isModalOpen.set(false);
+    document.body.style.overflow = '';
+  }
 }

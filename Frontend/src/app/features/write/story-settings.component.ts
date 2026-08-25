@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-story-settings',
@@ -37,19 +38,24 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
               <div class="settings-sidebar">
                 <div class="form-group">
                   <label>Cover Image</label>
-                  <div class="cover-upload" (click)="fileInput.click()">
-                    <input type="file" #fileInput hidden accept="image/*" (change)="fileChangeEvent($event)">
-                    @if (coverPreviewUrl()) {
-                      <img [src]="coverPreviewUrl()" class="cover-preview-img">
-                    } @else {
-                      <div class="cover-placeholder">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                          <circle cx="8.5" cy="8.5" r="1.5"/>
-                          <polyline points="21 15 16 10 5 21"/>
-                        </svg>
-                        <span>Upload Cover</span>
-                      </div>
+                  <div class="cover-upload-container">
+                    <div class="cover-upload" (click)="fileInput.click()">
+                      <input type="file" #fileInput hidden accept="image/*" (change)="fileChangeEvent($event)">
+                      @if (coverPreviewUrl()) {
+                        <img [src]="coverPreviewUrl()" class="cover-preview-img">
+                      } @else {
+                        <div class="cover-placeholder">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                          <span>Upload Cover</span>
+                        </div>
+                      }
+                    </div>
+                    @if (coverPreviewUrl() || story.cover) {
+                      <button (click)="removeCover()" class="btn-text-error">Remove Cover</button>
                     }
                   </div>
                 </div>
@@ -240,15 +246,33 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
       aspect-ratio: 2 / 3;
       height: auto;
       background: var(--surface);
-      border: 2px dashed var(--border);
-      border-radius: 12px;
+      border: 2px dashed var(--border-soft);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+      background: var(--surface-alt);
+      transition: all 0.2s;
+    }
+
+    .cover-upload-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .btn-text-error {
+      background: none;
+      border: none;
+      color: var(--error);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
     }
     
     .cover-upload:hover {
@@ -441,6 +465,7 @@ export class StorySettingsComponent implements OnInit {
 
   bookId: string | null = null;
   coverPreviewUrl = signal<string | null>(null);
+  hasRemovedCover = false;
 
   isLoading = true;
   isSaving = false;
@@ -451,7 +476,8 @@ export class StorySettingsComponent implements OnInit {
     genre: '',
     description: '',
     tags: '',
-    series: ''
+    series: '',
+    cover: null as string | null
   };
 
   ngOnInit() {
@@ -476,7 +502,9 @@ export class StorySettingsComponent implements OnInit {
         this.story.series = book.series || '';
         
         if (book.cover) {
-          this.coverPreviewUrl.set(book.cover);
+          const serverUrl = environment.apiUrl.replace('/api', '');
+          const coverUrl = book.cover.startsWith('http') ? book.cover : `${serverUrl}${book.cover}`;
+          this.coverPreviewUrl.set(coverUrl);
         }
         
         this.isLoading = false;
@@ -531,6 +559,13 @@ export class StorySettingsComponent implements OnInit {
     this.activeBlob = null;
   }
 
+  removeCover() {
+    this.croppedBlob = null;
+    this.coverPreviewUrl.set(null);
+    this.hasRemovedCover = true;
+    this.story.cover = null;
+  }
+
   saveSettings() {
     if (!this.bookId || !this.story.title || !this.story.genre) {
       this.errorMessage = 'Please fill out the story title and genre.';
@@ -552,6 +587,10 @@ export class StorySettingsComponent implements OnInit {
       series: this.story.series || undefined,
     };
     
+    if (this.hasRemovedCover) {
+      bookData.cover = null;
+    }
+
     // Only upload if a new cover was cropped
     if (this.croppedBlob) {
       const file = new File([this.croppedBlob], 'cover.jpg', { type: 'image/jpeg' });

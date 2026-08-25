@@ -1,6 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 export interface UserProfile {
@@ -18,9 +19,7 @@ export interface UserProfile {
   imports: [CommonModule, RouterModule],
   template: `
     <div class="user-card" [routerLink]="['/author', user.id]">
-      <div class="user-avatar" [ngStyle]="{'background-image': 'url(' + user.avatar + ')'}">
-        <span *ngIf="!user.avatar">{{ user.name.charAt(0) }}</span>
-      </div>
+      <img [src]="user.avatar" (error)="onAvatarError($event)" [alt]="user.name" class="user-avatar" style="object-fit: cover;">
       <h4 class="user-name">{{ user.name }}</h4>
       <div class="user-followers">{{ formatFollowers(user.followers) }} followers</div>
       <button class="follow-btn" [class.following]="user.isFollowing" (click)="toggleFollow($event)">
@@ -136,6 +135,11 @@ export interface UserProfile {
 export class UserCardComponent {
   @Input() user!: UserProfile;
   private authService = inject(AuthService);
+  private api = inject(ApiService);
+
+  onAvatarError(event: any) {
+    event.target.src = this.api.getFallbackAvatar(this.user.name);
+  }
 
   formatFollowers(num: string | number): string {
     if (typeof num === 'string') return num;
@@ -149,16 +153,30 @@ export class UserCardComponent {
       alert('Please log in to follow authors.');
       return;
     }
+    
+    // Optimistic update for instant feedback
+    this.user.isFollowing = !this.user.isFollowing;
+    if (typeof this.user.followers === 'number') {
+      this.user.followers += this.user.isFollowing ? 1 : -1;
+    }
+    
     this.authService.followAuthor(this.user.id).subscribe({
       next: (res) => {
-        this.user.isFollowing = res.following;
-        // Optionally update follower count visually
-        if (typeof this.user.followers === 'number') {
-          this.user.followers += res.following ? 1 : -1;
+        // Sync with backend if needed
+        if (this.user.isFollowing !== res.following) {
+          this.user.isFollowing = res.following;
+          if (typeof this.user.followers === 'number') {
+            this.user.followers += this.user.isFollowing ? 1 : -1;
+          }
         }
       },
       error: (err) => {
         console.error('Failed to toggle follow', err);
+        // Revert on error
+        this.user.isFollowing = !this.user.isFollowing;
+        if (typeof this.user.followers === 'number') {
+          this.user.followers += this.user.isFollowing ? 1 : -1;
+        }
       }
     });
   }

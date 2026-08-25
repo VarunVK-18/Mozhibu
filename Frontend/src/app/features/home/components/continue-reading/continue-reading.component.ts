@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { BookService } from '../../../../core/services/book.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ApiService } from '../../../../core/services/api.service';
 
 interface ReadingItem {
   id?: string;
@@ -25,7 +26,13 @@ interface ReadingItem {
 export class ContinueReadingComponent implements OnInit {
   bookService = inject(BookService);
   authService = inject(AuthService);
+  api = inject(ApiService);
+  router = inject(Router);
   items: ReadingItem[] = [];
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
+  }
 
   ngOnInit() {
     if (this.authService.user()) {

@@ -129,7 +129,7 @@ export class BooksComponent implements OnInit {
   books = signal<AdminBook[]>([]);
   searchQuery = signal('');
   loading = signal(true);
-  statusFilter = 'pending';
+  statusFilter = 'all';
   
   filteredBooks = computed(() => {
     const q = this.searchQuery().toLowerCase();

@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 const Book = require('../models/Book');
 const Chapter = require('../models/Chapter');
 const Review = require('../models/Review');
@@ -13,15 +14,7 @@ const { translateBooks, translateChapters } = require('../services/translationSe
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads/covers'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -35,12 +28,25 @@ const upload = multer({
 });
 
 // @route POST /api/books/cover
-// @desc Upload a cover image and get its URL
-router.post('/cover', protect, author, upload.single('cover'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ msg: 'No file uploaded' });
+// @desc Upload a cover image and get its URL (Base64)
+router.post('/cover', protect, author, upload.single('cover'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ msg: 'No file uploaded' });
+    }
+    
+    // Compress the image and convert to base64
+    const buffer = await sharp(req.file.buffer)
+      .resize(600, 900, { fit: 'cover' }) // Typical book cover ratio (2:3)
+      .jpeg({ quality: 80 })
+      .toBuffer();
+    
+    const coverUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+    res.json({ coverUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server Error processing image' });
   }
-  res.json({ coverUrl: `/uploads/covers/${req.file.filename}` });
 });
 const getGenAI = () => {
   const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
@@ -311,8 +317,11 @@ router.post('/:id/reviews', protect, async (req, res) => {
     const review = await newReview.save();
     
     // Update book rating
-    const reviews = await Review.find({ book: req.params.id, status: 'approved' });
-    const avgRating = reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length;
+    const reviews = await Review.find({ book: req.params.id, status: 'approved', parentReview: { $exists: false } });
+    let avgRating = 0;
+    if (reviews.length > 0) {
+      avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / reviews.length;
+    }
     book.rating = avgRating;
     await book.save();
 

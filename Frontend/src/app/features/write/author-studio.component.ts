@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ApiService } from '../../core/services/api.service';
 
 interface AuthorStory {
   id: string;
@@ -98,7 +99,9 @@ interface AuthorStory {
             <div class="stories-list">
               @for (story of filteredStories; track story._id) {
                 <div class="story-card">
-                  <img [src]="story.cover || 'assets/default-cover.png'" [alt]="story.title" class="story-cover">
+                  <div class="cover-wrapper">
+                    <img [src]="api.getImageUrl(story.cover) || 'assets/default-cover.png'" [alt]="story.title" class="story-cover" (error)="onCoverError($event)">
+                  </div>
                   
                   <div class="story-details">
                     <div class="story-header">
@@ -412,6 +415,7 @@ interface AuthorStory {
 export class AuthorStudioComponent implements OnInit {
   private bookService = inject(BookService);
   private authService = inject(AuthService);
+  api = inject(ApiService);
   
   myStories: any[] = [];
   isLoading = true;
@@ -424,6 +428,10 @@ export class AuthorStudioComponent implements OnInit {
   ngOnInit() {
     this.userFollowers = this.authService.user()?.followersCount || 0;
     this.fetchStories();
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   fetchStories() {
