@@ -15,7 +15,9 @@ const UserSchema = new mongoose.Schema({
   avatar: { type: String },
   bio: { type: String, default: '' },
   savedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
-  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  resetPasswordToken: { type: String },
+  resetPasswordExpire: { type: Date }
 }, {
   timestamps: true
 });

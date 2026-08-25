@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, GoogleSigninButtonModule],
   template: `
     <div class="login-wrap">
       <div class="login-card">
@@ -32,8 +33,11 @@ import { AuthService } from '../../../core/services/auth.service';
                 <svg *ngIf="showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
               </button>
             </div>
-            <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" class="validation-error">
+            <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" class="field-error">
               Password is required.
+            </div>
+            <div class="forgot-link">
+              <a routerLink="/forgot-password">Forgot Password?</a>
             </div>
           </div>
 
@@ -44,6 +48,13 @@ import { AuthService } from '../../../core/services/auth.service';
           <button type="submit" class="btn btn-primary" [disabled]="isLoading">
             {{ isLoading ? 'Signing in...' : 'Sign In' }}
           </button>
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
+          <div class="social-login">
+            <asl-google-signin-button type="standard" size="large" text="signin_with" shape="rectangular" theme="outline"></asl-google-signin-button>
+          </div>
         </form>
         
         <div class="signup-link">
@@ -124,8 +135,25 @@ import { AuthService } from '../../../core/services/auth.service';
       padding: 0;
       transition: color 0.2s;
     }
-    .eye-btn:hover {
-      color: var(--ink);
+    .forgot-link {
+      text-align: right;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+    .forgot-link a {
+      color: var(--forest);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .forgot-link a:hover {
+      text-decoration: underline;
+    }
+    .field-error {
+      color: var(--rose);
+      font-size: 11px;
+      margin-top: 6px;
+      line-height: 1.3;
+      display: block;
     }
     .error-msg {
       color: var(--rose);
@@ -163,6 +191,29 @@ import { AuthService } from '../../../core/services/auth.service';
     .signup-link a:hover {
       text-decoration: underline;
     }
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+      color: var(--ink-faint);
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .divider span {
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .social-login {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
     @media (max-width: 600px) {
       .login-wrap {
         padding: 24px 16px;
@@ -178,11 +229,42 @@ export class LoginComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
   fb = inject(FormBuilder);
+  socialAuthService = inject(SocialAuthService);
 
   returnUrl = '/';
 
   ngOnInit() {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+
+    this.socialAuthService.authState.subscribe((user) => {
+      console.log('Google Auth State Emitted:', user);
+      if (user && user.idToken) {
+        this.isLoading = true;
+        this.auth.loginWithGoogle(user.idToken).subscribe({
+          next: (res) => {
+            console.log('Backend response:', res);
+            this.isLoading = false;
+            if (res.isNewUser) {
+              sessionStorage.setItem('pendingGoogleUser', JSON.stringify(res.googleData));
+              this.router.navigate(['/complete-profile']);
+            } else if (res.user && res.user.role === 'superadmin') {
+              this.router.navigate(['/admin']);
+            } else {
+              this.router.navigateByUrl(this.returnUrl);
+            }
+          },
+          error: (err) => {
+            console.error('Backend Error:', err);
+            this.isLoading = false;
+            this.errorMessage = err.error?.msg || err.message || 'An error occurred during Google sign in.';
+            alert('Error from backend: ' + this.errorMessage);
+          }
+        });
+      } else if (user) {
+        console.warn('User emitted but no idToken present!', user);
+        alert('Google popup closed, but no ID token was received.');
+      }
+    });
   }
 
   loginForm: FormGroup = this.fb.group({

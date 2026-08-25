@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 
 export function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -13,7 +14,7 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, GoogleSigninButtonModule],
   template: `
     <div class="signup-wrap">
       <div class="signup-card">
@@ -56,38 +57,44 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
           <div class="form-row">
             <div class="form-group">
               <label>Username</label>
-              <input type="text" formControlName="username" class="form-control" placeholder="Choose a username" />
+              <input type="text" formControlName="username" class="form-control" placeholder="ravi123" (input)="onUsernameInput($event)" />
+              <div *ngIf="signupForm.get('username')?.touched && signupForm.get('username')?.hasError('pattern')" class="field-error">
+                Username can only contain letters and numbers.
+              </div>
             </div>
             <div class="form-group">
               <label>Mobile</label>
-              <input type="text" formControlName="mobile" class="form-control" placeholder="Phone number" />
+              <input type="text" formControlName="mobile" class="form-control" placeholder="9876543210" />
+              <div *ngIf="signupForm.get('mobile')?.touched && signupForm.get('mobile')?.hasError('pattern')" class="field-error">
+                Mobile number must be exactly 10 digits.
+              </div>
             </div>
           </div>
 
           <div class="form-group">
             <label>Email</label>
-            <input type="email" formControlName="email" class="form-control" placeholder="Enter your email" />
+            <input type="email" formControlName="email" class="form-control" placeholder="use@gmail.com" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label>Password</label>
               <div class="input-wrapper">
-                <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="form-control" placeholder="8+ chars, 1 capital, 1 number" />
+                <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="form-control" placeholder="••••••••" />
                 <button type="button" class="eye-btn" (click)="togglePassword()">
                   <svg *ngIf="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   <svg *ngIf="showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 </button>
               </div>
-              <div *ngIf="signupForm.get('password')?.invalid && signupForm.get('password')?.touched" class="field-error">
-                Must be 8+ characters, with at least 1 capital letter and 1 number.
+              <div *ngIf="signupForm.get('password')?.touched && signupForm.get('password')?.hasError('pattern')" class="field-error">
+                Password must be 8-16 characters, have 1 uppercase, 1 number, and no emojis.
               </div>
             </div>
             
             <div class="form-group">
               <label>Confirm Password</label>
               <div class="input-wrapper">
-                <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" class="form-control" placeholder="Confirm password" />
+                <input [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" class="form-control" placeholder="••••••••" />
                 <button type="button" class="eye-btn" (click)="toggleConfirmPassword()">
                   <svg *ngIf="!showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   <svg *ngIf="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
@@ -112,8 +119,19 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
               </select>
             </div>
             <div class="form-group">
-              <label>Favorite Genres</label>
-              <input type="text" formControlName="favoriteGenres" class="form-control" placeholder="e.g. Romance, Sci-Fi" />
+              <label>Favorite Genres (Optional)</label>
+              <select formControlName="favoriteGenres" class="form-control">
+                <option value="" disabled>Select a genre</option>
+                <option value="Action">Action</option>
+                <option value="Romance">Romance</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+                <option value="Fantasy">Fantasy</option>
+                <option value="Mystery">Mystery</option>
+                <option value="Horror">Horror</option>
+                <option value="Thriller">Thriller</option>
+                <option value="Comedy">Comedy</option>
+                <option value="Drama">Drama</option>
+              </select>
             </div>
           </div>
 
@@ -121,9 +139,17 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
             {{ errorMessage }}
           </div>
 
-          <button type="submit" class="btn btn-primary" [disabled]="signupForm.invalid || isLoading">
+          <button type="submit" class="btn btn-primary" [disabled]="isLoading">
             {{ isLoading ? 'Creating account...' : 'Sign Up' }}
           </button>
+          
+          <div class="divider">
+            <span>OR</span>
+          </div>
+
+          <div class="social-login">
+            <asl-google-signin-button type="standard" size="large" text="signup_with" shape="rectangular" theme="outline"></asl-google-signin-button>
+          </div>
         </form>
         
         <div class="login-link">
@@ -277,7 +303,9 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     .field-error {
       color: var(--rose);
       font-size: 11px;
-      margin-top: 4px;
+      margin-top: 6px;
+      line-height: 1.3;
+      display: block;
     }
     .error-msg {
       color: var(--rose);
@@ -310,6 +338,29 @@ export function passwordMatchValidator(control: AbstractControl): ValidationErro
     .login-link a:hover {
       text-decoration: underline;
     }
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+      color: var(--ink-faint);
+    }
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .divider span {
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .social-login {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
     @media (max-width: 600px) {
       .signup-wrap {
         padding: 24px 16px;
@@ -333,24 +384,55 @@ export class SignupComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
   fb = inject(FormBuilder);
+  socialAuthService = inject(SocialAuthService);
   
   returnUrl = '/';
 
   ngOnInit() {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+    
+    this.socialAuthService.authState.subscribe((user) => {
+      console.log('Google Auth State Emitted:', user);
+      if (user && user.idToken) {
+        this.isLoading = true;
+        this.auth.loginWithGoogle(user.idToken).subscribe({
+          next: (res) => {
+            console.log('Backend response:', res);
+            this.isLoading = false;
+            if (res.isNewUser) {
+              sessionStorage.setItem('pendingGoogleUser', JSON.stringify(res.googleData));
+              this.router.navigate(['/complete-profile']);
+            } else if (res.user && res.user.role === 'superadmin') {
+              this.router.navigate(['/admin']);
+            } else {
+              this.router.navigateByUrl(this.returnUrl);
+            }
+          },
+          error: (err) => {
+            console.error('Backend Error:', err);
+            this.isLoading = false;
+            this.errorMessage = err.error?.msg || err.message || 'An error occurred during Google sign up.';
+            alert('Error from backend: ' + this.errorMessage);
+          }
+        });
+      } else if (user) {
+        console.warn('User emitted but no idToken present!', user);
+        alert('Google popup closed, but no ID token was received.');
+      }
+    });
   }
 
   // Regex: At least 8 chars, 1 uppercase, 1 number
   passwordRegex = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
 
   signupForm: FormGroup = this.fb.group({
-    username: ['', Validators.required],
+    username: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9]+$/)]],
+    mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
     email: ['', [Validators.required, Validators.email]],
-    mobile: ['', Validators.required],
-    password: ['', [Validators.required, Validators.pattern(this.passwordRegex)]],
+    password: ['', [Validators.required, Validators.pattern(/^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/)]],
     confirmPassword: ['', Validators.required],
     preferredLanguage: ['', Validators.required],
-    favoriteGenres: ['', Validators.required],
+    favoriteGenres: [''],
     role: ['reader', Validators.required]
   }, { validators: passwordMatchValidator });
 
@@ -358,6 +440,23 @@ export class SignupComponent implements OnInit {
   isLoading = false;
   showPassword = false;
   showConfirmPassword = false;
+
+  onUsernameInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+    
+    // Remove any non-alphanumeric characters
+    value = value.replace(/[^a-zA-Z0-9\s]/g, '');
+
+    // Convert to camelCase
+    value = value.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
+      return index === 0 ? word.toLowerCase() : word.toUpperCase();
+    }).replace(/\s+/g, '');
+
+    this.signupForm.patchValue({ username: value }, { emitEvent: false });
+    // Update the input value directly so the user sees the change immediately
+    input.value = value;
+  }
 
   togglePassword() {
     this.showPassword = !this.showPassword;
@@ -368,7 +467,11 @@ export class SignupComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.signupForm.invalid) return;
+    if (this.signupForm.invalid) {
+      this.errorMessage = 'Please fill out all mandatory details correctly.';
+      this.signupForm.markAllAsTouched();
+      return;
+    }
 
     this.isLoading = true;
     this.errorMessage = '';

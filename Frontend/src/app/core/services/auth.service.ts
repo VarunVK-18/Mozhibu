@@ -43,6 +43,22 @@ export class AuthService {
     );
   }
 
+  loginWithGoogle(token: string): Observable<any> {
+    return this.api.post('/auth/google', { token }).pipe(
+      tap((res: any) => {
+        if (!res.isNewUser) {
+          this.handleAuthResponse(res);
+        }
+      })
+    );
+  }
+
+  completeGoogleProfile(userData: any): Observable<any> {
+    return this.api.post('/auth/complete-profile', userData).pipe(
+      tap((res: any) => this.handleAuthResponse(res))
+    );
+  }
+
   upgradeRole(): Observable<any> {
     return this.api.put('/users/upgrade-role', {}).pipe(
       tap((res: any) => this.handleAuthResponse(res))
@@ -99,7 +115,6 @@ export class AuthService {
       })
     );
   }
-
   updateProfile(data: { bio: string }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {
@@ -113,6 +128,14 @@ export class AuthService {
         }
       })
     );
+  }
+
+  forgotPassword(email: string): Observable<any> {
+    return this.api.post('/auth/forgot-password', { email });
+  }
+
+  resetPassword(token: string, password: string): Observable<any> {
+    return this.api.post('/auth/reset-password', { token, password });
   }
 
   updateReadingProgress(bookId: string, chapterId?: string, progressPercentage?: number): Observable<any> {
