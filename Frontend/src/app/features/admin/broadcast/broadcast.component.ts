@@ -104,7 +104,7 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
                     <td>
                       <div class="title-cell">
                         <span class="broadcast-title">{{ item.title }}</span>
-                        <span class="broadcast-sender">Sent by {{ item.sentBy?.username || 'Unknown' }}</span>
+                        <span class="broadcast-sender">Sent by {{ item.sentBy.username || 'Unknown' }}</span>
                       </div>
                     </td>
                     <td>
