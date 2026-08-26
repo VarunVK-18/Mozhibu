@@ -225,8 +225,8 @@ export class StoryDetailComponent implements OnInit {
         clearInterval(checkStory);
         const genre = story.genres?.[0] || '';
         this.bookService.getBooks('popular', genre).subscribe({
-          next: (books: any[]) => {
-            const related = books
+          next: (res: any) => {
+            const related = res.books
               .filter((b: any) => b._id !== currentBookId)
               .slice(0, 4)
               .map((b: any) => ({

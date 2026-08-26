@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { StoryCardComponent, Story } from '../story-card/story-card.component';
@@ -28,8 +28,8 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
         </div>
       </div>
       
-      <div class="scroll-container" #scrollContainer>
-        <div class="stories-track" *ngIf="!isLoading">
+      <div class="scroll-container" #scrollContainer (scroll)="onScroll($event)">
+        <div class="stories-track" *ngIf="!isLoading || stories.length > 0">
           <app-story-card 
             *ngFor="let story of stories" 
             [story]="story"
@@ -37,10 +37,12 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
           </app-story-card>
         </div>
         
-        <!-- Local Loading Buffer -->
-        <div class="section-loader-container" *ngIf="isLoading">
-          <div class="section-loading-bar">
-            <div class="section-loading-progress"></div>
+        <!-- Skeleton Loader -->
+        <div class="stories-track skeleton-track" *ngIf="isLoading">
+          <div class="story-item skeleton-card" *ngFor="let i of [1,2,3,4,5]">
+            <div class="skeleton-cover"></div>
+            <div class="skeleton-title"></div>
+            <div class="skeleton-author"></div>
           </div>
         </div>
       </div>
@@ -121,27 +123,37 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
       width: 200px;
       flex-shrink: 0;
     }
-    .section-loader-container {
-      width: 100%;
-      height: 250px;
+    .skeleton-track {
+      gap: 24px;
+    }
+    .skeleton-card {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
     }
-    .section-loading-bar {
-      width: 150px;
-      height: 4px;
-      background-color: rgba(194, 159, 96, 0.2);
-      border-radius: 100px;
-      overflow: hidden;
-    }
-    .section-loading-progress {
+    .skeleton-cover {
       width: 100%;
-      height: 100%;
-      background: var(--gold);
-      transform-origin: 0% 50%;
+      height: 300px;
+      border-radius: var(--radius-m);
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
       animation: loadingSlide 1.5s infinite linear;
-      border-radius: 100px;
+    }
+    .skeleton-title {
+      width: 80%;
+      height: 16px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
+      animation: loadingSlide 1.5s infinite linear;
+    }
+    .skeleton-author {
+      width: 60%;
+      height: 14px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
+      animation: loadingSlide 1.5s infinite linear;
     }
     @media (max-width: 768px) {
       .story-item {
@@ -173,8 +185,18 @@ export class StorySectionComponent {
   @Input() stories: Story[] = [];
   @Input() viewAllLink?: string;
   @Input() isLoading: boolean = false;
+  
+  @Output() loadMore = new EventEmitter<void>();
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+
+  onScroll(event: any) {
+    const el = event.target;
+    // If scrolled to within 50px of the right edge, emit loadMore
+    if (el.scrollWidth - el.scrollLeft - el.clientWidth < 50) {
+      this.loadMore.emit();
+    }
+  }
 
   scrollLeft() {
     if (this.scrollContainer) {

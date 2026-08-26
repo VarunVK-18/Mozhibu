@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SafeUrlPipe } from '../../../shared/pipes/safe-url.pipe';
 
 export interface UserProfile {
   id: string;
@@ -16,10 +17,10 @@ export interface UserProfile {
 @Component({
   selector: 'app-user-card',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="user-card" [routerLink]="['/author', user.id]">
-      <img [src]="user.avatar" (error)="onAvatarError($event)" [alt]="user.name" class="user-avatar" style="object-fit: cover;">
+      <img [src]="user.avatar | safeUrl" (error)="onAvatarError($event)" [alt]="user.name" class="user-avatar" style="object-fit: cover;">
       <h4 class="user-name">{{ user.name }}</h4>
       <div class="user-followers">{{ formatFollowers(user.followers) }} followers</div>
       <button class="follow-btn" [class.following]="user.isFollowing" (click)="toggleFollow($event)">

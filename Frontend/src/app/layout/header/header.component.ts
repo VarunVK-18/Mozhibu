@@ -2,6 +2,7 @@ import { Component, HostListener, signal, computed, OnInit, OnDestroy, inject } 
 import { CommonModule } from '@angular/common';
 import { LanguageService, Lang, LangOption } from '../../core/services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { AuthService } from '../../core/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
@@ -15,7 +16,7 @@ import { Subject, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, RouterModule],
+  imports: [CommonModule, TranslatePipe, RouterModule, SafeUrlPipe],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css'],
 })

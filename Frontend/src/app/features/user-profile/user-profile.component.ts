@@ -6,19 +6,20 @@ import { AuthorService, AuthorProfile } from '../../core/services/author.service
 import { ApiService } from '../../core/services/api.service';
 import { finalize } from 'rxjs/operators';
 import { StoryCardComponent } from '../../shared/components/story-card/story-card.component';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, StoryCardComponent],
+  imports: [CommonModule, RouterModule, StoryCardComponent, SafeUrlPipe],
   template: `
     <div class="profile-layout">
       <!-- Profile Banner -->
       <div class="profile-banner">
         <div class="profile-header">
-          <img [src]="getAvatarUrl(user()?.avatar, user()?.username)" alt="User avatar" class="author-avatar" (error)="onAvatarError($event, user()?.username)">
+          <img [src]="getAvatarUrl(user()?.avatar, user()?.username) | safeUrl" alt="User avatar" class="author-avatar" (error)="onAvatarError($event, user()?.username)">
           <div class="author-info">
             <h1 class="author-name">{{ user()?.username }}</h1>
             <div class="author-meta">

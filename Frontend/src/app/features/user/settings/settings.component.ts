@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -42,7 +43,7 @@ import { AuthService } from '../../../core/services/auth.service';
             
             <div class="avatar-upload-section">
               <div class="avatar-preview" 
-                   [style.backgroundImage]="auth.user()?.avatar ? 'url(' + getAvatarUrl(auth.user()?.avatar) + ')' : 'none'"
+                   [style.backgroundImage]="getAvatarStyle()"
                    (click)="fileInput.click()">
                 <span *ngIf="!auth.user()?.avatar">{{ auth.user()?.username?.charAt(0) }}</span>
                 <div class="upload-overlay">
@@ -597,8 +598,9 @@ import { AuthService } from '../../../core/services/auth.service';
   `]
 })
 export class SettingsComponent implements OnInit {
-  auth = inject(AuthService);
-  api = inject(ApiService);
+  public auth = inject(AuthService);
+  private api = inject(ApiService);
+  private sanitizer = inject(DomSanitizer);
   router = inject(Router);
   route = inject(ActivatedRoute);
   
@@ -678,6 +680,12 @@ export class SettingsComponent implements OnInit {
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
     return this.api.getImageUrl(path);
+  }
+
+  getAvatarStyle(): SafeStyle {
+    const avatar = this.auth.user()?.avatar;
+    if (!avatar) return this.sanitizer.bypassSecurityTrustStyle('none');
+    return this.sanitizer.bypassSecurityTrustStyle(`url(${this.getAvatarUrl(avatar)})`);
   }
 
   imageChangedEvent: any = '';

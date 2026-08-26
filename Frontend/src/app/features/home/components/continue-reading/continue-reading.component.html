@@ -12,7 +12,7 @@
       <div class="cr-card" [routerLink]="['/story', item.id]" [queryParams]="{resume: 'true'}" style="cursor: pointer;">
         <div class="cr-cover" [ngClass]="item.colorClass">
           @if (item.cover) {
-            <img [src]="api.getImageUrl(item.cover)" [alt]="item.title" class="cr-cover-img" (error)="onCoverError($event)" />
+            <img [src]="api.getImageUrl(item.cover) | safeUrl" [alt]="item.title" class="cr-cover-img" (error)="onCoverError($event)" />
           } @else {
             <span>{{ item.initials }}</span>
           }

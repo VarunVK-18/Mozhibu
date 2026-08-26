@@ -228,8 +228,9 @@ export class CategoryDetailComponent implements OnInit {
 
     // Call the BookService to get books by genre
     this.bookService.getBooks('', this.categoryName).subscribe({
-      next: (data: any[]) => {
-        this.books = data.map(b => ({
+      next: (res: any) => {
+        const books = res.books;
+        this.books = books.map((b: any) => ({
           id: b._id,
           title: b.title,
           author: b.author?.username || 'Unknown',

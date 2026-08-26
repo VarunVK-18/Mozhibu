@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 
 @Component({
   selector: 'app-story-hero',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="hero-container" [style.background-image]="'url(' + coverImage + ')'">
       <div class="scrim"></div>
@@ -31,7 +32,7 @@ import { RouterModule } from '@angular/router';
         <p class="subtitle">{{ subtitle }}</p>
         
         <div class="author-row" (click)="authorClicked.emit(author.id)">
-          <img [src]="author.avatar" [alt]="author.name" class="author-avatar">
+          <img [src]="author.avatar | safeUrl" [alt]="author.name" class="author-avatar">
           <span class="author-name">By {{ author.name }}</span>
         </div>
       </div>

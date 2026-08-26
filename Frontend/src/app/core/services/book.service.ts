@@ -18,10 +18,13 @@ export class BookService {
     return { ...book, cover: `${baseUrl}${book.cover}` };
   }
 
-  getPublishedBooks(query: string = ''): Observable<AdminBook[]> {
-    const endpoint = query ? `/books?q=${encodeURIComponent(query)}` : '/books';
-    return this.api.get<AdminBook[]>(endpoint).pipe(
-      map((books: AdminBook[]) => books.map(b => this.fixCoverUrl(b)))
+  getPublishedBooks(query: string = '', page: number = 1, limit: number = 20): Observable<any> {
+    const qs = query ? `q=${encodeURIComponent(query)}&page=${page}&limit=${limit}` : `page=${page}&limit=${limit}`;
+    return this.api.get<any>(`/books?${qs}`).pipe(
+      map(res => ({
+        ...res,
+        books: res.books.map((b: any) => this.fixCoverUrl(b))
+      }))
     );
   }
 
@@ -31,15 +34,18 @@ export class BookService {
     );
   }
 
-  getBooks(sort: string = '', genre: string = '', isAudio: boolean = false): Observable<AdminBook[]> {
-    let params = [];
+  getBooks(sort: string = '', genre: string = '', isAudio: boolean = false, page: number = 1, limit: number = 20): Observable<any> {
+    let params = [`page=${page}`, `limit=${limit}`];
     if (sort) params.push(`sort=${sort}`);
     if (genre) params.push(`genre=${encodeURIComponent(genre)}`);
     if (isAudio) params.push(`isAudio=true`);
     
-    const qs = params.length > 0 ? `?${params.join('&')}` : '';
-    return this.api.get<AdminBook[]>(`/books${qs}`).pipe(
-      map((books: AdminBook[]) => books.map(b => this.fixCoverUrl(b)))
+    const qs = `?${params.join('&')}`;
+    return this.api.get<any>(`/books${qs}`).pipe(
+      map(res => ({
+        ...res,
+        books: res.books.map((b: any) => this.fixCoverUrl(b))
+      }))
     );
   }
 

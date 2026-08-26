@@ -168,7 +168,7 @@
               <span class="user-name">{{ camelCaseName }}</span>
             </div>
             <div class="avatar-ring" [class.premium-ring]="isPremium()">
-              <img *ngIf="user.avatar" [src]="getAvatarUrl(user.avatar)" class="avatar logged-in" [alt]="user.username" (error)="onAvatarError($event, user.username)" style="object-fit: cover;">
+              <img *ngIf="user.avatar" [src]="getAvatarUrl(user.avatar) | safeUrl" class="avatar logged-in" [alt]="user.username" (error)="onAvatarError($event, user.username)" style="object-fit: cover;">
               <div *ngIf="!user.avatar" class="avatar logged-in">{{ firstInitial }}</div>
             </div>
           </div>

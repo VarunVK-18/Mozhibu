@@ -114,7 +114,7 @@ router.put('/:id/status', protect, author, async (req, res) => {
 });
 
 // @route GET /api/books
-// @desc Get all published books
+// @desc Get all published books (paginated)
 router.get('/', async (req, res) => {
   try {
     // Get all active users
@@ -142,21 +142,32 @@ router.get('/', async (req, res) => {
     let sortObj = { createdAt: -1 }; // default to latest
     
     if (req.query.sort === 'trending') {
-      // Sort by views + rating combined (approximate by sorting views descending then rating descending)
       sortObj = { views: -1, rating: -1 };
     } else if (req.query.sort === 'popular') {
       sortObj = { views: -1 };
     }
+
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const totalBooks = await Book.countDocuments(query);
     
     const books = await Book.find(query)
       .populate('author', 'username avatar')
       .sort(sortObj)
-      .limit(Number(req.query.limit) || 20); // Limit to 20 by default for speed
+      .skip(skip)
+      .limit(limit);
       
     const targetLang = req.headers['x-app-language'] || 'en';
     const translatedBooks = await translateBooks(books, targetLang);
       
-    res.json(translatedBooks);
+    res.json({
+      books: translatedBooks,
+      currentPage: page,
+      totalPages: Math.ceil(totalBooks / limit),
+      totalBooks
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: 'Server Error' });

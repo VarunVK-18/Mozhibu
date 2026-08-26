@@ -4,6 +4,9 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const cron = require('node-cron');
 const { computeEngagementScores } = require('./services/engagementScorer');
@@ -45,6 +48,27 @@ app.set('userSockets', userSockets);
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+app.use(helmet()); // Security headers
+app.use(compression()); // Compress responses
+
+// Global Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs
+  message: { msg: 'Too many requests from this IP, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
+
+// Stricter Rate Limiting for Auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 login/register requests per window
+  message: { msg: 'Too many authentication attempts, please try again later' }
+});
+app.use('/api/auth', authLimiter);
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -54,8 +78,12 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Database connection
 if (process.env.NODE_ENV !== 'test') {
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB Atlas'))
+  mongoose.connect(process.env.MONGODB_URI, {
+    maxPoolSize: 500, // Handle up to 500 concurrent connections
+    serverSelectionTimeoutMS: 15000, // Keep trying to send operations for 15 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  })
+    .then(() => console.log('Connected to MongoDB Atlas with optimized pool size'))
     .catch(err => console.error('MongoDB connection error:', err));
 }
 

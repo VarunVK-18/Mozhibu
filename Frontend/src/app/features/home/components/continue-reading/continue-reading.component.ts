@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 import { BookService } from '../../../../core/services/book.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ApiService } from '../../../../core/services/api.service';
@@ -19,7 +20,7 @@ interface ReadingItem {
 @Component({
   selector: 'app-continue-reading',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, RouterModule, TranslatePipe, SafeUrlPipe],
   templateUrl: './continue-reading.component.html',
   styleUrls: ['./continue-reading.component.css'],
 })
@@ -61,7 +62,8 @@ export class ContinueReadingComponent implements OnInit {
 
   loadFallbackBooks() {
     this.bookService.getBooks().subscribe({
-      next: (books) => {
+      next: (res: any) => {
+        const books = res.books;
         // Take up to 3 books and mock the user progress for the UI
         this.items = books.slice(0, 3).map((book: any, index: number) => ({
           id: book._id,

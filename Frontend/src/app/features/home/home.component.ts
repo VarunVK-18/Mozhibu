@@ -34,36 +34,36 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
         <!-- GUEST VIEW -->
         <app-hero></app-hero>
         
-        <app-story-section title="Recommended for You" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Recommended for You" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('popular', 'popular')"></app-story-section>
         
         <div class="ad-banner-wrapper">
           <app-google-ad></app-google-ad>
         </div>
         
-        <app-story-section title="Trending Today" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Trending Today" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('trending', 'trending')"></app-story-section>
         <app-story-section title="Most Read" [stories]="mostReadStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
         
         <app-competition-banner></app-competition-banner>
         
         <app-story-section title="Editor's Picks" [stories]="editorPicks" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Newly Published" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Newly Published" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('latest', 'latest')"></app-story-section>
         <app-story-section title="Completed Stories" [stories]="completedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
         <app-story-section title="Ongoing Stories" [stories]="ongoingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
-        <app-story-section title="Audio Stories" [stories]="audioStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+        <app-story-section title="Audio Stories" [stories]="audioStories" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('audio', '', true)"></app-story-section>
       } @else {
         <!-- LOGGED IN VIEW -->
         <div class="logged-in-container">
           <app-continue-reading></app-continue-reading>
           
-          <app-story-section title="Recommended" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+          <app-story-section title="Recommended" [stories]="recommendedStories" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('popular', 'popular')"></app-story-section>
           
           <div class="ad-banner-wrapper">
             <app-google-ad></app-google-ad>
           </div>
           
-          <app-story-section title="Latest" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+          <app-story-section title="Latest" [stories]="newlyPublished" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('latest', 'latest')"></app-story-section>
           
-          <app-story-section title="Trending" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories"></app-story-section>
+          <app-story-section title="Trending" [stories]="trendingStories" [isLoading]="isStoriesLoading" viewAllLink="/categories" (loadMore)="loadMoreBooks('trending', 'trending')"></app-story-section>
           
           <!-- Following Users -->
           <section class="user-section">
@@ -195,22 +195,22 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     forkJoin({
-      popular: this.bookService.getBooks('popular'),
-      trending: this.bookService.getBooks('trending'),
-      latest: this.bookService.getBooks('latest'),
-      audio: this.bookService.getBooks('', '', true)
+      popular: this.bookService.getBooks('popular', '', false, 1, 10),
+      trending: this.bookService.getBooks('trending', '', false, 1, 10),
+      latest: this.bookService.getBooks('latest', '', false, 1, 10),
+      audio: this.bookService.getBooks('', '', true, 1, 10)
     }).subscribe({
-      next: (res) => {
-        this.recommendedStories = this.mapStories(res.popular).slice(0, 5);
-        this.trendingStories = this.mapStories(res.trending).slice(0, 5);
-        this.newlyPublished = this.mapStories(res.latest).slice(0, 5);
-        this.audioStories = this.mapStories(res.audio).slice(0, 5);
+      next: (res: any) => {
+        this.recommendedStories = this.mapStories(res.popular.books).slice(0, 10);
+        this.trendingStories = this.mapStories(res.trending.books).slice(0, 10);
+        this.newlyPublished = this.mapStories(res.latest.books).slice(0, 10);
+        this.audioStories = this.mapStories(res.audio.books).slice(0, 10);
         
-        // Some fallback slices for completed/ongoing/picks
-        this.mostReadStories = this.mapStories(res.popular).slice(5, 10);
-        this.editorPicks = this.mapStories(res.trending).slice(5, 10);
-        this.completedStories = this.mapStories(res.latest).slice(5, 10);
-        this.ongoingStories = this.mapStories(res.audio).slice(5, 10);
+        // Some fallback slices for completed/ongoing/picks (we can just duplicate for demo)
+        this.mostReadStories = [...this.recommendedStories];
+        this.editorPicks = [...this.trendingStories];
+        this.completedStories = [...this.newlyPublished];
+        this.ongoingStories = [...this.audioStories];
 
         this.isStoriesLoading = false;
       },
@@ -276,6 +276,34 @@ export class HomeComponent implements OnInit {
     }));
   }
 
+
+  private pageMap: { [key: string]: number } = {
+    popular: 1,
+    trending: 1,
+    latest: 1,
+    audio: 1
+  };
+  private loadingMap: { [key: string]: boolean } = {};
+
+  loadMoreBooks(category: string, sort: string, isAudio: boolean = false) {
+    if (this.loadingMap[category]) return;
+    this.loadingMap[category] = true;
+    this.pageMap[category]++;
+    
+    this.bookService.getBooks(sort, '', isAudio, this.pageMap[category], 10).subscribe({
+      next: (res: any) => {
+        const newStories = this.mapStories(res.books);
+        if (category === 'popular') this.recommendedStories.push(...newStories);
+        if (category === 'trending') this.trendingStories.push(...newStories);
+        if (category === 'latest') this.newlyPublished.push(...newStories);
+        if (category === 'audio') this.audioStories.push(...newStories);
+        this.loadingMap[category] = false;
+      },
+      error: () => {
+        this.loadingMap[category] = false;
+      }
+    });
+  }
 
   followingUsers: UserProfile[] = [];
   followerUsers: UserProfile[] = [];
