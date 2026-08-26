@@ -591,15 +591,15 @@ export class HeroComponent implements OnInit, OnDestroy {
           tag
         });
 
-        if (res.latest && Array.isArray(res.latest)) {
-          const topLatest = res.latest.slice(0, 2).map((b: any) => mapBook(b, 'New Release'));
+        if (res.latest?.books && Array.isArray(res.latest.books)) {
+          const topLatest = res.latest.books.slice(0, 2).map((b: any) => mapBook(b, 'New Release'));
           combinedBooks = [...combinedBooks, ...topLatest];
         }
 
-        if (res.trending && Array.isArray(res.trending)) {
+        if (res.trending?.books && Array.isArray(res.trending.books)) {
           // ensure we don't duplicate books that are both new and trending
           const existingIds = new Set(combinedBooks.map(b => b.id));
-          const topTrending = res.trending
+          const topTrending = res.trending.books
             .filter((b: any) => !existingIds.has(b._id))
             .slice(0, 2)
             .map((b: any) => mapBook(b, 'Trending'));

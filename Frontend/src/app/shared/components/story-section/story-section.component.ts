@@ -8,7 +8,7 @@ import { StoryCardComponent, Story } from '../story-card/story-card.component';
   standalone: true,
   imports: [CommonModule, RouterModule, StoryCardComponent],
   template: `
-    <section class="story-section">
+    <section class="story-section" *ngIf="isLoading || (stories && stories.length > 0)">
       <div class="section-header">
         <h2 class="section-title">{{ title }}</h2>
         <div class="section-actions">
