@@ -2,6 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 
 export interface Story {
   id?: string;
@@ -19,11 +20,11 @@ export interface Story {
 @Component({
   selector: 'app-story-card',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="story-card group" [routerLink]="['/story', story.id || story._id]">
       <div class="cover-wrapper">
-        <img [src]="api.getImageUrl(story.cover)" [alt]="story.title" class="cover-img" (error)="onImgError($event)" />
+        <img [src]="api.getImageUrl(story.cover) | safeUrl" [alt]="story.title" class="cover-img" (error)="onImgError($event)" />
         <div class="top-left-badges">
           <div class="paid-badge" *ngIf="story.accessType === 'premium'">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

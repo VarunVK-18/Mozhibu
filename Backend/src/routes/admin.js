@@ -477,6 +477,102 @@ router.put('/competition', async (req, res) => {
   }
 });
 
+// @route GET /api/admin/competition/entries
+// @desc Get books submitted to the active competition
+router.get('/competition/entries', async (req, res) => {
+  try {
+    const competition = await Competition.findOne();
+    if (!competition || !competition.tag) {
+      return res.json([]);
+    }
+    
+    // Find all published books that have this competition tag
+    const entries = await Book.find({ 
+      competitionTag: competition.tag,
+      status: 'published'
+    }).populate('author', 'username email');
+    
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route POST /api/admin/competition/notify
+// @desc Send a broadcast to writers inviting them to the competition
+router.post('/competition/notify', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    const broadcast = new Broadcast({
+      title: 'New Competition Announcement',
+      message: message || 'A new competition has started! Submit your entry now.',
+      audience: 'writers',
+      sentBy: req.user.id
+    });
+    
+    await broadcast.save();
+    
+    // Notify all writers
+    const writers = await User.find({ role: 'writer' });
+    const notifications = writers.map(user => ({
+      recipient: user._id,
+      sender: req.user.id,
+      type: 'competition',
+      title: broadcast.title,
+      message: broadcast.message,
+      link: '/write/new' // They can click the notification to go straight to submitting
+    }));
+    
+    await Notification.insertMany(notifications);
+    
+    res.json({ msg: 'Notification sent successfully' });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route POST /api/admin/competition/announce-winner
+// @desc Set the winner and announce it to everyone
+router.post('/competition/announce-winner', async (req, res) => {
+  try {
+    const { bookId } = req.body;
+    const competition = await Competition.findOne();
+    if (!competition) return res.status(404).json({ msg: 'No competition found' });
+    
+    const winningBook = await Book.findById(bookId).populate('author', 'username');
+    if (!winningBook) return res.status(404).json({ msg: 'Book not found' });
+    
+    competition.winnerBookId = bookId;
+    competition.isActive = false; // Competition is over
+    await competition.save();
+    
+    // Announce to EVERYONE
+    const broadcast = new Broadcast({
+      title: 'Competition Winner Announced!',
+      message: `The competition "${competition.title}" has concluded. Congratulations to ${winningBook.author.username} for their winning book "${winningBook.title}"!`,
+      audience: 'all',
+      sentBy: req.user.id
+    });
+    await broadcast.save();
+    
+    const allUsers = await User.find({});
+    const notifications = allUsers.map(user => ({
+      recipient: user._id,
+      sender: req.user.id,
+      type: 'announcement',
+      title: broadcast.title,
+      message: broadcast.message,
+      link: `/book/${bookId}` // Link straight to the winning book
+    }));
+    await Notification.insertMany(notifications);
+    
+    res.json({ msg: 'Winner announced successfully!', competition });
+  } catch (err) {
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
 // --- SUBSCRIPTION PLAN MANAGEMENT ---
 
 // @route GET /api/admin/plans

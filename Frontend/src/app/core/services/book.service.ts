@@ -13,7 +13,7 @@ export class BookService {
 
   private fixCoverUrl(book: any): any {
     if (!book || !book.cover) return book;
-    if (book.cover.startsWith('http')) return book;
+    if (book.cover.startsWith('http') || book.cover.startsWith('data:')) return book;
     const baseUrl = environment.apiUrl.replace('/api', '');
     return { ...book, cover: `${baseUrl}${book.cover}` };
   }

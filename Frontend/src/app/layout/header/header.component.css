@@ -467,6 +467,7 @@
   z-index: 100;
   overflow: hidden;
 }
+.engagement-dropdown { right: -65px; } /* Adjust alignment specifically for the heart icon */
 .notifications-dropdown.open { display: block; }
 .notif-header {
   display: flex;

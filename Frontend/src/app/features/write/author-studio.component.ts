@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 
 interface AuthorStory {
   id: string;
@@ -19,7 +20,7 @@ interface AuthorStory {
 @Component({
   selector: 'app-author-studio',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="studio-page">
       <div class="hero-section">
@@ -29,7 +30,7 @@ interface AuthorStory {
               <h1>Author Studio</h1>
               <p>Manage your stories, view analytics, and connect with your readers.</p>
             </div>
-            <button class="btn-primary" routerLink="/write/new">
+            <button class="btn-primary" routerLink="/write/new" [queryParams]="{clear: 'true'}">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -100,7 +101,7 @@ interface AuthorStory {
               @for (story of filteredStories; track story._id) {
                 <div class="story-card">
                   <div class="cover-wrapper">
-                    <img [src]="api.getImageUrl(story.cover) || 'assets/default-cover.png'" [alt]="story.title" class="story-cover" (error)="onCoverError($event)">
+                    <img [src]="(api.getImageUrl(story.cover) | safeUrl) || 'assets/default-cover.png'" [alt]="story.title" class="story-cover" (error)="onCoverError($event)">
                   </div>
                   
                   <div class="story-details">

@@ -112,7 +112,7 @@ const computeEngagementScores = async (year, month) => {
         fraudReason,
         computedAt: new Date()
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     // Mark qualified reads for this user
@@ -163,7 +163,7 @@ const recordReadEvent = async (userId, bookId, chapterId, completionPercent, tim
       isQualified: false, // set to true by nightly scorer
       readAt: now
     },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   );
 };
 

@@ -10,7 +10,7 @@ const BookSchema = new mongoose.Schema({
   views: { type: Number, default: 0 },
   rating: { type: Number, default: 0 },
   isAudio: { type: Boolean, default: false },
-  status: { type: String, enum: ['pending', 'published', 'rejected', 'suspended'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'published', 'rejected', 'suspended'], default: 'published' },
   rejectionReason: { type: String },
   submittedAt: { type: Date, default: Date.now },
   reviewedAt: { type: Date },

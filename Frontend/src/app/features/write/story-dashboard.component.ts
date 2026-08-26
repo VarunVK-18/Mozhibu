@@ -1,13 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule, NavigationEnd } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { ApiService } from '../../core/services/api.service';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
+import { Subject, filter, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-story-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="dashboard-page">
       @if (isLoading) {
@@ -19,7 +21,7 @@ import { ApiService } from '../../core/services/api.service';
           <div class="wrap">
             <div class="book-summary">
               <div class="book-cover-container">
-                <img [src]="api.getImageUrl(book.cover) || 'assets/default-cover.png'" [alt]="book.title" class="book-cover" (error)="onCoverError($event)">
+                <img [src]="(api.getImageUrl(book.cover) | safeUrl) || 'assets/default-cover.png'" [alt]="book.title" class="book-cover" (error)="onCoverError($event)">
               </div>
               <div class="book-info">
                 <h1>{{ book.title }}</h1>
@@ -31,7 +33,7 @@ import { ApiService } from '../../core/services/api.service';
                 </div>
                 
                 <div class="actions-row">
-                  <button class="btn-primary" [routerLink]="['/write/book', book._id, 'chapter', 'new']">
+                  <button class="btn-primary" [routerLink]="['/write/book', book._id, 'chapter', 'new']" [queryParams]="{clear: 'true'}">
                     + Add New Chapter
                   </button>
                   <button class="btn-outline" [routerLink]="['/write/book', book._id, 'settings']">
@@ -270,23 +272,44 @@ import { ApiService } from '../../core/services/api.service';
     }
   `]
 })
-export class StoryDashboardComponent implements OnInit {
+export class StoryDashboardComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private bookService = inject(BookService);
   api = inject(ApiService);
+  private destroy$ = new Subject<void>();
 
   book: any = null;
   chapters: any[] = [];
   isLoading = true;
   totalWords = 0;
+  private currentBookId: string | null = null;
 
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
+      this.currentBookId = id;
       if (id) {
         this.fetchBookDetails(id);
       }
     });
+
+    // Re-fetch on every NavigationEnd to pick up cover changes after returning from settings
+    this.router.events
+      .pipe(
+        filter(e => e instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        if (this.currentBookId) {
+          this.fetchBookDetails(this.currentBookId);
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   fetchBookDetails(id: string) {

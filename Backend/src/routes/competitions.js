@@ -20,6 +20,12 @@ router.get('/active', async (req, res) => {
       await competition.save();
     }
 
+    // Populate winner details if present
+    competition = await Competition.findById(competition._id).populate({
+      path: 'winnerBookId',
+      populate: { path: 'author', select: 'username' }
+    });
+
     res.json(competition);
   } catch (err) {
     console.error(err.message);

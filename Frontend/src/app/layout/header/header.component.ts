@@ -23,7 +23,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   langMenuOpen = signal(false);
   profileMenuOpen = signal(false);
   mobileMenuOpen = signal(false);
-  searchOpen = signal(false);
   notificationsOpen = signal(false);
   engagementOpen = signal(false);
   showAuthorModal = signal(false);
@@ -39,9 +38,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   unreadGeneralCount = computed(() => this.generalNotifications().filter(n => !n.isRead).length);
   isPremium = signal(false);
 
-  searchResults: AdminBook[] = [];
-  searchQuery = '';
-
   private destroy$ = new Subject<void>();
   public langService = inject(LanguageService);
   public authService = inject(AuthService);
@@ -51,18 +47,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private socketService = inject(SocketService);
   private subService = inject(SubscriptionService);
   private api = inject(ApiService);
-
-  onSearchInput(event: Event): void {
-    const query = (event.target as HTMLInputElement).value;
-    this.searchQuery = query;
-    if (query.trim().length > 0) {
-      this.bookService.getPublishedBooks(query).subscribe(books => {
-        this.searchResults = books;
-      });
-    } else {
-      this.searchResults = [];
-    }
-  }
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
     return this.api.getImageUrl(path);
@@ -120,20 +104,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.mobileMenuOpen.update(v => !v);
   }
 
-  toggleSearch(): void {
-    this.searchOpen.update(v => !v);
-    if (this.searchOpen()) {
-      this.notificationsOpen.set(false);
-      this.engagementOpen.set(false);
-      this.profileMenuOpen.set(false);
-      this.langMenuOpen.set(false);
-    }
-  }
-
   toggleNotifications(): void {
     this.notificationsOpen.update(v => !v);
     if (this.notificationsOpen()) {
-      this.searchOpen.set(false);
       this.engagementOpen.set(false);
       this.profileMenuOpen.set(false);
       this.langMenuOpen.set(false);
@@ -143,9 +116,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleEngagement(): void {
     this.engagementOpen.update(v => !v);
     if (this.engagementOpen()) {
-      this.searchOpen.set(false);
       this.notificationsOpen.set(false);
       this.profileMenuOpen.set(false);
+      this.langMenuOpen.set(false);
+    }
+  }
+
+  toggleProfileMenu(): void {
+    this.profileMenuOpen.update(v => !v);
+    if (this.profileMenuOpen()) {
+      this.notificationsOpen.set(false);
+      this.engagementOpen.set(false);
       this.langMenuOpen.set(false);
     }
   }
@@ -171,9 +152,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!target.closest('.lang-dropdown-wrapper')) {
       this.langMenuOpen.set(false);
     }
-    if (!target.closest('.search-wrapper') && !target.closest('.icon-btn[aria-label="Search"]')) {
-      this.searchOpen.set(false);
-    }
     if (!target.closest('.user-profile-wrapper')) {
       this.profileMenuOpen.set(false);
     }
@@ -197,7 +175,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       if (!this.isHeaderHidden()) {
         this.isHeaderHidden.set(true);
         // Close dropdowns when hiding header
-        this.searchOpen.set(false);
         this.langMenuOpen.set(false);
         this.profileMenuOpen.set(false);
         this.notificationsOpen.set(false);

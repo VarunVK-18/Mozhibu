@@ -38,6 +38,10 @@ const CompetitionSchema = new mongoose.Schema({
     type: String,
     required: true,
     default: '/write/new'
+  },
+  winnerBookId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Book'
   }
 });
 

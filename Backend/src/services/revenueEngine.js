@@ -96,7 +96,7 @@ const computeMonthlyRevenue = async (year, month, adminUserId, force = false) =>
         computedAt: new Date(),
         revenueSnapshot: adRevenue._id
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     authorResults.push({ authorId, reads, earningsInPaise: Number(earnings), status });
   }
@@ -129,7 +129,7 @@ const computeMonthlyRevenue = async (year, month, adminUserId, force = false) =>
         computedAt: new Date(),
         revenueSnapshot: adRevenue._id
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     readerResults.push({ userId: scoreDoc.user, score: scoreDoc.totalScore, rewardInPaise: Number(reward), status });
   }

@@ -270,27 +270,37 @@ export class StoryEditorComponent implements OnInit {
       if (params['competition']) {
         this.competitionTag = params['competition'];
       }
-    });
-
-    const draft = localStorage.getItem('storyDraft');
-    if (draft) {
-      try {
-        const parsedDraft = JSON.parse(draft);
-        this.story = parsedDraft.story || this.story;
-        this.chapter = parsedDraft.chapter || this.chapter;
-        this.bookId = parsedDraft.bookId || null;
-        this.chapterId = parsedDraft.chapterId || null;
-        this.isCoverUploaded = parsedDraft.isCoverUploaded || false;
-        if (parsedDraft.coverPreviewUrl) {
-          this.coverPreviewUrl.set(parsedDraft.coverPreviewUrl);
-          if (!this.isCoverUploaded && parsedDraft.coverPreviewUrl.startsWith('data:image')) {
-            this.croppedBlob = this.base64ToBlob(parsedDraft.coverPreviewUrl);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to parse draft from local storage', err);
+      
+      if (params['clear'] === 'true') {
+        localStorage.removeItem('storyDraft');
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { clear: null },
+          queryParamsHandling: 'merge'
+        });
+        return;
       }
-    }
+
+      const draft = localStorage.getItem('storyDraft');
+      if (draft) {
+        try {
+          const parsedDraft = JSON.parse(draft);
+          this.story = parsedDraft.story || this.story;
+          this.chapter = parsedDraft.chapter || this.chapter;
+          this.bookId = parsedDraft.bookId || null;
+          this.chapterId = parsedDraft.chapterId || null;
+          this.isCoverUploaded = parsedDraft.isCoverUploaded || false;
+          if (parsedDraft.coverPreviewUrl) {
+            this.coverPreviewUrl.set(parsedDraft.coverPreviewUrl);
+            if (!this.isCoverUploaded && parsedDraft.coverPreviewUrl.startsWith('data:image')) {
+              this.croppedBlob = this.base64ToBlob(parsedDraft.coverPreviewUrl);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to parse draft from local storage', err);
+        }
+      }
+    });
   }
 
   private base64ToBlob(base64: string): Blob {
@@ -317,7 +327,14 @@ export class StoryEditorComponent implements OnInit {
   }
 
   imageCropped(event: ImageCroppedEvent) {
-    if (event.objectUrl) {
+    if (event.base64) {
+      this.croppedImage = event.base64;
+      if (event.blob) {
+        this.activeBlob = event.blob;
+      } else {
+        this.activeBlob = this.base64ToBlob(event.base64);
+      }
+    } else if (event.objectUrl) {
       if (event.blob) {
         this.activeBlob = event.blob;
         const reader = new FileReader();
@@ -325,11 +342,8 @@ export class StoryEditorComponent implements OnInit {
         reader.onloadend = () => {
           this.croppedImage = reader.result as string;
         };
-      }
-    } else if ((event as any).base64) {
-      this.croppedImage = (event as any).base64;
-      if (event.blob) {
-         this.activeBlob = event.blob;
+      } else {
+        this.croppedImage = event.objectUrl;
       }
     }
   }
@@ -346,7 +360,10 @@ export class StoryEditorComponent implements OnInit {
           next: (res) => {
             this.isCoverUploaded = true;
             const baseUrl = environment.apiUrl.replace('/api', '');
-            this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+            const finalUrl = res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http') 
+              ? res.coverUrl 
+              : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
+            this.coverPreviewUrl.set(finalUrl);
             this.onContentChange();
           },
           error: (err) => {
@@ -415,7 +432,10 @@ export class StoryEditorComponent implements OnInit {
           bookData.cover = res.coverUrl;
           this.isCoverUploaded = true;
           const baseUrl = environment.apiUrl.replace('/api', '');
-          this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+          const finalUrl = res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http') 
+            ? res.coverUrl 
+            : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
+          this.coverPreviewUrl.set(finalUrl);
           this.saveToLocal();
           this.submitBook(bookData, isDraft, isAutoSave);
         },
@@ -427,10 +447,13 @@ export class StoryEditorComponent implements OnInit {
       });
     } else {
       let currentCover = this.coverPreviewUrl();
-      if (currentCover && !currentCover.startsWith('data:image')) {
-        const baseUrl = environment.apiUrl.replace('/api', '');
-        if (currentCover.startsWith(baseUrl)) {
-          currentCover = currentCover.substring(baseUrl.length);
+      if (currentCover) {
+        if (!currentCover.startsWith('data:image')) {
+          const baseUrl = environment.apiUrl.replace('/api', '');
+          if (currentCover.startsWith(baseUrl)) {
+            currentCover = currentCover.substring(baseUrl.length);
+            if (!currentCover.startsWith('/')) currentCover = '/' + currentCover;
+          }
         }
         bookData.cover = currentCover;
       }

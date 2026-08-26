@@ -5,11 +5,12 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 import { environment } from '../../../environments/environment';
+import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 
 @Component({
   selector: 'app-story-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ImageCropperComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ImageCropperComponent, SafeUrlPipe],
   template: `
     <div class="editor-page wrap">
       <div class="editor-header">
@@ -42,7 +43,7 @@ import { environment } from '../../../environments/environment';
                     <div class="cover-upload" (click)="fileInput.click()">
                       <input type="file" #fileInput hidden accept="image/*" (change)="fileChangeEvent($event)">
                       @if (coverPreviewUrl()) {
-                        <img [src]="coverPreviewUrl()" class="cover-preview-img">
+                        <img [src]="coverPreviewUrl() | safeUrl" class="cover-preview-img">
                       } @else {
                         <div class="cover-placeholder">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -503,7 +504,9 @@ export class StorySettingsComponent implements OnInit {
         
         if (book.cover) {
           const serverUrl = environment.apiUrl.replace('/api', '');
-          const coverUrl = book.cover.startsWith('http') ? book.cover : `${serverUrl}${book.cover}`;
+          const coverUrl = book.cover.startsWith('http') || book.cover.startsWith('data:') 
+            ? book.cover 
+            : `${serverUrl}${book.cover.startsWith('/') ? '' : '/'}${book.cover}`;
           this.coverPreviewUrl.set(coverUrl);
         }
         
@@ -527,28 +530,50 @@ export class StorySettingsComponent implements OnInit {
     }
   }
 
+  private base64ToBlob(base64: string): Blob {
+    const parts = base64.split(';base64,');
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
+  }
+
   imageCropped(event: ImageCroppedEvent) {
-    if (event.objectUrl) {
+    // Always grab blob if available
+    if (event.blob) {
+      this.activeBlob = event.blob;
+    }
+    
+    if (event.base64) {
+      this.croppedImage = event.base64;
+      if (!this.activeBlob) {
+        this.activeBlob = this.base64ToBlob(event.base64);
+      }
+    } else if (event.objectUrl) {
       if (event.blob) {
-        this.activeBlob = event.blob;
+        // Read blob as base64 for preview
         const reader = new FileReader();
         reader.readAsDataURL(event.blob);
         reader.onloadend = () => {
           this.croppedImage = reader.result as string;
         };
-      }
-    } else if ((event as any).base64) {
-      this.croppedImage = (event as any).base64;
-      if (event.blob) {
-        this.activeBlob = event.blob;
+      } else {
+        this.croppedImage = event.objectUrl;
       }
     }
   }
 
   applyCrop() {
+    // Always assign croppedBlob from activeBlob
+    if (this.activeBlob) {
+      this.croppedBlob = this.activeBlob;
+    }
     if (this.croppedImage) {
       this.coverPreviewUrl.set(this.croppedImage);
-      this.croppedBlob = this.activeBlob;
     }
     this.imageChangedEvent = '';
   }
@@ -591,12 +616,17 @@ export class StorySettingsComponent implements OnInit {
       bookData.cover = null;
     }
 
-    // Only upload if a new cover was cropped
+    // Upload cover if a new one was cropped
     if (this.croppedBlob) {
       const file = new File([this.croppedBlob], 'cover.jpg', { type: 'image/jpeg' });
       this.bookService.uploadCover(file).subscribe({
         next: (res) => {
           bookData.cover = res.coverUrl;
+          // Update preview with the returned URL from server
+          if (res.coverUrl) {
+            this.coverPreviewUrl.set(res.coverUrl);
+          }
+          this.croppedBlob = null; // clear after successful upload
           this.submitUpdate(bookData);
         },
         error: (err) => {
@@ -612,8 +642,16 @@ export class StorySettingsComponent implements OnInit {
 
   private submitUpdate(bookData: any) {
     this.bookService.updateBook(this.bookId!, bookData).subscribe({
-      next: () => {
+      next: (updatedBook: any) => {
         this.isSaving = false;
+        // If the server returned updated cover data, update the preview
+        if (updatedBook?.cover) {
+          const serverUrl = environment.apiUrl.replace('/api', '');
+          const coverUrl = updatedBook.cover.startsWith('http') || updatedBook.cover.startsWith('data:')
+            ? updatedBook.cover
+            : `${serverUrl}${updatedBook.cover.startsWith('/') ? '' : '/'}${updatedBook.cover}`;
+          this.coverPreviewUrl.set(coverUrl);
+        }
         this.goBack();
       },
       error: (err) => {

@@ -42,8 +42,8 @@ router.post('/register', async (req, res) => {
       preferredLanguage,
       favoriteGenres,
       authProvider: authProvider || 'normal',
-      role: 'reader', // Everyone starts as a reader
-      authorStatus: role === 'writer' ? 'pending' : 'none'
+      role: role === 'writer' ? 'writer' : 'reader',
+      authorStatus: role === 'writer' ? 'approved' : 'none'
     });
 
     if (user.authProvider === 'normal') {

@@ -76,7 +76,7 @@ router.post('/monthly', protect, superadmin, async (req, res) => {
       { month, year },
       { month, year, grossRevenueInPaise, netRevenueInPaise,
         source: source || 'manual', importedBy: req.user.id, importedAt: new Date(), notes },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     res.json(record);
   } catch (err) {
@@ -225,7 +225,7 @@ router.post('/plans', protect, superadmin, async (req, res) => {
 // PUT /api/revenue/plans/:id
 router.put('/plans/:id', protect, superadmin, async (req, res) => {
   try {
-    const plan = await SubscriptionPlan.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const plan = await SubscriptionPlan.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     if (!plan) return res.status(404).json({ msg: 'Plan not found' });
     res.json(plan);
   } catch (err) {
@@ -237,7 +237,7 @@ router.put('/plans/:id', protect, superadmin, async (req, res) => {
 router.delete('/plans/:id', protect, superadmin, async (req, res) => {
   try {
     const plan = await SubscriptionPlan.findByIdAndUpdate(
-      req.params.id, { isActive: false }, { new: true }
+      req.params.id, { isActive: false }, { returnDocument: 'after' }
     );
     res.json({ msg: 'Plan deactivated', plan });
   } catch (err) {
@@ -271,7 +271,7 @@ router.post('/coupons', protect, superadmin, async (req, res) => {
 // PUT /api/revenue/coupons/:id
 router.put('/coupons/:id', protect, superadmin, async (req, res) => {
   try {
-    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json(coupon);
   } catch (err) {
     res.status(400).json({ msg: err.message });

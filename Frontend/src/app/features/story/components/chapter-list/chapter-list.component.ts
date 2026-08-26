@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { StoryEpisode } from '../../../../core/services/story.service';
+import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 
 @Component({
   selector: 'app-chapter-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, SafeUrlPipe],
   template: `
     <div class="chapters-container">
       <div class="chapters-header">
@@ -29,7 +30,7 @@ import { StoryEpisode } from '../../../../core/services/story.service';
             <div class="ep-number">{{ ep.episode }}</div>
             
             <div class="ep-thumbnail-wrapper">
-              <img [src]="ep.thumbnail" [alt]="ep.title" class="ep-thumbnail">
+              <img [src]="ep.thumbnail | safeUrl" [alt]="ep.title" class="ep-thumbnail">
               @if (ep.isRead) {
                 <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
               } @else if (!ep.isUnlocked) {

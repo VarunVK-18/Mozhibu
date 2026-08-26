@@ -17,7 +17,7 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
@@ -210,7 +210,7 @@ router.put('/:id', protect, author, async (req, res) => {
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
-      { new: true }
+      { returnDocument: 'after' }
     );
     
     res.json(updatedBook);
@@ -560,7 +560,7 @@ router.put('/:id/chapters/:chapterId', protect, author, async (req, res) => {
     const chapter = await Chapter.findOneAndUpdate(
       { _id: req.params.chapterId, book: req.params.id },
       { $set: req.body },
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
     

@@ -102,11 +102,11 @@ export class StoryService {
           id: book._id,
           title: book.title,
           subtitle: book.subtitle || '',
-          coverImage: book.cover ? (book.cover.startsWith('http') ? book.cover : `${baseUrl}${book.cover}`) : 'assets/default-cover.png',
+          coverImage: book.cover ? (book.cover.startsWith('http') || book.cover.startsWith('data:') ? book.cover : `${baseUrl}${book.cover.startsWith('/') ? '' : '/'}${book.cover}`) : 'assets/default-cover.png',
           author: {
             id: book.author._id,
             name: book.author.username,
-            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') ? book.author.avatar : `${baseUrl}${book.author.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
+            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') || book.author.avatar.startsWith('data:') ? book.author.avatar : `${baseUrl}${book.author.avatar.startsWith('/') ? '' : '/'}${book.author.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
             isFollowed: false
           },
           genres: [book.genre],
@@ -146,7 +146,7 @@ export class StoryService {
           season: c.season || 1,
           episode: c.order,
           title: c.title,
-          thumbnail: c.cover ? (c.cover.startsWith('http') ? c.cover : `${baseUrl}${c.cover}`) : coverImage,
+          thumbnail: c.cover ? (c.cover.startsWith('http') || c.cover.startsWith('data:') ? c.cover : `${baseUrl}${c.cover.startsWith('/') ? '' : '/'}${c.cover}`) : coverImage,
           readingTime: `${readTime} min`,
           synopsis: (c.content || '').substring(0, 100) + '...',
           isRead: false,

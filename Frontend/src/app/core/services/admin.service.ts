@@ -196,4 +196,18 @@ export class AdminService {
   updateCompetitionConfig(data: any): Observable<any> {
     return this.api.put('/admin/competition', data);
   }
+
+  getCompetitionEntries(): Observable<AdminBook[]> {
+    return this.api.get<AdminBook[]>('/admin/competition/entries').pipe(
+      map(books => books.map(b => this.fixCoverUrl(b)))
+    );
+  }
+
+  announceCompetitionWinner(bookId: string): Observable<any> {
+    return this.api.post('/admin/competition/announce-winner', { bookId });
+  }
+
+  sendCompetitionNotification(message: string): Observable<any> {
+    return this.api.post('/admin/competition/notify', { message });
+  }
 }

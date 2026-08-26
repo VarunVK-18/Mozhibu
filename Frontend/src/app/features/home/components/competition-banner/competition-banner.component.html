@@ -1,38 +1,58 @@
-@if (config && !isExpired) {
+@if (config) {
 <section class="section alt">
   <div class="wrap">
     <div class="competition">
       <div class="competition-left">
         <span class="eyebrow">
-          <span class="pulse"></span>
+          @if (!isExpired) {
+            <span class="pulse"></span>
+          } @else {
+            <span>🏆</span>
+          }
           {{ config.tag }}
         </span>
-        <h3>{{ config.title }}</h3>
-        <p>{{ config.description }}</p>
+        @if (!isExpired) {
+          <h3>{{ config.title }}</h3>
+          <p>{{ config.description }}</p>
+        } @else {
+          <h3>Winner Announced!</h3>
+          <p>The competition has concluded. Congratulations to the winner for their exceptional story.</p>
+        }
       </div>
 
       <div class="competition-cta">
-        <div class="countdown">
-          <div>
-            <b>{{ days.toString().padStart(2, '0') }}</b>
-            <span>{{ 'competition.days' | translate }}</span>
+        @if (!isExpired) {
+          <div class="countdown">
+            <div>
+              <b>{{ days.toString().padStart(2, '0') }}</b>
+              <span>{{ 'competition.days' | translate }}</span>
+            </div>
+            <div class="sep">:</div>
+            <div>
+              <b>{{ hours.toString().padStart(2, '0') }}</b>
+              <span>{{ 'competition.hours' | translate }}</span>
+            </div>
+            <div class="sep">:</div>
+            <div>
+              <b>{{ mins.toString().padStart(2, '0') }}</b>
+              <span>{{ 'competition.mins' | translate }}</span>
+            </div>
           </div>
-          <div class="sep">:</div>
-          <div>
-            <b>{{ hours.toString().padStart(2, '0') }}</b>
-            <span>{{ 'competition.hours' | translate }}</span>
-          </div>
-          <div class="sep">:</div>
-          <div>
-            <b>{{ mins.toString().padStart(2, '0') }}</b>
-            <span>{{ 'competition.mins' | translate }}</span>
-          </div>
-        </div>
           @if (isExternalLink(config.buttonLink)) {
             <a [href]="config.buttonLink" target="_blank" rel="noopener noreferrer" class="btn btn-light">{{ config.buttonText }}</a>
           } @else {
             <a [routerLink]="(config.buttonLink || '/competitions').split('?')[0]" [queryParams]="getQueryParams(config.buttonLink)" class="btn btn-light">{{ config.buttonText }}</a>
           }
+        } @else if (config.winnerBookId) {
+          <div class="winner-info" style="display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px;">
+            <div style="color: white;">
+              <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">Winning Story</div>
+              <strong style="font-size: 18px; display: block; margin-bottom: 4px;">{{ config.winnerBookId.title }}</strong>
+              <div style="font-size: 14px; opacity: 0.9;">By {{ config.winnerBookId.author.username }}</div>
+            </div>
+            <a [routerLink]="['/book', config.winnerBookId._id]" class="btn btn-light" style="white-space: nowrap;">Read Winner</a>
+          </div>
+        }
       </div>
     </div>
   </div>

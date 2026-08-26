@@ -390,7 +390,20 @@ export class ChapterEditorComponent implements OnInit {
         this.fetchBookDetails(this.bookId);
       }
       
-      this.restoreDraft();
+      this.route.queryParams.subscribe(queryParams => {
+        if (queryParams['clear'] === 'true') {
+          const cacheKey = `chapterDraft_${this.bookId}_${this.chapterId || 'new'}`;
+          localStorage.removeItem(cacheKey);
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { clear: null },
+            queryParamsHandling: 'merge'
+          });
+          return;
+        }
+        
+        this.restoreDraft();
+      });
     });
   }
 
@@ -455,10 +468,11 @@ export class ChapterEditorComponent implements OnInit {
         
         if (chapter.cover) {
           const baseUrl = environment.apiUrl.replace('/api', '');
-          const coverUrl = chapter.cover.startsWith('http') || chapter.cover.startsWith('data:image') 
-            ? chapter.cover 
-            : `${baseUrl}${chapter.cover}`;
-          this.coverPreviewUrl.set(coverUrl);
+          this.coverPreviewUrl.set(
+            chapter.cover.startsWith('data:') || chapter.cover.startsWith('http') 
+              ? chapter.cover 
+              : `${baseUrl}${chapter.cover.startsWith('/') ? '' : '/'}${chapter.cover}`
+          );
           this.isCoverUploaded = true;
         }
         
@@ -577,7 +591,9 @@ export class ChapterEditorComponent implements OnInit {
             this.bookService.uploadCover(compressedFile).subscribe({
               next: (res) => {
                 const baseUrl = environment.apiUrl.replace('/api', '');
-                const imageUrl = `${baseUrl}${res.coverUrl}`;
+                const imageUrl = res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http') 
+                  ? res.coverUrl 
+                  : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
                 // Insert the returned image URL into the rich text editor
                 this.editorRef.nativeElement.focus();
                 document.execCommand('insertImage', false, imageUrl);
@@ -603,7 +619,14 @@ export class ChapterEditorComponent implements OnInit {
   }
 
   imageCropped(event: ImageCroppedEvent) {
-    if (event.objectUrl) {
+    if (event.base64) {
+      this.croppedImage = event.base64;
+      if (event.blob) {
+        this.activeBlob = event.blob;
+      } else {
+        this.activeBlob = this.base64ToBlob(event.base64);
+      }
+    } else if (event.objectUrl) {
       if (event.blob) {
         this.activeBlob = event.blob;
         const reader = new FileReader();
@@ -611,11 +634,8 @@ export class ChapterEditorComponent implements OnInit {
         reader.onloadend = () => {
           this.croppedImage = reader.result as string;
         };
-      }
-    } else if ((event as any).base64) {
-      this.croppedImage = (event as any).base64;
-      if (event.blob) {
-         this.activeBlob = event.blob;
+      } else {
+        this.croppedImage = event.objectUrl;
       }
     }
   }
@@ -632,7 +652,10 @@ export class ChapterEditorComponent implements OnInit {
           next: (res) => {
             this.isCoverUploaded = true;
             const baseUrl = environment.apiUrl.replace('/api', '');
-            this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+            const finalUrl = res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http') 
+              ? res.coverUrl 
+              : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
+            this.coverPreviewUrl.set(finalUrl);
             this.onContentChange();
           },
           error: (err) => {
@@ -707,7 +730,10 @@ export class ChapterEditorComponent implements OnInit {
         next: (res) => {
           this.isCoverUploaded = true;
           const baseUrl = environment.apiUrl.replace('/api', '');
-          this.coverPreviewUrl.set(`${baseUrl}${res.coverUrl}`);
+          const finalUrl = res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http') 
+            ? res.coverUrl 
+            : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
+          this.coverPreviewUrl.set(finalUrl);
           this.saveToLocal(); 
           this.submitChapterData(res.coverUrl, isDraft, isAutoSave);
         },
@@ -719,12 +745,13 @@ export class ChapterEditorComponent implements OnInit {
       });
     } else {
       let currentCover = this.coverPreviewUrl();
-      if (currentCover && currentCover.startsWith('data:image')) {
-         currentCover = null; 
-      } else if (currentCover) {
-        const baseUrl = environment.apiUrl.replace('/api', '');
-        if (currentCover.startsWith(baseUrl)) {
-          currentCover = currentCover.substring(baseUrl.length);
+      if (currentCover) {
+        if (!currentCover.startsWith('data:image')) {
+          const baseUrl = environment.apiUrl.replace('/api', '');
+          if (currentCover.startsWith(baseUrl)) {
+            currentCover = currentCover.substring(baseUrl.length);
+            if (!currentCover.startsWith('/')) currentCover = '/' + currentCover;
+          }
         }
       }
       this.submitChapterData(currentCover, isDraft, isAutoSave);
