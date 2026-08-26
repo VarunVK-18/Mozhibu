@@ -421,8 +421,8 @@ export class UserProfileComponent implements OnInit {
   requestAuthorStatus() {
     this.http.put('/api/users/upgrade-role', {}).subscribe({
       next: (res: any) => {
-        this.authorStatus.set('pending');
         if (res.user) {
+          this.authorStatus.set(res.user.authorStatus || 'pending');
           this.authService.user.set({...this.authService.user()!, ...res.user});
         }
       },

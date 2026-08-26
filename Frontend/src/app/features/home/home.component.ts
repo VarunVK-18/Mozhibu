@@ -226,7 +226,7 @@ export class HomeComponent implements OnInit {
           this.followingUsers = authors.map((a: any) => ({
             id: a._id,
             name: a.username,
-            avatar: a.avatar,
+            avatar: a.avatar ? this.apiService.getImageUrl(a.avatar) : this.apiService.getFallbackAvatar(a.username),
             followers: a.followersCount || 0,
             isFollowing: true
           }));
@@ -240,7 +240,7 @@ export class HomeComponent implements OnInit {
           this.followerUsers = authors.map((a: any) => ({
             id: a._id,
             name: a.username,
-            avatar: a.avatar,
+            avatar: a.avatar ? this.apiService.getImageUrl(a.avatar) : this.apiService.getFallbackAvatar(a.username),
             followers: a.followersCount || 0
           }));
         }

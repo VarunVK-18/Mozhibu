@@ -28,6 +28,17 @@ export class AuthService {
     const token = localStorage.getItem('token');
     if (storedUser && token) {
       this.user.set(JSON.parse(storedUser));
+      // Fetch latest user data from backend to prevent stale local storage (e.g. missing avatar)
+      this.api.get<User>('/users/me').subscribe({
+        next: (latestUser: User) => {
+          this.user.set({ ...this.user()!, ...latestUser, id: latestUser.id || (latestUser as any)._id });
+          localStorage.setItem('user', JSON.stringify(this.user()));
+        },
+        error: () => {
+          // If token is invalid or expired
+          // this.logout();
+        }
+      });
     }
   }
 

@@ -22,6 +22,10 @@ export class ApiService {
    */
   getImageUrl(path: string | undefined | null): string {
     if (!path) return '';
+    path = path.replace(/\\/g, '/');
+    if (!path.startsWith('/') && !path.startsWith('http') && !path.startsWith('data:')) {
+      path = '/' + path;
+    }
     if (path.startsWith('http') || path.startsWith('data:')) return path;
     return `${this.serverUrl}${path}`;
   }

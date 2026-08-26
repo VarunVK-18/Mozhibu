@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: '5d' }, (err, token) => {
       if (err) throw err;
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, mobile: user.mobile, role: user.role, authorStatus: user.authorStatus } });
+      res.json({ token, user: { id: user.id, username: user.username, email: user.email, mobile: user.mobile, role: user.role, authorStatus: user.authorStatus, avatar: user.avatar } });
     });
   } catch (err) {
     console.error(err.message);
@@ -102,7 +102,7 @@ router.post('/login', async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: '5d' }, (err, token) => {
       if (err) throw err;
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, mobile: user.mobile, role: user.role, authorStatus: user.authorStatus } });
+      res.json({ token, user: { id: user.id, username: user.username, email: user.email, mobile: user.mobile, role: user.role, authorStatus: user.authorStatus, avatar: user.avatar } });
     });
   } catch (err) {
     console.error(err.message);

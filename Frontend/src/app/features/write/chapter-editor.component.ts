@@ -454,7 +454,11 @@ export class ChapterEditorComponent implements OnInit {
         this.scheduledAt = chapter.scheduledAt || '';
         
         if (chapter.cover) {
-          this.coverPreviewUrl.set(chapter.cover);
+          const baseUrl = environment.apiUrl.replace('/api', '');
+          const coverUrl = chapter.cover.startsWith('http') || chapter.cover.startsWith('data:image') 
+            ? chapter.cover 
+            : `${baseUrl}${chapter.cover}`;
+          this.coverPreviewUrl.set(coverUrl);
           this.isCoverUploaded = true;
         }
         

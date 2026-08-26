@@ -40,11 +40,8 @@ router.put('/upgrade-role', protect, async (req, res) => {
       return res.status(400).json({ msg: 'User is already an author or admin' });
     }
     
-    if (user.authorStatus === 'pending') {
-      return res.status(400).json({ msg: 'Author request is already pending' });
-    }
-
-    user.authorStatus = 'pending';
+    user.authorStatus = 'approved';
+    user.role = 'writer';
     await user.save();
 
     // Issue a new token with the updated authorStatus
@@ -53,6 +50,19 @@ router.put('/upgrade-role', protect, async (req, res) => {
       if (err) throw err;
       res.json({ token, user: { id: user.id, username: user.username, email: user.email, mobile: user.mobile, role: user.role, authorStatus: user.authorStatus } });
     });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: 'Server Error' });
+  }
+});
+
+// @route GET /api/users/me
+// @desc Get current user's full profile
+router.get('/me', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+    res.json(user);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: 'Server Error' });

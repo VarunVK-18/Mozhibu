@@ -475,7 +475,8 @@ router.post('/', protect, author, async (req, res) => {
   try {
     const newBook = new Book({
       ...req.body,
-      author: req.user.id
+      author: req.user.id,
+      status: req.body.status || 'published'
     });
     const book = await newBook.save();
     res.json(book);

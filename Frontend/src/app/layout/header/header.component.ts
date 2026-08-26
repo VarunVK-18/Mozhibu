@@ -1,4 +1,4 @@
-import { Component, HostListener, signal, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, HostListener, signal, computed, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LanguageService, Lang, LangOption } from '../../core/services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
@@ -31,7 +31,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private lastScrollY = 0;
   
   notifications = signal<NotificationItem[]>([]);
-  unreadCount = signal(0);
+  
+  activityNotifications = computed(() => this.notifications().filter(n => ['like', 'comment', 'follower', 'following'].includes(n.type)));
+  generalNotifications = computed(() => this.notifications().filter(n => ['new_chapter', 'competition', 'announcement', 'system'].includes(n.type)));
+  
+  unreadActivityCount = computed(() => this.activityNotifications().filter(n => !n.isRead).length);
+  unreadGeneralCount = computed(() => this.generalNotifications().filter(n => !n.isRead).length);
   isPremium = signal(false);
 
   searchResults: AdminBook[] = [];
@@ -241,7 +246,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notificationService.getNotifications().subscribe({
       next: (notifs) => {
         this.notifications.set(notifs);
-        this.unreadCount.set(notifs.filter(n => !n.isRead).length);
       },
       error: (err) => console.error('Failed to fetch notifications', err)
     });
@@ -253,7 +257,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.notifications.update(notifs => 
           notifs.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
         );
-        this.unreadCount.update(c => Math.max(0, c - 1));
       });
     }
     
@@ -269,7 +272,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
     this.notificationService.markAllAsRead().subscribe(() => {
       this.notifications.update(notifs => notifs.map(n => ({...n, isRead: true})));
-      this.unreadCount.set(0);
     });
   }
 

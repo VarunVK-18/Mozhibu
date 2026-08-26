@@ -347,7 +347,7 @@
 }
 
 /* ---- Overlays / Wrappers ---- */
-.search-wrapper, .notifications-wrapper {
+.search-wrapper, .notifications-wrapper, .engagement-wrapper {
   position: relative;
 }
 
