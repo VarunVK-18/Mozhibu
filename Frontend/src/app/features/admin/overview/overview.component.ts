@@ -56,25 +56,25 @@ import { Router } from '@angular/router';
 
             <div class="stat-card">
               <div class="stat-header">
-                <div class="stat-icon pending-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <div class="stat-icon authors-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                 </div>
               </div>
-              <div class="stat-label">Pending Books</div>
+              <div class="stat-label">Total Writers</div>
               <div class="stat-bottom">
-                <div class="stat-value">{{ stats()!.pendingBooks }}</div>
+                <div class="stat-value">{{ stats()!.writers }}</div>
               </div>
             </div>
 
             <div class="stat-card">
               <div class="stat-header">
-                <div class="stat-icon approval-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <div class="stat-icon readers-icon" style="color: var(--blue); background: var(--blue-tint);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                 </div>
               </div>
-              <div class="stat-label">Approval Rate</div>
+              <div class="stat-label">Total Readers</div>
               <div class="stat-bottom">
-                <div class="stat-value">{{ getApprovalRate() | number:'1.0-0' }}%</div>
+                <div class="stat-value">{{ stats()!.readers }}</div>
               </div>
             </div>
           </div>
@@ -111,8 +111,8 @@ import { Router } from '@angular/router';
                 </div>
                 <div class="metric-divider"></div>
                 <div class="metric-item">
-                  <span class="value">{{ getApprovalRate() | number:'1.0-1' }}%</span>
-                  <span class="label">Approval Ratio</span>
+                  <span class="value">{{ getReadersRatio() | number:'1.0-1' }}%</span>
+                  <span class="label">Reader Ratio</span>
                 </div>
               </div>
 
@@ -171,8 +171,8 @@ import { Router } from '@angular/router';
             <!-- Target Chart -->
             <div class="target-card card-panel">
               <div class="panel-header">
-                <h3>Approval Target</h3>
-                <p>Percentage of books approved vs pending</p>
+                <h3>User Distribution</h3>
+                <p>Percentage of readers vs total users</p>
               </div>
               <div class="target-chart">
                 <svg viewBox="0 0 36 36" class="circular-chart">
@@ -182,22 +182,22 @@ import { Router } from '@angular/router';
                       a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                   <path class="circle blue-circle"
-                    [attr.stroke-dasharray]="getApprovalRate() + ', 100'"
+                    [attr.stroke-dasharray]="getReadersRatio() + ', 100'"
                     d="M18 2.0845
                       a 15.9155 15.9155 0 0 1 0 31.831
                       a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
-                  <text x="18" y="20.35" class="percentage">{{ getApprovalRate() | number:'1.0-0' }}%</text>
+                  <text x="18" y="20.35" class="percentage">{{ getReadersRatio() | number:'1.0-0' }}%</text>
                 </svg>
               </div>
               <div class="target-footer">
                 <div class="target-stat">
-                  <span>Pending</span>
-                  <strong>{{ stats()!.pendingBooks }}</strong>
+                  <span>Readers</span>
+                  <strong>{{ stats()!.readers }}</strong>
                 </div>
                 <div class="target-stat">
-                  <span>Published</span>
-                  <strong>{{ stats()!.totalPublishedBooks }}</strong>
+                  <span>Writers</span>
+                  <strong>{{ stats()!.writers }}</strong>
                 </div>
               </div>
             </div>
@@ -522,12 +522,12 @@ export class OverviewComponent implements OnInit {
     return Math.round(((current - prev) / prev) * 100);
   }
 
-  getApprovalRate(): number {
+  getReadersRatio(): number {
     const s = this.stats();
     if (!s) return 0;
-    const total = s.totalPublishedBooks + s.pendingBooks;
+    const total = s.readers + s.writers;
     if (total === 0) return 0;
-    return (s.totalPublishedBooks / total) * 100;
+    return (s.readers / total) * 100;
   }
 
   maxBooks(): number {

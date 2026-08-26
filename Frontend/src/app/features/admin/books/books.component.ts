@@ -13,13 +13,12 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
       <header class="page-header">
         <div class="header-left">
           <h1>Book Management</h1>
-          <p>Review pending books or manage published ones.</p>
+          <p>Manage published books across the platform.</p>
         </div>
         <div class="header-actions">
           <input type="text" [(ngModel)]="searchQuery" placeholder="Search by title or author..." class="search-input">
           <select [(ngModel)]="statusFilter" (change)="loadBooks()" class="filter-select">
             <option value="all">All Books</option>
-            <option value="pending">Pending Review</option>
             <option value="published">Published</option>
             <option value="rejected">Rejected</option>
             <option value="suspended">Suspended</option>
@@ -66,10 +65,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   </td>
                   <td>
                     <div class="action-buttons">
-                      @if (book.status === 'pending') {
-                        <button class="btn-approve" (click)="updateStatus(book, 'published')">Approve</button>
-                        <button class="btn-reject" (click)="rejectBook(book)">Reject</button>
-                      } @else if (book.status === 'published') {
+                      @if (book.status === 'published') {
                         <button class="btn-reject" (click)="updateStatus(book, 'suspended')">Suspend</button>
                       } @else if (book.status === 'rejected' || book.status === 'suspended') {
                         <button class="btn-approve" (click)="updateStatus(book, 'published')">Republish</button>

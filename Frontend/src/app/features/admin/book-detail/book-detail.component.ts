@@ -33,14 +33,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
           </div>
           
           <div class="action-panel">
-            @if (book()?.status === 'pending') {
-              <h3>Review Required</h3>
-              <p>Please review the contents of this book before approving it for public release.</p>
-              <div class="action-buttons">
-                <button class="btn-approve" (click)="updateStatus('published')">Approve Book</button>
-                <button class="btn-reject" (click)="rejectBook()">Reject Book</button>
-              </div>
-            } @else if (book()?.status === 'published') {
+            @if (book()?.status === 'published') {
               <h3>Published Book</h3>
               <p>This book is currently visible to the public.</p>
               <div class="action-buttons">
