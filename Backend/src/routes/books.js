@@ -218,6 +218,20 @@ router.put('/:id', protect, author, async (req, res) => {
       }
     }
     
+    // Deadline Enforcement for Competition Books
+    if (updateData.status === 'published' && book.competitionTag) {
+      const Competition = require('../models/Competition');
+      const comp = await Competition.findOne({ tag: book.competitionTag });
+      if (comp) {
+        if (!comp.isActive) {
+          return res.status(400).json({ msg: 'Competition already ended' });
+        }
+        if (comp.endDate && new Date() > new Date(comp.endDate)) {
+          return res.status(400).json({ msg: 'Competition deadline has passed' });
+        }
+      }
+    }
+    
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
@@ -489,6 +503,20 @@ router.post('/', protect, author, async (req, res) => {
       author: req.user.id,
       status: req.body.status || 'published'
     });
+    
+    // Deadline Enforcement for Competition Books
+    if (newBook.status === 'published' && newBook.competitionTag) {
+      const Competition = require('../models/Competition');
+      const comp = await Competition.findOne({ tag: newBook.competitionTag });
+      if (comp) {
+        if (!comp.isActive) {
+          return res.status(400).json({ msg: 'Competition already ended' });
+        }
+        if (comp.endDate && new Date() > new Date(comp.endDate)) {
+          return res.status(400).json({ msg: 'Competition deadline has passed' });
+        }
+      }
+    }
     const book = await newBook.save();
     res.json(book);
   } catch (err) {

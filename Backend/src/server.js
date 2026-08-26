@@ -1,3 +1,5 @@
+// Increase thread pool size for heavy concurrent crypto operations (like bcrypt during load testing)
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || '64';
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -50,6 +52,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet()); // Security headers
 app.use(compression()); // Compress responses
+app.use(cors()); // CORS must be before rate limiters so they include correct headers
 
 // Global Rate Limiting
 const globalLimiter = rateLimit({
@@ -69,7 +72,6 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
-app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 

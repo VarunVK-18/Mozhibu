@@ -138,9 +138,21 @@ import { environment } from '../../../environments/environment';
               {{ errorMessage }}
             </div>
           }
+          
+          <div class="editor-toolbar" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center; background: var(--surface); padding: 8px 12px; border-radius: var(--radius-m); border: 1px solid var(--border-soft);">
+            <button class="btn-icon" (click)="undo(contentInput)" title="Undo (Ctrl+Z)" style="color: var(--ink-soft); padding: 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+              Undo
+            </button>
+            <button class="btn-icon" (click)="redo(contentInput)" title="Redo (Ctrl+Y)" style="color: var(--ink-soft); padding: 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+              Redo
+            </button>
+          </div>
+          
           <input type="text" class="chapter-title-input" placeholder="Chapter 1: Title..." [(ngModel)]="chapter.title" (ngModelChange)="onContentChange()">
           
-          <textarea class="content-textarea" placeholder="Start writing your story here..." [(ngModel)]="chapter.content" (ngModelChange)="onContentChange()"></textarea>
+          <textarea #contentInput class="content-textarea" placeholder="Start writing your story here..." [(ngModel)]="chapter.content" (ngModelChange)="onContentChange()"></textarea>
         </div>
       </main>
     </div>
@@ -389,6 +401,16 @@ export class StoryEditorComponent implements OnInit {
     localStorage.setItem('writerDarkMode', this.isDarkMode ? 'true' : 'false');
   }
 
+  undo(textarea: HTMLTextAreaElement) {
+    textarea.focus();
+    document.execCommand('undo');
+  }
+
+  redo(textarea: HTMLTextAreaElement) {
+    textarea.focus();
+    document.execCommand('redo');
+  }
+
   publishChapter(isDraft: boolean, isAutoSave = false) {
     if (!this.story.title || !this.story.genre || !this.chapter.title) {
       if (!isAutoSave) {
@@ -416,7 +438,7 @@ export class StoryEditorComponent implements OnInit {
       genre: this.story.genre,
       description: this.story.description,
       tags: tagsArray,
-      status: isDraft ? 'pending' : 'published'
+      status: isDraft ? 'draft' : 'published'
     };
     if (this.story.series) {
       bookData.series = this.story.series;
@@ -469,7 +491,9 @@ export class StoryEditorComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to update book', err);
-          if (!isAutoSave) this.errorMessage = 'Failed to update story. Please try again.';
+          if (!isAutoSave) {
+            this.errorMessage = err.error?.msg || 'Failed to update story. Please try again.';
+          }
           this.isSaving = false;
         }
       });
@@ -482,7 +506,9 @@ export class StoryEditorComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to create book', err);
-          if (!isAutoSave) this.errorMessage = 'Failed to create story. Please try again.';
+          if (!isAutoSave) {
+            this.errorMessage = err.error?.msg || 'Failed to create story. Please try again.';
+          }
           this.isSaving = false;
         }
       });

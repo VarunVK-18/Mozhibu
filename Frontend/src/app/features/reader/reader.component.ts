@@ -529,7 +529,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
     const clientHeight = this.document.documentElement.clientHeight || window.innerHeight || 0;
     
     let percent = 0;
-    if (scrollHeight > clientHeight) {
+    if (scrollHeight <= clientHeight) {
+      percent = 100;
+    } else {
       percent = (scrollOffset / (scrollHeight - clientHeight)) * 100;
     }
     

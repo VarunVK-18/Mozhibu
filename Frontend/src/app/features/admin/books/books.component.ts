@@ -20,6 +20,8 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
           <select [(ngModel)]="statusFilter" (change)="loadBooks()" class="filter-select">
             <option value="all">All Books</option>
             <option value="published">Published</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
             <option value="rejected">Rejected</option>
             <option value="suspended">Suspended</option>
             <option value="reported">Reported Queue (10+)</option>
@@ -107,9 +109,9 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
     .status-badge { display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
     .status-badge.pending { background: #FFF7ED; color: #C2410C; }
     .status-badge.published { background: var(--forest-tint); color: var(--forest-deep); }
-    .status-badge.rejected, .status-badge.suspended { background: var(--rose-tint); color: var(--rose); }
-    
-    .date-cell { font-size: 14px; color: var(--ink-soft); }
+    .status-badge.rejected { background: #FEE2E2; color: #991B1B; }
+    .status-badge.suspended { background: #FEF3C7; color: #92400E; }
+    .status-badge.draft { background: #F3F4F6; color: #4B5563; }
     
     .action-buttons { display: flex; gap: 8px; }
     .action-buttons button { padding: 6px 12px; border-radius: var(--radius-s); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }

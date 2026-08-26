@@ -52,6 +52,9 @@ import { environment } from '../../../environments/environment';
           <button class="tab-btn" [class.active]="activeTab() === 'published'" (click)="activeTab.set('published')">
             Published Contents ({{ publishedStories().length }})
           </button>
+          <button class="tab-btn" *ngIf="user()?.role === 'writer' || user()?.role === 'superadmin'" [class.active]="activeTab() === 'competitions'" (click)="activeTab.set('competitions')">
+            Competition Entries ({{ competitionStories().length }})
+          </button>
           <button class="tab-btn" [class.active]="activeTab() === 'library'" (click)="activeTab.set('library')">
             Saved ({{ savedStories().length }})
           </button>
@@ -111,6 +114,37 @@ import { environment } from '../../../environments/environment';
                 <button class="btn-primary" (click)="requestAuthorStatus()" [disabled]="authorStatus() === 'pending'">
                   {{ authorStatus() === 'pending' ? 'Request Pending' : 'Become an Author' }}
                 </button>
+              </div>
+            }
+          </div>
+
+          <!-- COMPETITION ENTRIES -->
+          <div *ngIf="activeTab() === 'competitions'" class="tab-pane">
+            @if (competitionStories().length > 0) {
+              <div class="results-grid">
+                @for (item of competitionStories(); track item._id) {
+                  <div class="book-card" [routerLink]="['/story', item._id]">
+                    <div class="cover-wrapper">
+                      <img [src]="getCoverUrl(item.cover)" alt="Book cover" class="book-cover" (error)="onCoverError($event)">
+                      <span class="status-badge" style="background: var(--honey); color: var(--ink);">
+                        Competition Entry
+                      </span>
+                    </div>
+                    <div class="book-info">
+                      <h4 class="book-title">{{ item.title }}</h4>
+                      <div class="book-meta">
+                        <span class="meta-item">👁 {{ item.views || 0 }}</span>
+                        <span class="meta-item">♥ {{ item.likesCount || 0 }}</span>
+                        <span class="genre-badge">{{ item.genre }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state">
+                <p>You haven't submitted any stories to a competition yet.</p>
+                <button class="btn-primary" routerLink="/competitions">View Active Competitions</button>
               </div>
             }
           </div>
@@ -305,10 +339,11 @@ export class UserProfileComponent implements OnInit {
   user = this.authService.user;
   authorStatus = signal<string>('');
   
-  activeTab = signal<'published' | 'library' | 'history' | 'following' | 'followers'>('published');
+  activeTab = signal<'published' | 'competitions' | 'library' | 'history' | 'following' | 'followers'>('published');
   isLoading = signal<boolean>(true);
   
   publishedStories = signal<any[]>([]);
+  competitionStories = signal<any[]>([]);
   followersCount = signal<number>(0);
   
   savedStories = signal<any[]>([]);
@@ -337,7 +372,9 @@ export class UserProfileComponent implements OnInit {
     if (this.user()?.role === 'writer' || this.user()?.role === 'superadmin') {
       this.authorService.getAuthorProfile(this.user()!.id).subscribe({
         next: (profile) => {
-          this.publishedStories.set(profile.books || []);
+          const allBooks = profile.books || [];
+          this.publishedStories.set(allBooks.filter(b => !b.competitionTag));
+          this.competitionStories.set(allBooks.filter(b => b.competitionTag));
           this.followersCount.set(profile.author.followersCount || 0);
           checkDone();
         },

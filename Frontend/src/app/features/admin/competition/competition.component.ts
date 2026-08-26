@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminService, AdminBook } from '../../../core/services/admin.service';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-admin-competition',
@@ -91,7 +92,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
       <div class="card" style="margin-top: 24px;">
         <h2>Submitted Entries</h2>
         <p style="color: var(--ink-soft); font-size: 14px; margin-bottom: 24px;">
-          Books published by authors with the current competition tag: <strong>{{ config.tag || 'None' }}</strong>
+          All books published with a competition tag. The currently active tag is: <strong>{{ config.tag || 'None' }}</strong>
         </p>
 
         @if (isLoadingEntries) {
@@ -100,38 +101,37 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
           <div class="empty-state">No entries found for this competition tag yet.</div>
         } @else {
           <div class="table-container">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Submitted At</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let entry of entries">
-                  <td>
-                    <div class="book-info">
-                      <strong>{{ entry.title }}</strong>
-                      <span class="genre-badge">{{ entry.genre }}</span>
-                    </div>
-                  </td>
-                  <td>{{ entry.author.username }}</td>
-                  <td>{{ entry.submittedAt | date:'mediumDate' }}</td>
-                  <td>
-                    <button class="btn-outline btn-small" [routerLink]="['/book', entry._id]" style="margin-right: 8px;">View Book</button>
+            <div class="entries-grid">
+              <div *ngFor="let entry of entries" class="entry-card">
+                <div class="entry-cover-wrapper" [routerLink]="['/admin/books', entry._id]">
+                  <img [src]="entry.cover || api.getFallbackCover()" alt="Book cover" class="entry-cover" (error)="onCoverError($event)">
+                  <div class="entry-badges">
+                    <span class="badge tag-badge">{{ entry.competitionTag || 'Unknown' }}</span>
+                    <span class="badge genre-badge">{{ entry.genre }}</span>
+                  </div>
+                </div>
+                
+                <div class="entry-details">
+                  <h3 class="entry-title">{{ entry.title }}</h3>
+                  <p class="entry-author">By <strong>{{ entry.author.username }}</strong></p>
+                  <p class="entry-date">Submitted: {{ entry.submittedAt | date:'mediumDate' }}</p>
+                  
+                  <div class="entry-actions">
+                    <button class="btn-outline btn-small" [routerLink]="['/admin/books', entry._id]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      View
+                    </button>
                     <button 
                       class="btn-primary btn-small" 
-                      style="background: var(--honey); color: var(--ink); border-color: var(--honey);"
                       (click)="announceWinner(entry._id)"
                       [disabled]="isAnnouncing">
-                      🏆 Pick Winner
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                      Pick Winner
                     </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         }
       </div>
@@ -141,6 +141,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
 })
 export class AdminCompetitionComponent implements OnInit {
   private adminService = inject(AdminService);
+  api = inject(ApiService);
   
   isLoading = true;
   isLoadingEntries = false;
@@ -235,6 +236,10 @@ export class AdminCompetitionComponent implements OnInit {
         alert('Failed to send notifications.');
       }
     });
+  }
+
+  onCoverError(event: any) {
+    event.target.src = this.api.getFallbackCover();
   }
 
   announceWinner(bookId: string) {

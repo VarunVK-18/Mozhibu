@@ -175,7 +175,7 @@ export class StoryService {
       const formattedComments = reviews.map((r: any) => ({
         id: r._id,
         authorName: r.user?.username || 'Unknown',
-        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') || r.user.avatar.startsWith('data:') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
         timestamp: new Date(r.createdAt).toLocaleDateString(),
         text: r.comment || r.text,
         likes: r.likes?.length || 0,
@@ -186,7 +186,7 @@ export class StoryService {
         replies: r.replies ? r.replies.map((reply: any) => ({
           id: reply._id,
           authorName: reply.user?.username || 'Unknown',
-          authorAvatar: reply.user?.avatar ? (reply.user.avatar.startsWith('http') ? reply.user.avatar : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+          authorAvatar: reply.user?.avatar ? (reply.user.avatar.startsWith('http') || reply.user.avatar.startsWith('data:') ? reply.user.avatar : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
           timestamp: new Date(reply.createdAt).toLocaleDateString(),
           text: reply.comment || reply.text,
           likes: reply.likes?.length || 0,
@@ -279,7 +279,7 @@ export class StoryService {
     const newComment: StoryComment = {
       id: Date.now().toString(),
       authorName,
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
+      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,
@@ -322,6 +322,25 @@ export class StoryService {
             dislikes: c.dislikes + (wasDisliked ? -1 : 0)
           };
         }
+        if (c.replies) {
+          return {
+            ...c,
+            replies: c.replies.map((r: any) => {
+              if (r.id === commentId) {
+                const wasLiked = r.isLiked;
+                const wasDisliked = r.isDisliked;
+                return {
+                  ...r,
+                  isLiked: !wasLiked,
+                  isDisliked: false,
+                  likes: r.likes + (wasLiked ? -1 : 1),
+                  dislikes: r.dislikes + (wasDisliked ? -1 : 0)
+                };
+              }
+              return r;
+            })
+          };
+        }
         return c;
       })
     );
@@ -346,6 +365,25 @@ export class StoryService {
             likes: c.likes + (wasLiked ? -1 : 0)
           };
         }
+        if (c.replies) {
+          return {
+            ...c,
+            replies: c.replies.map((r: any) => {
+              if (r.id === commentId) {
+                const wasLiked = r.isLiked;
+                const wasDisliked = r.isDisliked;
+                return {
+                  ...r,
+                  isDisliked: !wasDisliked,
+                  isLiked: false,
+                  dislikes: r.dislikes + (wasDisliked ? -1 : 1),
+                  likes: r.likes + (wasLiked ? -1 : 0)
+                };
+              }
+              return r;
+            })
+          };
+        }
         return c;
       })
     );
@@ -361,7 +399,7 @@ export class StoryService {
     const newReply: StoryComment = {
       id: Date.now().toString(),
       authorName,
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
+      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,

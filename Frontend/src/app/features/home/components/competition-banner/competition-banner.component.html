@@ -39,9 +39,9 @@
             </div>
           </div>
           @if (isExternalLink(config.buttonLink)) {
-            <a [href]="config.buttonLink" target="_blank" rel="noopener noreferrer" class="btn btn-light">{{ config.buttonText }}</a>
+            <a [href]="config.buttonLink" (click)="handleCtaClick($event)" target="_blank" rel="noopener noreferrer" class="btn btn-light">{{ config.buttonText }}</a>
           } @else {
-            <a [routerLink]="(config.buttonLink || '/competitions').split('?')[0]" [queryParams]="getQueryParams(config.buttonLink)" class="btn btn-light">{{ config.buttonText }}</a>
+            <a [routerLink]="(config.buttonLink || '/competitions').split('?')[0]" [queryParams]="getQueryParams(config.buttonLink)" (click)="handleCtaClick($event)" class="btn btn-light">{{ config.buttonText }}</a>
           }
         } @else if (config.winnerBookId) {
           <div class="winner-info" style="display: flex; align-items: center; gap: 16px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px;">
@@ -57,4 +57,25 @@
     </div>
   </div>
 </section>
+
+<!-- Upgrade to Author Modal -->
+@if (showUpgradeModal()) {
+  <div class="modal-overlay" (click)="closeUpgradeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="closeUpgradeModal()">×</button>
+      <div class="modal-header">
+        <h2 class="modal-title" style="color: var(--ink);">Become an Author</h2>
+      </div>
+      <div class="modal-body" style="color: var(--ink-soft); margin-bottom: 24px;">
+        <p>You need to be an Author to submit a story to this competition. Would you like to upgrade your account now? It's completely free!</p>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 16px; justify-content: flex-end;">
+        <button class="btn btn-outline" style="border: 1px solid var(--border); background: transparent; padding: 10px 20px; border-radius: 8px; cursor: pointer; color: var(--ink);" (click)="closeUpgradeModal()">Cancel</button>
+        <button class="btn btn-primary" style="background: var(--forest); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;" (click)="upgradeToAuthor()" [disabled]="isUpgrading()">
+          {{ isUpgrading() ? 'Upgrading...' : 'Upgrade Now' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 }

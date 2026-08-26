@@ -50,6 +50,7 @@ export interface Announcement {
       border-radius: var(--radius-m);
       padding: 24px;
       width: 300px;
+      height: 240px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;

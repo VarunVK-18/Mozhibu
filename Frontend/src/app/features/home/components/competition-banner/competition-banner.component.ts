@@ -2,7 +2,10 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { CompetitionService, CompetitionConfig } from '../../../../core/services/competition.service';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../../../core/services/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-competition-banner',
@@ -13,8 +16,13 @@ import { RouterModule } from '@angular/router';
 })
 export class CompetitionBannerComponent implements OnInit, OnDestroy {
   private competitionService = inject(CompetitionService);
+  authService = inject(AuthService);
+  private http = inject(HttpClient);
+  private router = inject(Router);
   
   config: CompetitionConfig | null = null;
+  showUpgradeModal = signal(false);
+  isUpgrading = signal(false);
   
   days = 0;
   hours = 0;
@@ -76,6 +84,63 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
   isExternalLink(url: string | undefined): boolean {
     if (!url) return false;
     return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  handleCtaClick(event: Event) {
+    if (!this.config?.buttonLink) return;
+    
+    // If external link, let the standard href handle it
+    if (this.isExternalLink(this.config.buttonLink)) {
+      return;
+    }
+
+    const user = this.authService.user();
+    
+    // If not logged in, route to login
+    if (!user) {
+      this.router.navigate(['/login']);
+      event.preventDefault();
+      return;
+    }
+
+    // If logged in as reader, show upgrade modal
+    if (user.role === 'reader') {
+      event.preventDefault();
+      this.showUpgradeModal.set(true);
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    // Otherwise (writer/admin), the routerLink will handle the navigation naturally
+  }
+
+  closeUpgradeModal() {
+    this.showUpgradeModal.set(false);
+    document.body.style.overflow = '';
+  }
+
+  upgradeToAuthor() {
+    this.isUpgrading.set(true);
+    this.http.put('/api/users/upgrade-role', {}).subscribe({
+      next: (res: any) => {
+        if (res.user) {
+          this.authService.user.set({...this.authService.user()!, ...res.user});
+          this.closeUpgradeModal();
+          // Navigate to the competition link
+          if (this.config?.buttonLink) {
+            const url = this.config.buttonLink.split('?')[0];
+            const queryParams = this.getQueryParams(this.config.buttonLink);
+            this.router.navigate([url], { queryParams });
+          }
+        }
+        this.isUpgrading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.isUpgrading.set(false);
+        alert('Failed to upgrade. Please try again or go to your profile settings.');
+      }
+    });
   }
 
   getQueryParams(url: string | undefined): any {

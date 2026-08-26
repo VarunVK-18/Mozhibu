@@ -47,7 +47,7 @@ import { AuthService } from '../../../../core/services/auth.service';
       <div class="comment-input-area write-review-box">
         <img [src]="currentUserAvatar" alt="You" class="avatar">
         <div class="input-wrapper">
-          @if ((isFocused || newCommentText.trim().length > 0) && viewMode === 'reviews') {
+          @if (isFocused || newCommentText.trim().length > 0) {
             <div class="rating-selector">
               <span class="rating-label">Tap to Rate:</span>
               <div class="stars">
@@ -67,7 +67,7 @@ import { AuthService } from '../../../../core/services/auth.service';
           }
           <textarea 
             [(ngModel)]="newCommentText" 
-            [placeholder]="viewMode === 'reviews' ? 'Write a review...' : 'Write a comment...'"
+            [placeholder]="'Write a review (with rating) or a comment...'"
             rows="1"
             (focus)="isFocused = true"
             (blur)="onBlur()"
@@ -83,7 +83,7 @@ import { AuthService } from '../../../../core/services/auth.service';
               <div class="input-actions">
                 <button class="btn-cancel" (click)="cancelComment()">Cancel</button>
                 <button class="btn-submit" [disabled]="!newCommentText.trim()" (click)="submitComment()">
-                  {{ viewMode === 'reviews' ? 'Post Review' : 'Post Comment' }}
+                  {{ newRating > 0 ? 'Post Review' : 'Post Comment' }}
                 </button>
               </div>
             </div>
@@ -91,25 +91,9 @@ import { AuthService } from '../../../../core/services/auth.service';
         </div>
       </div>
 
-      <!-- Sort Navigation -->
-      <div class="reviews-tabs">
-        <div class="left-tabs">
-          <button class="tab-btn" [class.active]="viewMode === 'reviews'" (click)="viewMode = 'reviews'">Reviews ({{ ratedComments.length }})</button>
-          <button class="tab-btn" [class.active]="viewMode === 'comments'" (click)="viewMode = 'comments'">Comments ({{ unratedComments.length }})</button>
-        </div>
-        <div class="right-sort">
-          <span class="sort-label">Sort by:</span>
-          <select [(ngModel)]="sortOrder" class="sort-select">
-            <option value="popular">Top</option>
-            <option value="newest">Recent</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Comment List -->
-      <div class="comments-list">
-        @for (comment of sortedComments; track comment.id) {
-          <div class="comment-thread" [class.pinned]="comment.isPinned">
+      <!-- Comment Thread Template -->
+      <ng-template #commentThread let-comment>
+        <div class="comment-thread" [class.pinned]="comment.isPinned">
             <!-- Parent Comment -->
             <div class="comment-card" [class.highlight-pinned]="comment.isPinned">
               <img [src]="comment.authorAvatar" [alt]="comment.authorName" class="avatar">
@@ -263,13 +247,66 @@ import { AuthService } from '../../../../core/services/auth.service';
               </div>
             </div>
           </div>
-        }
+      </ng-template>
+
+      <!-- Sort Navigation -->
+      <div class="reviews-tabs">
+        <div class="right-sort" style="margin-left: auto;">
+          <span class="sort-label">Sort by:</span>
+          <select [(ngModel)]="sortOrder" class="sort-select">
+            <option value="popular">Top</option>
+            <option value="newest">Recent</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Comments and Reviews Grid -->
+      <div class="comments-reviews-grid">
+        <!-- Left: Comments -->
+        <div class="comments-column">
+          <h3 class="column-title">Comments ({{ unratedComments.length }})</h3>
+          <div class="comments-list">
+            @for (comment of sortedUnratedComments; track comment.id) {
+              <ng-container *ngTemplateOutlet="commentThread; context: { $implicit: comment }"></ng-container>
+            }
+          </div>
+        </div>
+        
+        <!-- Right: Reviews -->
+        <div class="reviews-column">
+          <h3 class="column-title">Reviews ({{ ratedComments.length }})</h3>
+          <div class="comments-list">
+            @for (comment of sortedRatedComments; track comment.id) {
+              <ng-container *ngTemplateOutlet="commentThread; context: { $implicit: comment }"></ng-container>
+            }
+          </div>
+        </div>
       </div>
     </div>
   `,
   styles: [`
     .comments-section {
       margin-top: 48px;
+    }
+    
+    /* Two Column Grid Styles */
+    .comments-reviews-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    .column-title {
+      font-family: var(--display);
+      font-size: 20px;
+      color: var(--ink);
+      margin-bottom: 24px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-soft);
+    }
+    @media (max-width: 900px) {
+      .comments-reviews-grid {
+        grid-template-columns: 1fr;
+      }
     }
     
     /* Ratings Dashboard Styles */
@@ -812,11 +849,18 @@ export class CommentListComponent {
     }));
   }
 
-  viewMode: 'reviews' | 'comments' = 'reviews';
+  
   sortOrder: 'newest' | 'popular' = 'popular';
   
-  get sortedComments() {
-    let source = this.viewMode === 'reviews' ? this.ratedComments : this.unratedComments;
+  get sortedUnratedComments() {
+    return this.sortList(this.unratedComments);
+  }
+  
+  get sortedRatedComments() {
+    return this.sortList(this.ratedComments);
+  }
+
+  private sortList(source: any[]) {
     let sorted = [...source];
     
     if (this.sortOrder === 'newest') {
@@ -931,7 +975,8 @@ export class CommentListComponent {
 
   submitComment() {
     if (this.newCommentText.trim()) {
-      const ratingToSubmit = this.viewMode === 'reviews' ? this.newRating : 0;
+      // If user selected a rating > 0, we consider it a review, otherwise a comment.
+      const ratingToSubmit = this.newRating;
       this.postComment.emit({text: this.newCommentText.trim(), rating: ratingToSubmit});
       this.newCommentText = '';
       this.newRating = 5;

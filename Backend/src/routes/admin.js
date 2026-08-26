@@ -488,9 +488,9 @@ router.get('/competition/entries', async (req, res) => {
     
     // Find all published books that have this competition tag
     const entries = await Book.find({ 
-      competitionTag: competition.tag,
+      competitionTag: { $exists: true, $ne: '' },
       status: 'published'
-    }).populate('author', 'username email');
+    }).populate('author', 'username email').sort({ createdAt: -1 });
     
     res.json(entries);
   } catch (err) {

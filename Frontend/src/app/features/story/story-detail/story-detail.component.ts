@@ -311,8 +311,8 @@ export class StoryDetailComponent implements OnInit {
   getAvatarUrl(path: string | undefined): string {
     const baseUrl = environment.apiUrl.replace('/api', '');
     if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser()?.username || 'You')}&background=random&color=fff&size=100&length=1`;
-    if (path.startsWith('http')) return path;
-    return `${baseUrl}${path}`;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
   onPostComment(event: {text: string, rating: number}) {

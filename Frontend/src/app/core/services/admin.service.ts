@@ -24,6 +24,7 @@ export interface AdminBook {
   genre: string;
   description?: string;
   tags?: string[];
+  competitionTag?: string;
   series?: string;
   views: number;
   rating?: number;
@@ -109,8 +110,7 @@ export class AdminService {
   private fixCoverUrl(book: any): any {
     if (!book || !book.cover) return book;
     if (book.cover.startsWith('http')) return book;
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return { ...book, cover: `${baseUrl}${book.cover}` };
+    return { ...book, cover: this.api.getImageUrl(book.cover) };
   }
 
   getStats(): Observable<AdminStats> {
