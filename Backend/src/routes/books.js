@@ -1,103 +1,123 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const sharp = require('sharp');
-const Book = require('../models/Book');
-const Chapter = require('../models/Chapter');
-const Review = require('../models/Review');
-const Report = require('../models/Report');
-const UserSubscription = require('../models/UserSubscription');
-const User = require('../models/User');
-const { protect, protectOptional, author } = require('../middleware/auth');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { translateBooks, translateChapters } = require('../services/translationService');
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const sharp = require("sharp");
+const Book = require("../models/Book");
+const Chapter = require("../models/Chapter");
+const Review = require("../models/Review");
+const Report = require("../models/Report");
+const UserSubscription = require("../models/UserSubscription");
+const User = require("../models/User");
+const Notification = require("../models/Notification");
+const { protect, protectOptional, author } = require("../middleware/auth");
+const xss = require("xss");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const {
+  translateBooks,
+  translateChapters,
+} = require("../services/translationService");
 
 const router = express.Router();
 
 const storage = multer.memoryStorage();
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error('Only images are allowed'));
+      cb(new Error("Only images are allowed"));
     }
-  }
+  },
 });
 
 // @route POST /api/books/cover
 // @desc Upload a cover image and get its URL (Base64)
-router.post('/cover', protect, author, upload.single('cover'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ msg: 'No file uploaded' });
+router.post(
+  "/cover",
+  protect,
+  author,
+  upload.single("cover"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ msg: "No file uploaded" });
+      }
+
+      // Compress the image and convert to base64
+      const buffer = await sharp(req.file.buffer)
+        .resize(600, 900, { fit: "cover" }) // Typical book cover ratio (2:3)
+        .jpeg({ quality: 80 })
+        .toBuffer();
+
+      const coverUrl = `data:image/jpeg;base64,${buffer.toString("base64")}`;
+      res.json({ coverUrl });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Server Error processing image" });
     }
-    
-    // Compress the image and convert to base64
-    const buffer = await sharp(req.file.buffer)
-      .resize(600, 900, { fit: 'cover' }) // Typical book cover ratio (2:3)
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    
-    const coverUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-    res.json({ coverUrl });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: 'Server Error processing image' });
-  }
-});
+  },
+);
 const getGenAI = () => {
-  const keys = process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',') : [];
+  const keys = process.env.GEMINI_API_KEYS
+    ? process.env.GEMINI_API_KEYS.split(",")
+    : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   return new GoogleGenerativeAI(randomKey);
 };
 
 // @route GET /api/books/categories
 // @desc Get all unique book genres with counts
-router.get('/categories', async (req, res) => {
+router.get("/categories", async (req, res) => {
   try {
     const categories = await Book.aggregate([
-      { $match: { status: 'published' } },
-      { $group: { _id: '$genre', count: { $sum: 1 } } },
-      { $project: { _id: 0, name: '$_id', count: 1 } },
-      { $sort: { count: -1 } }
+      { $match: { status: "published" } },
+      { $group: { _id: "$genre", count: { $sum: 1 } } },
+      { $project: { _id: 0, name: "$_id", count: 1 } },
+      { $sort: { count: -1 } },
     ]);
     res.json(categories);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books/me
 // @desc Get all books written by the logged-in author
-router.get('/me', protect, author, async (req, res) => {
+router.get("/me", protect, author, async (req, res) => {
   try {
-    const books = await Book.find({ author: req.user.id }).sort({ createdAt: -1 }).lean();
-    
+    const books = await Book.find({ author: req.user.id })
+      .sort({ createdAt: -1 })
+      .lean();
+
     // Attach chapter count to each book
-    const booksWithStats = await Promise.all(books.map(async (book) => {
-      const chapterCount = await Chapter.countDocuments({ book: book._id });
-      return { ...book, chapters: chapterCount };
-    }));
+    const booksWithStats = await Promise.all(
+      books.map(async (book) => {
+        const chapterCount = await Chapter.countDocuments({ book: book._id });
+        return { ...book, chapters: chapterCount };
+      }),
+    );
 
     res.json(booksWithStats);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route PUT /api/books/:id/status
 // @desc Toggle the completion status of a book
-router.put('/:id/status', protect, author, async (req, res) => {
+router.put("/:id/status", protect, author, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    
-    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
-      return res.status(403).json({ msg: 'Not authorized' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    if (
+      book.author.toString() !== req.user.id &&
+      req.user.role !== "superadmin"
+    ) {
+      return res.status(403).json({ msg: "Not authorized" });
     }
 
     const { completionStatus } = req.body;
@@ -105,45 +125,45 @@ router.put('/:id/status', protect, author, async (req, res) => {
       book.completionStatus = completionStatus;
       await book.save();
     }
-    
+
     res.json(book);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books
 // @desc Get all published books (paginated)
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     // Get all active users
-    const activeUsers = await User.find({ status: 'active' }).select('_id');
-    const activeUserIds = activeUsers.map(u => u._id);
+    const activeUsers = await User.find({ status: "active" }).select("_id");
+    const activeUserIds = activeUsers.map((u) => u._id);
 
-    let query = { status: 'published', author: { $in: activeUserIds } };
-    
+    let query = { status: "published", author: { $in: activeUserIds } };
+
     // Search query
     if (req.query.q) {
-      query.title = { $regex: req.query.q, $options: 'i' };
+      query.title = { $regex: req.query.q, $options: "i" };
     }
-    
+
     // Audio filter
-    if (req.query.isAudio === 'true') {
+    if (req.query.isAudio === "true") {
       query.isAudio = true;
     }
-    
+
     // Genre filter
     if (req.query.genre) {
       query.genre = req.query.genre;
     }
-    
+
     // Sorting
     let sortObj = { createdAt: -1 }; // default to latest
-    
-    if (req.query.sort === 'trending') {
+
+    if (req.query.sort === "trending") {
       sortObj = { views: -1, rating: -1 };
-    } else if (req.query.sort === 'popular') {
+    } else if (req.query.sort === "popular") {
       sortObj = { views: -1 };
     }
 
@@ -152,140 +172,168 @@ router.get('/', async (req, res) => {
     const skip = (page - 1) * limit;
 
     const totalBooks = await Book.countDocuments(query);
-    
+
     const books = await Book.find(query)
-      .populate('author', 'username avatar')
+      .populate("author", "username avatar")
       .sort(sortObj)
       .skip(skip)
       .limit(limit);
-      
-    const targetLang = req.headers['x-app-language'] || 'en';
+
+    const targetLang = req.headers["x-app-language"] || "en";
     const translatedBooks = await translateBooks(books, targetLang);
-      
+
     res.json({
       books: translatedBooks,
       currentPage: page,
       totalPages: Math.ceil(totalBooks / limit),
-      totalBooks
+      totalBooks,
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books/:id
 // @desc Get a single published book (or unpublished if requested by author)
-router.get('/:id', protectOptional, async (req, res) => {
+router.get("/:id", protectOptional, async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id).populate('author', 'username avatar status');
-    
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    
-    const isAuthor = req.user && book.author && book.author._id.toString() === req.user.id;
-    if (!isAuthor && (book.status !== 'published' || !book.author || book.author.status !== 'active')) {
-      return res.status(404).json({ msg: 'Book not found or not published' });
+    const book = await Book.findById(req.params.id).populate(
+      "author",
+      "username avatar status",
+    );
+
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    const isAuthor =
+      req.user && book.author && book.author._id.toString() === req.user.id;
+    if (
+      !isAuthor &&
+      (book.status !== "published" ||
+        !book.author ||
+        book.author.status !== "active")
+    ) {
+      return res.status(404).json({ msg: "Book not found or not published" });
     }
 
-    const targetLang = req.headers['x-app-language'] || 'en';
+    const targetLang = req.headers["x-app-language"] || "en";
     const translatedBooks = await translateBooks([book], targetLang);
 
     res.json(translatedBooks[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route PUT /api/books/:id
 // @desc Update an existing book
-router.put('/:id', protect, author, async (req, res) => {
+router.put("/:id", protect, author, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
     // Check if user is author or superadmin
-    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
-      return res.status(403).json({ msg: 'Not authorized to update this book' });
+    if (
+      book.author.toString() !== req.user.id &&
+      req.user.role !== "superadmin"
+    ) {
+      return res
+        .status(403)
+        .json({ msg: "Not authorized to update this book" });
     }
-    
+
     // Only allow updating certain fields to prevent abuse
-    const updatableFields = ['title', 'genre', 'description', 'tags', 'series', 'cover', 'status', 'accessType'];
+    const updatableFields = [
+      "title",
+      "genre",
+      "description",
+      "tags",
+      "series",
+      "cover",
+      "status",
+      "accessType",
+    ];
     const updateData = {};
     for (const field of updatableFields) {
       if (req.body[field] !== undefined) {
         updateData[field] = req.body[field];
       }
     }
-    
+
     // Deadline Enforcement for Competition Books
-    if (updateData.status === 'published' && book.competitionTag) {
-      const Competition = require('../models/Competition');
+    if (updateData.status === "published" && book.competitionTag) {
+      const Competition = require("../models/Competition");
       const comp = await Competition.findOne({ tag: book.competitionTag });
       if (comp) {
         if (!comp.isActive) {
-          return res.status(400).json({ msg: 'Competition already ended' });
+          return res.status(400).json({ msg: "Competition already ended" });
         }
         if (comp.endDate && new Date() > new Date(comp.endDate)) {
-          return res.status(400).json({ msg: 'Competition deadline has passed' });
+          return res
+            .status(400)
+            .json({ msg: "Competition deadline has passed" });
         }
       }
     }
-    
+
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
-    
+
     res.json(updatedBook);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books/:id/chapters
 // @desc Get all chapters for a book
-router.get('/:id/chapters', protectOptional, async (req, res) => {
+router.get("/:id/chapters", protectOptional, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
     if (!book) {
-      return res.status(404).json({ msg: 'Book not found' });
+      return res.status(404).json({ msg: "Book not found" });
     }
 
     let isSubscriber = false;
     if (req.user) {
       const activeSub = await UserSubscription.findOne({
         user: req.user.id,
-        status: 'active',
-        endDate: { $gt: new Date() }
+        status: "active",
+        endDate: { $gt: new Date() },
       });
       if (activeSub) {
         isSubscriber = true;
       }
     }
 
-    const isAuthor = req.user && book.author && book.author.toString() === req.user.id;
+    const isAuthor =
+      req.user && book.author && book.author.toString() === req.user.id;
     const query = { book: req.params.id };
     if (!isAuthor) {
-      query.status = 'published';
+      query.status = "published";
     }
 
     const chapters = await Chapter.find(query).sort({ order: 1 });
-      
+
     // Apply access control before returning
-    const chaptersWithAccess = chapters.map(chapter => {
-      const isPremium = chapter.accessType === 'premium' || (chapter.accessType === 'inherit' && book.accessType === 'premium');
-      
+    const chaptersWithAccess = chapters.map((chapter) => {
+      const isPremium =
+        chapter.accessType === "premium" ||
+        (chapter.accessType === "inherit" && book.accessType === "premium");
+
       const chapObj = chapter.toObject();
-      
+
       // Authors can always read their own chapters
       if (isAuthor) {
         chapObj.isLocked = false;
         return chapObj;
       }
-      
+
       if (isPremium && !isSubscriber) {
         chapObj.content = null;
         chapObj.isLocked = true;
@@ -294,40 +342,64 @@ router.get('/:id/chapters', protectOptional, async (req, res) => {
       }
       return chapObj;
     });
-      
-    const targetLang = req.headers['x-app-language'] || 'en';
-    const translatedChapters = await translateChapters(chaptersWithAccess, targetLang);
+
+    const targetLang = req.headers["x-app-language"] || "en";
+    const translatedChapters = await translateChapters(
+      chaptersWithAccess,
+      targetLang,
+    );
 
     res.json(translatedChapters);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books/:id/reviews
 // @desc Get all approved reviews for a book
-router.get('/:id/reviews', async (req, res) => {
+router.get("/:id/reviews", async (req, res) => {
   try {
-    const reviews = await Review.find({ book: req.params.id, status: 'approved', parentReview: { $exists: false } })
-      .populate('user', 'username avatar')
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const skip = (page - 1) * limit;
+
+    const query = {
+      book: req.params.id,
+      status: "approved",
+      parentReview: { $exists: false },
+    };
+
+    const reviews = await Review.find(query)
+      .populate("user", "username avatar")
       .populate({
-        path: 'replies',
-        populate: { path: 'user', select: 'username avatar' }
+        path: "replies",
+        populate: { path: "user", select: "username avatar" },
       })
-      .sort({ createdAt: -1 });
-    res.json(reviews);
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalReviews = await Review.countDocuments(query);
+    const totalPages = Math.ceil(totalReviews / limit);
+
+    res.json({
+      reviews,
+      currentPage: page,
+      totalPages,
+      totalReviews,
+    });
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/reviews
 // @desc Post a review for a book
-router.post('/:id/reviews', protect, async (req, res) => {
+router.post("/:id/reviews", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
 
     // Allow multiple comments per user (removed existingReview check)
 
@@ -336,64 +408,91 @@ router.post('/:id/reviews', protect, async (req, res) => {
       user: req.user.id,
       rating: req.body.rating,
       comment: req.body.content,
-      status: 'approved' // Automatically approve for now, can be changed to pending
+      status: "approved", // Automatically approve for now, can be changed to pending
     });
 
     const review = await newReview.save();
-    
+
     // Update book rating
-    const reviews = await Review.find({ book: req.params.id, status: 'approved', parentReview: { $exists: false } });
+    const reviews = await Review.find({
+      book: req.params.id,
+      status: "approved",
+      parentReview: { $exists: false },
+    });
     let avgRating = 0;
     if (reviews.length > 0) {
-      avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / reviews.length;
+      avgRating =
+        reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) /
+        reviews.length;
     }
     book.rating = avgRating;
     await book.save();
 
+    if (book.author.toString() !== req.user.id) {
+      await Notification.create({
+        recipient: book.author,
+        sender: req.user.id,
+        type: "comment",
+        title: "New Comment",
+        message: `${req.user.username || "Someone"} commented on your book "${book.title}".`,
+        link: `/story/${book._id}`,
+      });
+    }
+
     res.json(review);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/reviews/:reviewId/like
 // @desc Like a comment
-router.post('/:id/reviews/:reviewId/like', protect, async (req, res) => {
+router.post("/:id/reviews/:reviewId/like", protect, async (req, res) => {
   try {
     const review = await Review.findById(req.params.reviewId);
-    if (!review) return res.status(404).json({ msg: 'Review not found' });
+    if (!review) return res.status(404).json({ msg: "Review not found" });
 
     const userId = req.user.id;
     // Remove from dislikes if present
-    review.dislikes = review.dislikes.filter(id => id.toString() !== userId);
-    
+    review.dislikes = review.dislikes.filter((id) => id.toString() !== userId);
+
     // Toggle like
-    const index = review.likes.findIndex(id => id.toString() === userId);
+    const index = review.likes.findIndex((id) => id.toString() === userId);
     if (index > -1) {
       review.likes.splice(index, 1); // unlike
     } else {
       review.likes.push(userId); // like
+      if (review.user.toString() !== userId) {
+        await Notification.create({
+          recipient: review.user,
+          sender: userId,
+          type: "like",
+          title: "New Like",
+          message: `${req.user.username || "Someone"} liked your comment.`,
+          link: `/story/${req.params.id}`,
+        });
+      }
     }
     await review.save();
     res.json(review);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/reviews/:reviewId/dislike
 // @desc Dislike a comment
-router.post('/:id/reviews/:reviewId/dislike', protect, async (req, res) => {
+router.post("/:id/reviews/:reviewId/dislike", protect, async (req, res) => {
   try {
     const review = await Review.findById(req.params.reviewId);
-    if (!review) return res.status(404).json({ msg: 'Review not found' });
+    if (!review) return res.status(404).json({ msg: "Review not found" });
 
     const userId = req.user.id;
     // Remove from likes if present
-    review.likes = review.likes.filter(id => id.toString() !== userId);
-    
+    review.likes = review.likes.filter((id) => id.toString() !== userId);
+
     // Toggle dislike
-    const index = review.dislikes.findIndex(id => id.toString() === userId);
+    const index = review.dislikes.findIndex((id) => id.toString() === userId);
     if (index > -1) {
       review.dislikes.splice(index, 1); // undislike
     } else {
@@ -402,242 +501,309 @@ router.post('/:id/reviews/:reviewId/dislike', protect, async (req, res) => {
     await review.save();
     res.json(review);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/reviews/:reviewId/reply
 // @desc Reply to a comment
-router.post('/:id/reviews/:reviewId/reply', protect, async (req, res) => {
+router.post("/:id/reviews/:reviewId/reply", protect, async (req, res) => {
   try {
     const parentReview = await Review.findById(req.params.reviewId);
-    if (!parentReview) return res.status(404).json({ msg: 'Parent review not found' });
+    if (!parentReview)
+      return res.status(404).json({ msg: "Parent review not found" });
 
     const newReply = new Review({
       book: req.params.id,
       user: req.user.id,
       comment: req.body.content,
       parentReview: parentReview._id,
-      status: 'approved'
+      status: "approved",
     });
 
     const reply = await newReply.save();
-    
+
     // Add to parent replies
     parentReview.replies.push(reply._id);
     await parentReview.save();
 
+    if (parentReview.user.toString() !== req.user.id) {
+      await Notification.create({
+        recipient: parentReview.user,
+        sender: req.user.id,
+        type: "comment",
+        title: "New Reply",
+        message: `${req.user.username || "Someone"} replied to your comment.`,
+        link: `/story/${req.params.id}`,
+      });
+    }
+
     // Populate user before sending back
-    await reply.populate('user', 'username avatar');
+    await reply.populate("user", "username avatar");
     res.json(reply);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/like
 // @desc Toggle like for a book
-router.post('/:id/like', protect, async (req, res) => {
+router.post("/:id/like", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
 
     if (!book.likes) {
       book.likes = [];
     }
 
-    const isLiked = book.likes.some(id => id.toString() === req.user.id);
+    const isLiked = book.likes.some((id) => id.toString() === req.user.id);
 
     if (isLiked) {
       // Unlike
-      book.likes = book.likes.filter(id => id.toString() !== req.user.id);
+      book.likes = book.likes.filter((id) => id.toString() !== req.user.id);
     } else {
       // Like
       book.likes.push(req.user.id);
+      if (book.author.toString() !== req.user.id) {
+        await Notification.create({
+          recipient: book.author,
+          sender: req.user.id,
+          type: "like",
+          title: "New Like",
+          message: `${req.user.username || "Someone"} liked your book "${book.title}".`,
+          link: `/story/${book._id}`,
+        });
+      }
     }
-    
+
     book.likesCount = book.likes.length;
     await book.save();
-    
-    res.json({ msg: isLiked ? 'Unliked' : 'Liked', isLiked: !isLiked, likesCount: book.likesCount });
+
+    res.json({
+      msg: isLiked ? "Unliked" : "Liked",
+      isLiked: !isLiked,
+      likesCount: book.likesCount,
+    });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/report
 // @desc Report a book
-router.post('/:id/report', protect, async (req, res) => {
+router.post("/:id/report", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
 
     const newReport = new Report({
       book: req.params.id,
       reporter: req.user.id,
-      reason: req.body.reason || 'Other'
+      reason: req.body.reason || "Other",
     });
 
     await newReport.save();
 
     book.reportCount = (book.reportCount || 0) + 1;
     if (book.reportCount >= 50) {
-      book.status = 'suspended';
+      book.status = "suspended";
     }
     await book.save();
 
-    res.json({ msg: 'Report submitted successfully' });
+    res.json({ msg: "Report submitted successfully" });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books
 // @desc Create a new book
-router.post('/', protect, author, async (req, res) => {
+router.post("/", protect, author, async (req, res) => {
   try {
     const newBook = new Book({
       ...req.body,
       author: req.user.id,
-      status: req.body.status || 'published'
+      status: req.body.status || "published",
     });
-    
+
     // Deadline Enforcement for Competition Books
-    if (newBook.status === 'published' && newBook.competitionTag) {
-      const Competition = require('../models/Competition');
+    if (newBook.status === "published" && newBook.competitionTag) {
+      const Competition = require("../models/Competition");
       const comp = await Competition.findOne({ tag: newBook.competitionTag });
       if (comp) {
         if (!comp.isActive) {
-          return res.status(400).json({ msg: 'Competition already ended' });
+          return res.status(400).json({ msg: "Competition already ended" });
         }
         if (comp.endDate && new Date() > new Date(comp.endDate)) {
-          return res.status(400).json({ msg: 'Competition deadline has passed' });
+          return res
+            .status(400)
+            .json({ msg: "Competition deadline has passed" });
         }
       }
     }
     const book = await newBook.save();
     res.json(book);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/:id/chapters
 // @desc Create a new chapter for a book
-router.post('/:id/chapters', protect, author, async (req, res) => {
+router.post("/:id/chapters", protect, author, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
-      return res.status(403).json({ msg: 'Not authorized' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+    if (
+      book.author.toString() !== req.user.id &&
+      req.user.role !== "superadmin"
+    ) {
+      return res.status(403).json({ msg: "Not authorized" });
     }
-    
+
     // Automatically calculate order
-    const lastChapter = await Chapter.findOne({ book: req.params.id }).sort('-order');
+    const lastChapter = await Chapter.findOne({ book: req.params.id }).sort(
+      "-order",
+    );
     const nextOrder = lastChapter ? lastChapter.order + 1 : 1;
     
+    // Sanitize HTML content
+    const sanitizedContent = req.body.content ? xss(req.body.content) : "";
+
     const newChapter = new Chapter({
       ...req.body,
+      content: sanitizedContent,
       order: nextOrder,
-      book: req.params.id
+      book: req.params.id,
     });
     const chapter = await newChapter.save();
     res.json(chapter);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route GET /api/books/:id/chapters/:chapterId
 // @desc Get a single chapter
-router.get('/:id/chapters/:chapterId', protectOptional, async (req, res) => {
+router.get("/:id/chapters/:chapterId", protectOptional, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    
-    const chapter = await Chapter.findOne({ _id: req.params.chapterId, book: req.params.id });
-    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
-    
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    const chapter = await Chapter.findOne({
+      _id: req.params.chapterId,
+      book: req.params.id,
+    });
+    if (!chapter) return res.status(404).json({ msg: "Chapter not found" });
+
     const isAuthor = req.user && book.author.toString() === req.user.id;
-    
+
     // Determine if premium
-    const isPremium = chapter.accessType === 'premium' || (chapter.accessType === 'inherit' && book.accessType === 'premium');
-    
+    const isPremium =
+      chapter.accessType === "premium" ||
+      (chapter.accessType === "inherit" && book.accessType === "premium");
+
     if (isPremium && !isAuthor) {
       let isSubscriber = false;
       if (req.user) {
         const activeSub = await UserSubscription.findOne({
           user: req.user.id,
-          status: 'active',
-          endDate: { $gt: new Date() }
+          status: "active",
+          endDate: { $gt: new Date() },
         });
         if (activeSub) isSubscriber = true;
       }
       if (!isSubscriber) {
-        return res.status(403).json({ msg: 'Premium chapter. Subscription required.' });
+        return res
+          .status(403)
+          .json({ msg: "Premium chapter. Subscription required." });
       }
     }
 
     res.json(chapter);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route PUT /api/books/:id/chapters/:chapterId
 // @desc Update a chapter
-router.put('/:id/chapters/:chapterId', protect, author, async (req, res) => {
+router.put("/:id/chapters/:chapterId", protect, author, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
-      return res.status(403).json({ msg: 'Not authorized' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+    if (
+      book.author.toString() !== req.user.id &&
+      req.user.role !== "superadmin"
+    ) {
+      return res.status(403).json({ msg: "Not authorized" });
     }
-    
+
+    if (req.body.content) {
+      req.body.content = xss(req.body.content);
+    }
+
     const chapter = await Chapter.findOneAndUpdate(
       { _id: req.params.chapterId, book: req.params.id },
       { $set: req.body },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
-    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
-    
+    if (!chapter) return res.status(404).json({ msg: "Chapter not found" });
+
     res.json(chapter);
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route DELETE /api/books/:id/chapters/:chapterId
 // @desc Delete a chapter
-router.delete('/:id/chapters/:chapterId', protect, author, async (req, res) => {
+router.delete("/:id/chapters/:chapterId", protect, author, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
-    if (!book) return res.status(404).json({ msg: 'Book not found' });
-    if (book.author.toString() !== req.user.id && req.user.role !== 'superadmin') {
-      return res.status(403).json({ msg: 'Not authorized' });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+    if (
+      book.author.toString() !== req.user.id &&
+      req.user.role !== "superadmin"
+    ) {
+      return res.status(403).json({ msg: "Not authorized" });
     }
-    
-    const chapter = await Chapter.findOneAndDelete({ _id: req.params.chapterId, book: req.params.id });
-    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
-    
-    res.json({ msg: 'Chapter deleted' });
+
+    const chapter = await Chapter.findOneAndDelete({
+      _id: req.params.chapterId,
+      book: req.params.id,
+    });
+    if (!chapter) return res.status(404).json({ msg: "Chapter not found" });
+
+    res.json({ msg: "Chapter deleted" });
   } catch (err) {
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route POST /api/books/translate-html
 // @desc Translate raw HTML to target language (for UI demo)
-router.post('/translate-html', async (req, res) => {
+router.post("/translate-html", async (req, res) => {
   const { html, targetLang } = req.body;
-  if (!html || !targetLang) return res.status(400).json({ msg: 'html and targetLang required' });
+  if (!html || !targetLang)
+    return res.status(400).json({ msg: "html and targetLang required" });
 
   const langMap = {
-    'en': 'English', 'ta': 'Tamil', 'te': 'Telugu', 'ml': 'Malayalam',
-    'kn': 'Kannada', 'bn': 'Bengali', 'hi': 'Hindi', 'pa': 'Punjabi',
-    'mr': 'Marathi', 'ur': 'Urdu', 'gu': 'Gujarati', 'or': 'Odia'
+    en: "English",
+    ta: "Tamil",
+    te: "Telugu",
+    ml: "Malayalam",
+    kn: "Kannada",
+    bn: "Bengali",
+    hi: "Hindi",
+    pa: "Punjabi",
+    mr: "Marathi",
+    ur: "Urdu",
+    gu: "Gujarati",
+    or: "Odia",
   };
   const targetLangName = langMap[targetLang] || targetLang;
 
@@ -654,28 +820,35 @@ ${html}`;
 
     const result = await model.generateContent(prompt);
     let translatedContent = result.response.text();
-    if (translatedContent.startsWith('\`\`\`html')) {
-        translatedContent = translatedContent.replace(/\`\`\`html\n?/, '').replace(/\`\`\`\n?$/, '');
-    } else if (translatedContent.startsWith('\`\`\`')) {
-        translatedContent = translatedContent.replace(/\`\`\`\n?/, '').replace(/\`\`\`\n?$/, '');
+    if (translatedContent.startsWith("\`\`\`html")) {
+      translatedContent = translatedContent
+        .replace(/\`\`\`html\n?/, "")
+        .replace(/\`\`\`\n?$/, "");
+    } else if (translatedContent.startsWith("\`\`\`")) {
+      translatedContent = translatedContent
+        .replace(/\`\`\`\n?/, "")
+        .replace(/\`\`\`\n?$/, "");
     }
     translatedContent = translatedContent.trim();
     res.json({ content: translatedContent });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server Error', error: err.message || err.toString() });
+    res
+      .status(500)
+      .json({ msg: "Server Error", error: err.message || err.toString() });
   }
 });
 
 // @route POST /api/books/:id/chapters/:chapterId/translate
 // @desc Translate a chapter to a target language using Gemini
-router.post('/:id/chapters/:chapterId/translate', async (req, res) => {
+router.post("/:id/chapters/:chapterId/translate", async (req, res) => {
   try {
     const { targetLang } = req.body;
-    if (!targetLang) return res.status(400).json({ msg: 'targetLang is required' });
+    if (!targetLang)
+      return res.status(400).json({ msg: "targetLang is required" });
 
     const chapter = await Chapter.findById(req.params.chapterId);
-    if (!chapter) return res.status(404).json({ msg: 'Chapter not found' });
+    if (!chapter) return res.status(404).json({ msg: "Chapter not found" });
 
     // Check if we already have the translation
     if (chapter.translations && chapter.translations.has(targetLang)) {
@@ -685,12 +858,21 @@ router.post('/:id/chapters/:chapterId/translate', async (req, res) => {
     // Initialize Gemini
     const genAI = getGenAI();
     const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-    
+
     // Create language map to give Gemini more context
     const langMap = {
-      'en': 'English', 'ta': 'Tamil', 'te': 'Telugu', 'ml': 'Malayalam',
-      'kn': 'Kannada', 'bn': 'Bengali', 'hi': 'Hindi', 'pa': 'Punjabi',
-      'mr': 'Marathi', 'ur': 'Urdu', 'gu': 'Gujarati', 'or': 'Odia'
+      en: "English",
+      ta: "Tamil",
+      te: "Telugu",
+      ml: "Malayalam",
+      kn: "Kannada",
+      bn: "Bengali",
+      hi: "Hindi",
+      pa: "Punjabi",
+      mr: "Marathi",
+      ur: "Urdu",
+      gu: "Gujarati",
+      or: "Odia",
     };
     const targetLangName = langMap[targetLang] || targetLang;
 
@@ -703,12 +885,16 @@ ${chapter.content}`;
 
     const result = await model.generateContent(prompt);
     let translatedContent = result.response.text();
-    
+
     // Clean up potential markdown formatting from Gemini
-    if (translatedContent.startsWith('\`\`\`html')) {
-        translatedContent = translatedContent.replace(/\`\`\`html\n?/, '').replace(/\`\`\`\n?$/, '');
-    } else if (translatedContent.startsWith('\`\`\`')) {
-        translatedContent = translatedContent.replace(/\`\`\`\n?/, '').replace(/\`\`\`\n?$/, '');
+    if (translatedContent.startsWith("\`\`\`html")) {
+      translatedContent = translatedContent
+        .replace(/\`\`\`html\n?/, "")
+        .replace(/\`\`\`\n?$/, "");
+    } else if (translatedContent.startsWith("\`\`\`")) {
+      translatedContent = translatedContent
+        .replace(/\`\`\`\n?/, "")
+        .replace(/\`\`\`\n?$/, "");
     }
     translatedContent = translatedContent.trim();
 
@@ -720,7 +906,7 @@ ${chapter.content}`;
     res.json({ content: translatedContent });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ msg: 'Server Error' });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 

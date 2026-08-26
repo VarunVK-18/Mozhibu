@@ -18,8 +18,8 @@ describe('MyReadingComponent', () => {
       imports: [MyReadingComponent],
       providers: [
         { provide: AuthService, useValue: spy },
-        provideRouter([]) // Mock router for routerLink
-      ]
+        provideRouter([]), // Mock router for routerLink
+      ],
     }).compileComponents();
 
     authServiceSpy = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
@@ -46,18 +46,30 @@ describe('MyReadingComponent', () => {
     const mockProgress = [
       {
         _id: '1',
-        book: { _id: 'b1', title: 'Book 1', cover: 'cover1.jpg', author: { username: 'Author 1' }, chapters: new Array(10) },
+        book: {
+          _id: 'b1',
+          title: 'Book 1',
+          cover: 'cover1.jpg',
+          author: { username: 'Author 1' },
+          chapters: new Array(10),
+        },
         currentChapter: { order: 2 },
         progressPercentage: 20,
-        lastReadAt: new Date().toISOString()
+        lastReadAt: new Date().toISOString(),
       },
       {
         _id: '2',
-        book: { _id: 'b2', title: 'Book 2', cover: 'cover2.jpg', author: 'Author 2', chapters: new Array(5) },
+        book: {
+          _id: 'b2',
+          title: 'Book 2',
+          cover: 'cover2.jpg',
+          author: 'Author 2',
+          chapters: new Array(5),
+        },
         currentChapter: 1,
         progressPercentage: 10,
-        lastReadAt: new Date().toISOString()
-      }
+        lastReadAt: new Date().toISOString(),
+      },
     ];
 
     authServiceSpy.getReadingProgress.and.returnValue(of(mockProgress));
@@ -66,11 +78,13 @@ describe('MyReadingComponent', () => {
     expect(component.recentlyRead()?.title).toBe('Book 1');
     expect(component.readingHistory().length).toBe(1);
     expect(component.readingHistory()[0].title).toBe('Book 2');
-    
+
     // Verify UI reflects data
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.empty-state')).toBeFalsy();
     expect(compiled.querySelector('.active-book-banner-clean')).toBeTruthy();
-    expect(compiled.querySelector('.active-info-card h2')?.textContent).toContain('Book 1');
+    expect(
+      compiled.querySelector('.active-info-card h2')?.textContent,
+    ).toContain('Book 1');
   });
 });

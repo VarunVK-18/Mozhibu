@@ -1,7 +1,17 @@
-import { Component, inject, ViewChild, ElementRef, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  ViewChild,
+  ElementRef,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService, AdminBroadcast } from '../../../core/services/admin.service';
+import {
+  AdminService,
+  AdminBroadcast,
+} from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-broadcast',
@@ -16,44 +26,133 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
 
       <div class="broadcast-card">
         <form (ngSubmit)="sendBroadcast()" #broadcastForm="ngForm">
-          
           <div class="form-group">
             <label for="title">Announcement Title</label>
-            <input type="text" id="title" name="title" [(ngModel)]="title" required placeholder="e.g. Server Maintenance at 2 AM" />
+            <input
+              type="text"
+              id="title"
+              name="title"
+              [(ngModel)]="title"
+              required
+              placeholder="e.g. Server Maintenance at 2 AM"
+            />
           </div>
 
           <div class="form-group">
             <label>Message</label>
             <div class="editor-container">
               <div class="editor-toolbar">
-                <button type="button" class="toolbar-btn" (click)="format('bold')" title="Bold">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg>
+                <button
+                  type="button"
+                  class="toolbar-btn"
+                  (click)="format('bold')"
+                  title="Bold"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                  </svg>
                 </button>
-                <button type="button" class="toolbar-btn" (click)="format('italic')" title="Italic">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg>
+                <button
+                  type="button"
+                  class="toolbar-btn"
+                  (click)="format('italic')"
+                  title="Italic"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="19" y1="4" x2="10" y2="4"></line>
+                    <line x1="14" y1="20" x2="5" y2="20"></line>
+                    <line x1="15" y1="4" x2="9" y2="20"></line>
+                  </svg>
                 </button>
-                <button type="button" class="toolbar-btn" (click)="format('underline')" title="Underline">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg>
+                <button
+                  type="button"
+                  class="toolbar-btn"
+                  (click)="format('underline')"
+                  title="Underline"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path>
+                    <line x1="4" y1="21" x2="20" y2="21"></line>
+                  </svg>
                 </button>
                 <div class="toolbar-divider"></div>
-                <button type="button" class="toolbar-btn" (click)="insertLink()" title="Insert Link">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <button
+                  type="button"
+                  class="toolbar-btn"
+                  (click)="insertLink()"
+                  title="Insert Link"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+                    ></path>
+                    <path
+                      d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+                    ></path>
+                  </svg>
                 </button>
               </div>
-              <div 
-                #editor 
-                class="editor-content" 
-                contenteditable="true" 
+              <div
+                #editor
+                class="editor-content"
+                contenteditable="true"
                 (input)="onEditorInput()"
                 placeholder="Type your full announcement here..."
               ></div>
             </div>
-            <input type="hidden" name="message" [(ngModel)]="message" required />
+            <input
+              type="hidden"
+              name="message"
+              [(ngModel)]="message"
+              required
+            />
           </div>
 
           <div class="form-group">
             <label for="audience">Target Audience</label>
-            <select id="audience" name="audience" [(ngModel)]="audience" required>
+            <select
+              id="audience"
+              name="audience"
+              [(ngModel)]="audience"
+              required
+            >
               <option value="all">All Users</option>
               <option value="readers">Readers Only</option>
               <option value="writers">Writers Only</option>
@@ -61,7 +160,11 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary" [disabled]="!broadcastForm.valid || isSubmitting">
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="!broadcastForm.valid || isSubmitting"
+            >
               {{ isSubmitting ? 'Sending...' : 'Send Broadcast' }}
             </button>
           </div>
@@ -84,9 +187,7 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
         @if (loadingHistory()) {
           <div class="loading-state">Loading history...</div>
         } @else if (history().length === 0) {
-          <div class="empty-state">
-            No past broadcasts found.
-          </div>
+          <div class="empty-state">No past broadcasts found.</div>
         } @else {
           <div class="table-container">
             <table class="admin-table">
@@ -104,15 +205,24 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
                     <td>
                       <div class="title-cell">
                         <span class="broadcast-title">{{ item.title }}</span>
-                        <span class="broadcast-sender">Sent by {{ item.sentBy.username || 'Unknown' }}</span>
+                        <span class="broadcast-sender"
+                          >Sent by {{ item.sentBy.username || 'Unknown' }}</span
+                        >
                       </div>
                     </td>
                     <td>
-                      <span class="audience-badge" [ngClass]="item.audience">{{ item.audience }}</span>
+                      <span class="audience-badge" [ngClass]="item.audience">{{
+                        item.audience
+                      }}</span>
                     </td>
-                    <td class="date-cell">{{ item.createdAt | date:'short' }}</td>
+                    <td class="date-cell">
+                      {{ item.createdAt | date: 'short' }}
+                    </td>
                     <td>
-                      <button class="btn-danger btn-sm" (click)="deleteBroadcast(item._id)">
+                      <button
+                        class="btn-danger btn-sm"
+                        (click)="deleteBroadcast(item._id)"
+                      >
                         Delete
                       </button>
                     </td>
@@ -125,7 +235,7 @@ import { AdminService, AdminBroadcast } from '../../../core/services/admin.servi
       </div>
     </div>
   `,
-  styleUrls: ['./broadcast.component.css']
+  styleUrls: ['./broadcast.component.css'],
 })
 export class BroadcastComponent implements OnInit {
   private adminService = inject(AdminService);
@@ -154,7 +264,7 @@ export class BroadcastComponent implements OnInit {
         this.history.set(data);
         this.loadingHistory.set(false);
       },
-      error: () => this.loadingHistory.set(false)
+      error: () => this.loadingHistory.set(false),
     });
   }
 
@@ -179,43 +289,49 @@ export class BroadcastComponent implements OnInit {
 
   sendBroadcast() {
     if (!this.title || !this.message) return;
-    
+
     this.isSubmitting = true;
     this.successMessage = '';
     this.errorMessage = '';
 
-    this.adminService.broadcastAnnouncement({
-      title: this.title,
-      message: this.message,
-      audience: this.audience
-    }).subscribe({
-      next: (res) => {
-        this.isSubmitting = false;
-        this.successMessage = res.msg || 'Broadcast sent successfully!';
-        this.title = '';
-        this.message = '';
-        this.audience = 'all';
-        if (this.editorElement) {
-          this.editorElement.nativeElement.innerHTML = '';
-        }
-        this.loadHistory(); // Refresh history
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.errorMessage = err.error?.msg || 'Failed to send broadcast.';
-      }
-    });
+    this.adminService
+      .broadcastAnnouncement({
+        title: this.title,
+        message: this.message,
+        audience: this.audience,
+      })
+      .subscribe({
+        next: (res) => {
+          this.isSubmitting = false;
+          this.successMessage = res.msg || 'Broadcast sent successfully!';
+          this.title = '';
+          this.message = '';
+          this.audience = 'all';
+          if (this.editorElement) {
+            this.editorElement.nativeElement.innerHTML = '';
+          }
+          this.loadHistory(); // Refresh history
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.errorMessage = err.error?.msg || 'Failed to send broadcast.';
+        },
+      });
   }
 
   deleteBroadcast(id: string) {
-    if (confirm('Are you sure you want to delete this broadcast from the history?')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this broadcast from the history?',
+      )
+    ) {
       this.adminService.deleteBroadcast(id).subscribe({
         next: () => {
-          this.history.update(list => list.filter(b => b._id !== id));
+          this.history.update((list) => list.filter((b) => b._id !== id));
         },
         error: () => {
           alert('Failed to delete broadcast');
-        }
+        },
       });
     }
   }

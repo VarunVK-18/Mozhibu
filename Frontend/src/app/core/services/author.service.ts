@@ -16,7 +16,7 @@ export interface AuthorProfile {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthorService {
   private api = inject(ApiService);

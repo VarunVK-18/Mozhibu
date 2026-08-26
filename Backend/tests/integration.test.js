@@ -79,15 +79,15 @@ describe('Integration Tests: Books & Users API', () => {
   test('GET /api/books?sort=trending returns books sorted by views and rating', async () => {
     const res = await request(testApp).get('/api/books?sort=trending');
     expect(res.status).toBe(200);
-    expect(res.body.length).toBe(2);
-    expect(res.body[0].title).toBe('Trending Book');
+    expect(res.body.books.length).toBe(2);
+    expect(res.body.books[0].title).toBe('Trending Book');
   });
 
   test('GET /api/books?isAudio=true returns only audio books', async () => {
     const res = await request(testApp).get('/api/books?isAudio=true');
     expect(res.status).toBe(200);
-    expect(res.body.length).toBe(1);
-    expect(res.body[0].title).toBe('Audio Book');
+    expect(res.body.books.length).toBe(1);
+    expect(res.body.books[0].title).toBe('Audio Book');
   });
 
   it('GET /api/books/categories returns unique categories with counts', async () => {

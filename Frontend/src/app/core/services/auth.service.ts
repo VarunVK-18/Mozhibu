@@ -16,7 +16,7 @@ export interface User {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private api = inject(ApiService);
@@ -31,27 +31,31 @@ export class AuthService {
       // Fetch latest user data from backend to prevent stale local storage (e.g. missing avatar)
       this.api.get<User>('/users/me').subscribe({
         next: (latestUser: User) => {
-          this.user.set({ ...this.user()!, ...latestUser, id: latestUser.id || (latestUser as any)._id });
+          this.user.set({
+            ...this.user()!,
+            ...latestUser,
+            id: latestUser.id || (latestUser as any)._id,
+          });
           localStorage.setItem('user', JSON.stringify(this.user()));
         },
         error: () => {
           // If token is invalid or expired
           // this.logout();
-        }
+        },
       });
     }
   }
 
   register(userData: any): Observable<any> {
-    return this.api.post('/auth/register', userData).pipe(
-      tap((res: any) => this.handleAuthResponse(res))
-    );
+    return this.api
+      .post('/auth/register', userData)
+      .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
   login(credentials: any): Observable<any> {
-    return this.api.post('/auth/login', credentials).pipe(
-      tap((res: any) => this.handleAuthResponse(res))
-    );
+    return this.api
+      .post('/auth/login', credentials)
+      .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
   loginWithGoogle(token: string): Observable<any> {
@@ -60,20 +64,20 @@ export class AuthService {
         if (!res.isNewUser) {
           this.handleAuthResponse(res);
         }
-      })
+      }),
     );
   }
 
   completeGoogleProfile(userData: any): Observable<any> {
-    return this.api.post('/auth/complete-profile', userData).pipe(
-      tap((res: any) => this.handleAuthResponse(res))
-    );
+    return this.api
+      .post('/auth/complete-profile', userData)
+      .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
   upgradeRole(): Observable<any> {
-    return this.api.put('/users/upgrade-role', {}).pipe(
-      tap((res: any) => this.handleAuthResponse(res))
-    );
+    return this.api
+      .put('/users/upgrade-role', {})
+      .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
   logout() {
@@ -123,10 +127,13 @@ export class AuthService {
             localStorage.setItem('user', JSON.stringify(updatedUser));
           }
         }
-      })
+      }),
     );
   }
-  updateProfile(data: { bio?: string, avatar?: string | null }): Observable<any> {
+  updateProfile(data: {
+    bio?: string;
+    avatar?: string | null;
+  }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {
         if (res && res.user) {
@@ -137,7 +144,7 @@ export class AuthService {
             localStorage.setItem('user', JSON.stringify(updatedUser));
           }
         }
-      })
+      }),
     );
   }
 
@@ -149,8 +156,16 @@ export class AuthService {
     return this.api.post('/auth/reset-password', { token, password });
   }
 
-  updateReadingProgress(bookId: string, chapterId?: string, progressPercentage?: number): Observable<any> {
-    return this.api.post('/users/me/progress', { bookId, chapterId, progressPercentage });
+  updateReadingProgress(
+    bookId: string,
+    chapterId?: string,
+    progressPercentage?: number,
+  ): Observable<any> {
+    return this.api.post('/users/me/progress', {
+      bookId,
+      chapterId,
+      progressPercentage,
+    });
   }
 
   deactivateAccount(): Observable<any> {

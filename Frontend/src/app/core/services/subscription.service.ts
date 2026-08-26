@@ -92,7 +92,17 @@ export class SubscriptionService {
     return this.api.get('/rewards/me');
   }
 
-  trackReadEvent(bookId: string, chapterId: string, completionPercent: number, timeOnPageSeconds: number): Observable<any> {
-    return this.api.post('/rewards/track-read', { bookId, chapterId, completionPercent, timeOnPageSeconds });
+  trackReadEvent(
+    bookId: string,
+    chapterId: string,
+    completionPercent: number,
+    timeOnPageSeconds: number,
+  ): Observable<any> {
+    return this.api.post('/rewards/track-read', {
+      bookId,
+      chapterId,
+      completionPercent,
+      timeOnPageSeconds,
+    });
   }
 }

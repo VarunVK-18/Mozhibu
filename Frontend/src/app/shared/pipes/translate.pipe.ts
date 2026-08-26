@@ -1,4 +1,9 @@
-import { Pipe, PipeTransform, ChangeDetectorRef, OnDestroy } from '@angular/core';
+import {
+  Pipe,
+  PipeTransform,
+  ChangeDetectorRef,
+  OnDestroy,
+} from '@angular/core';
 import { LanguageService } from '../../core/services/language.service';
 import { Subscription } from 'rxjs';
 
@@ -12,7 +17,10 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
   private lastValue = '';
   private sub: Subscription;
 
-  constructor(private lang: LanguageService, private cdr: ChangeDetectorRef) {
+  constructor(
+    private lang: LanguageService,
+    private cdr: ChangeDetectorRef,
+  ) {
     this.sub = this.lang.translations$.subscribe(() => {
       this.lastKey = '';
       this.cdr.markForCheck();

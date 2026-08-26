@@ -2,7 +2,19 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 
-export type Lang = 'en' | 'ta' | 'hi' | 'te' | 'ml' | 'kn' | 'bn' | 'pa' | 'mr' | 'ur' | 'gu' | 'or';
+export type Lang =
+  | 'en'
+  | 'ta'
+  | 'hi'
+  | 'te'
+  | 'ml'
+  | 'kn'
+  | 'bn'
+  | 'pa'
+  | 'mr'
+  | 'ur'
+  | 'gu'
+  | 'or';
 
 export interface LangOption {
   code: Lang;
@@ -14,8 +26,8 @@ export interface LangOption {
 export class LanguageService {
   readonly languages: LangOption[] = [
     { code: 'en', native: 'English', label: 'EN' },
-    { code: 'ta', native: 'தமிழ்',  label: 'தமிழ்' },
-    { code: 'hi', native: 'हिंदी',    label: 'हिंदी' },
+    { code: 'ta', native: 'தமிழ்', label: 'தமிழ்' },
+    { code: 'hi', native: 'हिंदी', label: 'हिंदी' },
     { code: 'te', native: 'తెలుగు', label: 'తెలుగు' },
     { code: 'ml', native: 'മലയാളം', label: 'മലയാളം' },
     { code: 'kn', native: 'ಕನ್ನಡ', label: 'ಕನ್ನಡ' },
@@ -24,7 +36,7 @@ export class LanguageService {
     { code: 'mr', native: 'मराठी', label: 'मराठी' },
     { code: 'ur', native: 'اردو', label: 'اردو' },
     { code: 'gu', native: 'ગુજરાતી', label: 'ગુજરાતી' },
-    { code: 'or', native: 'ଓଡ଼ିଆ', label: 'ଓଡ଼ିଆ' }
+    { code: 'or', native: 'ଓଡ଼ିଆ', label: 'ଓଡ଼ିଆ' },
   ];
 
   private _lang = signal<Lang>('en');
@@ -34,7 +46,10 @@ export class LanguageService {
   readonly translations$ = this._translations.asObservable();
 
   constructor(private http: HttpClient) {
-    const savedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('preferredLang') as Lang : null;
+    const savedLang =
+      typeof localStorage !== 'undefined'
+        ? (localStorage.getItem('preferredLang') as Lang)
+        : null;
     const initialLang = savedLang || 'en';
     this._lang.set(initialLang);
     this.loadTranslations(initialLang);
@@ -49,7 +64,7 @@ export class LanguageService {
   }
 
   getCurrentLangOption(): LangOption {
-    return this.languages.find(l => l.code === this._lang())!;
+    return this.languages.find((l) => l.code === this._lang())!;
   }
 
   translate(key: string): string {
@@ -65,13 +80,15 @@ export class LanguageService {
   translateRaw(key: string): any {
     const keys = key.split('.');
     let val: any = this._translations.getValue();
-    for (const k of keys) { val = val?.[k]; }
+    for (const k of keys) {
+      val = val?.[k];
+    }
     return val;
   }
 
   private loadTranslations(lang: Lang): void {
     this.http
       .get<Record<string, any>>(`assets/i18n/${lang}.json`)
-      .subscribe(data => this._translations.next(data));
+      .subscribe((data) => this._translations.next(data));
   }
 }

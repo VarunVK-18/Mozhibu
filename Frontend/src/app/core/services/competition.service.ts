@@ -14,7 +14,7 @@ export interface CompetitionConfig {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CompetitionService {
   private api = inject(ApiService);

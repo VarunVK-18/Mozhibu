@@ -1,7 +1,10 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService, PendingAuthor } from '../../../core/services/admin.service';
+import {
+  AdminService,
+  PendingAuthor,
+} from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-author-approvals',
@@ -15,7 +18,12 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
           <p>Review users requesting to become authors on the platform.</p>
         </div>
         <div class="header-right">
-          <input type="text" [(ngModel)]="searchQuery" placeholder="Search by name or email..." class="search-input">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search by name or email..."
+            class="search-input"
+          />
         </div>
       </header>
 
@@ -24,7 +32,14 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
       } @else if (pendingAuthors().length === 0) {
         <div class="empty-state">
           <div class="empty-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
@@ -52,16 +67,30 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
                       <span class="user-email">{{ author.email }}</span>
                     </div>
                   </td>
-                  <td class="date-cell">{{ author.createdAt | date:'mediumDate' }}</td>
+                  <td class="date-cell">
+                    {{ author.createdAt | date: 'mediumDate' }}
+                  </td>
                   <td>
                     <span class="status-badge pending">Pending</span>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      <button class="btn btn-primary btn-sm" (click)="updateStatus(author._id, 'approve')" [disabled]="processingId() === author._id">
-                        {{ processingId() === author._id ? 'Processing...' : 'Approve' }}
+                      <button
+                        class="btn btn-primary btn-sm"
+                        (click)="updateStatus(author._id, 'approve')"
+                        [disabled]="processingId() === author._id"
+                      >
+                        {{
+                          processingId() === author._id
+                            ? 'Processing...'
+                            : 'Approve'
+                        }}
                       </button>
-                      <button class="btn btn-danger btn-sm" (click)="updateStatus(author._id, 'reject')" [disabled]="processingId() === author._id">
+                      <button
+                        class="btn btn-danger btn-sm"
+                        (click)="updateStatus(author._id, 'reject')"
+                        [disabled]="processingId() === author._id"
+                      >
                         Reject
                       </button>
                     </div>
@@ -74,60 +103,174 @@ import { AdminService, PendingAuthor } from '../../../core/services/admin.servic
       }
     </div>
   `,
-  styles: [`
-    .admin-page { padding: 8px 0; }
-    .page-header { margin-bottom: 32px; }
-    .page-header h1 { font-family: var(--display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
-    .page-header p { color: var(--ink-soft); font-size: 15px; }
-    
-    .page-header { display: flex; justify-content: space-between; align-items: center; }
-    .search-input { padding: 10px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius-m); width: 300px; font-size: 14px; outline: none; }
-    .search-input:focus { border-color: var(--forest); }
-    
-    .loading-state, .empty-state { padding: 64px; text-align: center; color: var(--ink-soft); background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); }
-    .empty-icon { display: flex; justify-content: center; margin-bottom: 16px; color: var(--forest); }
-    .empty-icon svg { width: 48px; height: 48px; }
-    .empty-state h3 { font-family: var(--display); font-size: 20px; color: var(--ink); margin-bottom: 8px; }
-    
-    .table-container { background: #fff; border: 1px solid var(--border-soft); border-radius: var(--radius-m); overflow: hidden; }
-    .admin-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .admin-table th { padding: 16px 24px; background: #F8FAFC; font-weight: 600; font-size: 13px; color: var(--ink-soft); border-bottom: 1px solid var(--border-soft); text-transform: uppercase; letter-spacing: 0.05em; }
-    .admin-table td { padding: 16px 24px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
-    .admin-table tr:last-child td { border-bottom: none; }
-    
-    .title-cell { display: flex; flex-direction: column; gap: 4px; }
-    .user-name { font-family: var(--display); font-weight: 600; font-size: 15px; color: var(--ink); }
-    .user-email { font-size: 13px; color: var(--ink-faint); }
-    
-    .status-badge { display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
-    .status-badge.pending { background: #fef3c7; color: #d97706; }
-    
-    .date-cell { font-size: 14px; color: var(--ink-soft); }
-    
-    .action-buttons { display: flex; gap: 8px; }
-    .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: var(--radius-s); }
-    .btn-danger { background: var(--rose); color: #fff; border: 1px solid var(--rose); }
-    .btn-danger:hover { background: #e11d48; }
-  `]
+  styles: [
+    `
+      .admin-page {
+        padding: 8px 0;
+      }
+      .page-header {
+        margin-bottom: 32px;
+      }
+      .page-header h1 {
+        font-family: var(--display);
+        font-size: 28px;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+      .page-header p {
+        color: var(--ink-soft);
+        font-size: 15px;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .search-input {
+        padding: 10px 16px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-m);
+        width: 300px;
+        font-size: 14px;
+        outline: none;
+      }
+      .search-input:focus {
+        border-color: var(--forest);
+      }
+
+      .loading-state,
+      .empty-state {
+        padding: 64px;
+        text-align: center;
+        color: var(--ink-soft);
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-m);
+      }
+      .empty-icon {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+        color: var(--forest);
+      }
+      .empty-icon svg {
+        width: 48px;
+        height: 48px;
+      }
+      .empty-state h3 {
+        font-family: var(--display);
+        font-size: 20px;
+        color: var(--ink);
+        margin-bottom: 8px;
+      }
+
+      .table-container {
+        background: #fff;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-m);
+        overflow: hidden;
+      }
+      .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+      .admin-table th {
+        padding: 16px 24px;
+        background: #f8fafc;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--ink-soft);
+        border-bottom: 1px solid var(--border-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .admin-table td {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-soft);
+        vertical-align: middle;
+      }
+      .admin-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .title-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .user-name {
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ink);
+      }
+      .user-email {
+        font-size: 13px;
+        color: var(--ink-faint);
+      }
+
+      .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .status-badge.pending {
+        background: #fef3c7;
+        color: #d97706;
+      }
+
+      .date-cell {
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+        border-radius: var(--radius-s);
+      }
+      .btn-danger {
+        background: var(--rose);
+        color: #fff;
+        border: 1px solid var(--rose);
+      }
+      .btn-danger:hover {
+        background: #e11d48;
+      }
+    `,
+  ],
 })
 export class AuthorApprovalsComponent implements OnInit {
   adminService = inject(AdminService);
-  
+
   pendingAuthors = signal<PendingAuthor[]>([]);
   searchQuery = signal('');
   loading = signal(true);
   processingId = signal<string | null>(null);
-  
+
   filteredAuthors = computed(() => {
     const q = this.searchQuery().toLowerCase();
     if (!q) return this.pendingAuthors();
-    return this.pendingAuthors().filter(a => a.username.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+    return this.pendingAuthors().filter(
+      (a) =>
+        a.username.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q),
+    );
   });
 
   ngOnInit() {
     this.loadPendingAuthors();
   }
-  
+
   loadPendingAuthors() {
     this.loading.set(true);
     this.adminService.getPendingAuthors().subscribe({
@@ -135,7 +278,7 @@ export class AuthorApprovalsComponent implements OnInit {
         this.pendingAuthors.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -145,13 +288,15 @@ export class AuthorApprovalsComponent implements OnInit {
       this.adminService.updatePendingAuthorStatus(id, action).subscribe({
         next: () => {
           // Remove from list
-          this.pendingAuthors.update(list => list.filter(a => a._id !== id));
+          this.pendingAuthors.update((list) =>
+            list.filter((a) => a._id !== id),
+          );
           this.processingId.set(null);
         },
         error: () => {
           alert('Failed to update author status');
           this.processingId.set(null);
-        }
+        },
       });
     }
   }

@@ -10,7 +10,9 @@
   border-radius: var(--radius-m);
   padding: 24px 18px;
   text-align: center;
-  transition: box-shadow .15s ease, transform .15s ease;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 .author-card:hover {
   box-shadow: 0 12px 26px -16px rgba(43, 38, 32, 0.18);
@@ -51,25 +53,48 @@
   border: 1px solid var(--forest);
   color: var(--forest-deep);
   width: 100%;
-  transition: all .15s ease;
+  transition: all 0.15s ease;
   background: none;
   cursor: pointer;
   font-family: var(--body);
 }
-.follow-btn:hover { background: var(--forest); color: #fff; }
+.follow-btn:hover {
+  background: var(--forest);
+  color: #fff;
+}
 .follow-btn.following {
   background: var(--forest);
   color: #fff;
   border-color: var(--forest);
 }
 
-@media (max-width: 1080px) { .authors-row { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 680px)  { .authors-row { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px)  {
-  .authors-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .author-card { padding: 16px 12px; }
-  .author-avatar { width: 54px; height: 54px; font-size: 18px; margin-bottom: 10px; }
-  .author-card h4 { font-size: 13px; }
+@media (max-width: 1080px) {
+  .authors-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 680px) {
+  .authors-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .authors-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .author-card {
+    padding: 16px 12px;
+  }
+  .author-avatar {
+    width: 54px;
+    height: 54px;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .author-card h4 {
+    font-size: 13px;
+  }
 }
 
 .section-loader-container {

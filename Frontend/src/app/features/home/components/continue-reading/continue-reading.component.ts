@@ -40,20 +40,22 @@ export class ContinueReadingComponent implements OnInit {
       this.authService.getReadingProgress().subscribe({
         next: (progressList) => {
           if (progressList && progressList.length > 0) {
-            this.items = progressList.slice(0, 3).map((p: any, index: number) => ({
-              id: p.book._id,
-              initials: p.book.title.substring(0, 2).toUpperCase(),
-              colorClass: `cv-${(index % 8) + 1}`,
-              title: p.book.title,
-              meta: `Chapter 1 of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
-              progress: p.progressPercentage || 0,
-              cover: p.book.cover
-            }));
+            this.items = progressList
+              .slice(0, 3)
+              .map((p: any, index: number) => ({
+                id: p.book._id,
+                initials: p.book.title.substring(0, 2).toUpperCase(),
+                colorClass: `cv-${(index % 8) + 1}`,
+                title: p.book.title,
+                meta: `Chapter 1 of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
+                progress: p.progressPercentage || 0,
+                cover: p.book.cover,
+              }));
           } else {
             this.loadFallbackBooks();
           }
         },
-        error: () => this.loadFallbackBooks()
+        error: () => this.loadFallbackBooks(),
       });
     } else {
       this.loadFallbackBooks();
@@ -72,9 +74,9 @@ export class ContinueReadingComponent implements OnInit {
           title: book.title,
           meta: `Chapter ${Math.floor(Math.random() * 10) + 1} of ${book.chapters?.length || 20} · ${book.genre || 'Story'}`,
           progress: Math.floor(Math.random() * 80) + 10,
-          cover: book.cover
+          cover: book.cover,
         }));
-      }
+      },
     });
   }
 }

@@ -18,7 +18,7 @@ export interface NotificationItem {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   private api = inject(ApiService);
@@ -33,5 +33,9 @@ export class NotificationService {
 
   markAllAsRead(): Observable<any> {
     return this.api.put('/notifications/read-all', {});
+  }
+
+  clearAll(): Observable<any> {
+    return this.api.delete('/notifications/clear-all');
   }
 }

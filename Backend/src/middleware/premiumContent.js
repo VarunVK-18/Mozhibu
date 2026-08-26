@@ -8,8 +8,8 @@
  * when the user lacks an active subscription.
  */
 
-const UserSubscription = require('../models/UserSubscription');
-const SubscriptionPlan = require('../models/SubscriptionPlan');
+const UserSubscription = require("../models/UserSubscription");
+const SubscriptionPlan = require("../models/SubscriptionPlan");
 
 /**
  * Checks if a user has a specific subscription benefit.
@@ -18,15 +18,15 @@ const SubscriptionPlan = require('../models/SubscriptionPlan');
 const hasEntitlement = async (userId, benefitKey) => {
   const sub = await getActiveSubscription(userId);
   if (!sub) return false;
-  
+
   if (sub.planSnapshot && sub.planSnapshot.structuredBenefits) {
     return !!sub.planSnapshot.structuredBenefits[benefitKey];
   }
-  
+
   if (sub.plan && sub.plan.structuredBenefits) {
     return !!sub.plan.structuredBenefits[benefitKey];
   }
-  
+
   return false;
 };
 
@@ -39,10 +39,10 @@ const hasEntitlement = async (userId, benefitKey) => {
  * @returns {'free' | 'premium'}
  */
 const resolveAccessType = (chapter, book) => {
-  if (chapter.accessType && chapter.accessType !== 'inherit') {
+  if (chapter.accessType && chapter.accessType !== "inherit") {
     return chapter.accessType;
   }
-  return book.accessType || 'free';
+  return book.accessType || "free";
 };
 
 /**
@@ -62,28 +62,30 @@ const resolveAccessType = (chapter, book) => {
 const getActiveSubscription = async (userId) => {
   return await UserSubscription.findOne({
     user: userId,
-    status: 'active',
-    endDate: { $gte: new Date() }
-  }).populate('plan', 'name durationDays');
+    status: "active",
+    endDate: { $gte: new Date() },
+  }).populate("plan", "name durationDays");
 };
 
 /**
  * Build a 402 subscription prompt payload (sent instead of content).
  */
 const buildSubscriptionPrompt = async () => {
-  const plans = await SubscriptionPlan.find({ isActive: true }).sort({ priceInPaise: 1 });
+  const plans = await SubscriptionPlan.find({ isActive: true }).sort({
+    priceInPaise: 1,
+  });
   return {
-    type: 'SUBSCRIPTION_REQUIRED',
-    message: 'This content requires a Premium subscription.',
-    plans: plans.map(p => ({
+    type: "SUBSCRIPTION_REQUIRED",
+    message: "This content requires a Premium subscription.",
+    plans: plans.map((p) => ({
       id: p._id,
       name: p.name,
       description: p.description,
       priceInPaise: p.priceInPaise,
-      priceDisplay: `${p.currency === 'INR' ? '₹' : p.currency} ${(p.priceInPaise / 100).toFixed(2)}`,
+      priceDisplay: `${p.currency === "INR" ? "₹" : p.currency} ${(p.priceInPaise / 100).toFixed(2)}`,
       durationDays: p.durationDays,
-      marketingBenefits: p.marketingBenefits
-    }))
+      marketingBenefits: p.marketingBenefits,
+    })),
   };
 };
 
@@ -96,13 +98,13 @@ const buildSubscriptionPrompt = async () => {
  */
 const premiumContent = async (req, res, next) => {
   // If content is free, pass through immediately
-  if (!req.effectiveAccessType || req.effectiveAccessType === 'free') {
+  if (!req.effectiveAccessType || req.effectiveAccessType === "free") {
     return next();
   }
 
   // Premium content: user must be authenticated
   if (!req.user) {
-    return res.status(401).json({ msg: 'Authentication required' });
+    return res.status(401).json({ msg: "Authentication required" });
   }
 
   // Check active subscription
@@ -122,5 +124,5 @@ module.exports = {
   getActiveSubscription,
   buildSubscriptionPrompt,
   premiumContent,
-  hasEntitlement
+  hasEntitlement,
 };

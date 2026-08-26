@@ -1,11 +1,12 @@
 <section class="lang-strip-section">
   <div class="lang-strip-row">
-    <span class="lang-strip-label">{{ 'langStrip.label' | translate }}</span>
+    <span class="lang-strip-label">{{ "langStrip.label" | translate }}</span>
     @for (chip of chips; track chip.en; let i = $index) {
       <button
         class="lang-chip"
         [class.active]="activeIndex() === i"
-        (click)="selectChip(i)">
+        (click)="selectChip(i)"
+      >
         <span class="native">{{ chip.native }}</span>
         <span class="en">{{ chip.en }}</span>
       </button>

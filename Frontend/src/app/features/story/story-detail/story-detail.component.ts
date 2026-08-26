@@ -14,23 +14,38 @@ import { StoryActionsComponent } from '../components/story-actions/story-actions
 import { ChapterListComponent } from '../components/chapter-list/chapter-list.component';
 import { CommentListComponent } from '../components/comment-list/comment-list.component';
 import { StoryCardComponent } from '../../../shared/components/story-card/story-card.component';
+import { DownloadModalComponent } from '../../../shared/components/download-modal/download-modal.component';
+import { OfflineService } from '../../../core/services/offline.service';
 
 @Component({
   selector: 'app-story-detail',
   standalone: true,
   imports: [
-    CommonModule, 
-    StoryHeroComponent, 
-    StoryMetaRowComponent, 
+    CommonModule,
+    StoryHeroComponent,
+    StoryMetaRowComponent,
     StoryActionsComponent,
     ChapterListComponent,
     CommentListComponent,
-    StoryCardComponent
+    StoryCardComponent,
+    DownloadModalComponent,
   ],
   template: `
     <div class="story-detail-page">
+      @if (showDownloadModal()) {
+        <app-download-modal
+          (close)="showDownloadModal.set(false)"
+          (confirm)="onDownloadConfirmed($event)"
+        ></app-download-modal>
+      }
+
+      @if (offlineService.downloadProgress().status) {
+        <div class="download-toast">
+          {{ offlineService.downloadProgress().status }}
+        </div>
+      }
       @if (story()) {
-        <app-story-hero 
+        <app-story-hero
           [title]="story()!.title"
           [subtitle]="story()!.subtitle"
           [coverImage]="story()!.coverImage"
@@ -39,7 +54,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
           [accessType]="story()!.accessType"
           (authorClicked)="goToAuthor($event)"
         ></app-story-hero>
-        
+
         <div class="content-wrapper">
           <app-story-meta-row
             [readingTime]="story()!.readingTime"
@@ -51,7 +66,7 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             [language]="story()!.language"
             [updatedDate]="story()!.updatedDate"
           ></app-story-meta-row>
-          
+
           <app-story-actions
             [userProgress]="story()!.userProgress"
             [isBookmarked]="story()!.isBookmarked"
@@ -66,37 +81,46 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
             (downloadClicked)="onDownloadClicked()"
             (reportSubmitted)="onReportSubmitted($event)"
           ></app-story-actions>
-          
+
           <div class="synopsis-section">
             <h3>Synopsis</h3>
             <p [class.expanded]="synopsisExpanded()">
               {{ story()!.synopsis }}
             </p>
-            <button class="btn-read-more" (click)="synopsisExpanded.set(!synopsisExpanded())">
+            <button
+              class="btn-read-more"
+              (click)="synopsisExpanded.set(!synopsisExpanded())"
+            >
               {{ synopsisExpanded() ? 'Read Less' : 'Read More' }}
             </button>
           </div>
-          
-          <app-chapter-list [episodes]="episodes()" [storyId]="story()?.id || ''"></app-chapter-list>
-          
-          <app-comment-list 
+
+          <app-chapter-list
+            [episodes]="episodes()"
+            [storyId]="story()?.id || ''"
+          ></app-chapter-list>
+
+          <app-comment-list
             [comments]="comments()"
             [currentUserAvatar]="getAvatarUrl(currentUser()?.avatar)"
             [storyAuthorName]="story()?.author?.name || ''"
+            [hasMore]="
+              storyService.commentsPage() < storyService.commentsTotalPages()
+            "
+            [loadingMore]="storyService.loadingMoreComments()"
             (postComment)="onPostComment($event)"
             (likeComment)="onLikeComment($event)"
             (dislikeComment)="onDislikeComment($event)"
             (postReply)="onPostReply($event)"
+            (loadMore)="onLoadMoreComments()"
           ></app-comment-list>
-          
+
           <!-- Related Stories -->
           <div class="related-section">
             <h2>More like this</h2>
             <div class="related-grid">
               @for (related of relatedStories(); track related.id) {
-                <app-story-card
-                  [story]="related"
-                ></app-story-card>
+                <app-story-card [story]="related"></app-story-card>
               }
             </div>
           </div>
@@ -104,77 +128,100 @@ import { StoryCardComponent } from '../../../shared/components/story-card/story-
       }
     </div>
   `,
-  styles: [`
-    .story-detail-page {
-      width: 100%;
-      min-height: 100vh;
-      background: var(--paper);
-    }
-    
-    .content-wrapper {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 40px 80px;
-    }
-    
-    .synopsis-section {
-      margin-top: 32px;
-    }
-    .synopsis-section h3 {
-      font-family: var(--display);
-      font-size: 20px;
-      margin-bottom: 12px;
-      color: var(--ink);
-    }
-    .synopsis-section p {
-      font-size: 15px;
-      color: var(--ink-soft);
-      line-height: 1.6;
-      white-space: pre-line;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      transition: all 0.3s;
-    }
-    .synopsis-section p.expanded {
-      -webkit-line-clamp: unset;
-    }
-    
-    .btn-read-more {
-      background: transparent;
-      border: none;
-      color: var(--forest);
-      font-weight: 600;
-      font-size: 14px;
-      padding: 8px 0;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-    .btn-read-more:hover {
-      text-decoration: underline;
-    }
-    
-    .related-section {
-      margin-top: 64px;
-    }
-    .related-section h2 {
-      font-family: var(--display);
-      font-size: 24px;
-      margin-bottom: 24px;
-      color: var(--ink);
-    }
-    .related-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 24px;
-    }
-    
-    @media (max-width: 768px) {
-      .content-wrapper { padding: 0 20px 40px; }
-      .related-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    }
-  `]
+  styles: [
+    `
+      .story-detail-page {
+        width: 100%;
+        min-height: 100vh;
+        background: var(--paper);
+      }
+
+      .content-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px 80px;
+      }
+
+      .synopsis-section {
+        margin-top: 32px;
+      }
+      .synopsis-section h3 {
+        font-family: var(--display);
+        font-size: 20px;
+        margin-bottom: 12px;
+        color: var(--ink);
+      }
+      .synopsis-section p {
+        font-size: 15px;
+        color: var(--ink-soft);
+        line-height: 1.6;
+        white-space: pre-line;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: all 0.3s;
+      }
+      .synopsis-section p.expanded {
+        -webkit-line-clamp: unset;
+      }
+
+      .btn-read-more {
+        background: transparent;
+        border: none;
+        color: var(--forest);
+        font-weight: 600;
+        font-size: 14px;
+        padding: 8px 0;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      .btn-read-more:hover {
+        text-decoration: underline;
+      }
+
+      .related-section {
+        margin-top: 64px;
+      }
+      .related-section h2 {
+        font-family: var(--display);
+        font-size: 24px;
+        margin-bottom: 24px;
+        color: var(--ink);
+      }
+      .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 24px;
+      }
+
+      @media (max-width: 768px) {
+        .content-wrapper {
+          padding: 0 20px 40px;
+        }
+        .related-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+      }
+
+      .download-toast {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 100px;
+        font-weight: 500;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: slideUp 0.3s ease-out;
+      }
+    `,
+  ],
 })
 export class StoryDetailComponent implements OnInit {
   route = inject(ActivatedRoute);
@@ -183,19 +230,21 @@ export class StoryDetailComponent implements OnInit {
   authService = inject(AuthService);
   subService = inject(SubscriptionService);
   private bookService = inject(BookService);
+  public offlineService = inject(OfflineService);
   api = inject(ApiService);
-  
+
   story = this.storyService.getActiveStory();
   episodes = this.storyService.getEpisodes();
   comments = this.storyService.getComments();
   currentUser = this.authService.user;
-  
+
   synopsisExpanded = signal(false);
   isPremiumSubscriber = signal(false);
   relatedStories = signal<any[]>([]);
+  showDownloadModal = signal(false);
 
   ngOnInit() {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       const resume = this.route.snapshot.queryParamMap.get('resume') === 'true';
       if (id) {
@@ -212,7 +261,7 @@ export class StoryDetailComponent implements OnInit {
             this.isPremiumSubscriber.set(true);
           }
         },
-        error: () => {}
+        error: () => {},
       });
     }
   }
@@ -240,11 +289,11 @@ export class StoryDetailComponent implements OnInit {
                   return this.api.getImageUrl(c);
                 })(),
                 rating: b.rating || 0,
-                genre: b.genre
+                genre: b.genre,
               }));
             this.relatedStories.set(related);
           },
-          error: () => {}
+          error: () => {},
         });
       }
     }, 300);
@@ -267,8 +316,8 @@ export class StoryDetailComponent implements OnInit {
 
   onReadClicked() {
     if (this.story()?.accessType === 'premium' && !this.isPremiumSubscriber()) {
-       this.router.navigate(['/subscription/plans']);
-       return;
+      this.router.navigate(['/subscription/plans']);
+      return;
     }
 
     const readUrl = `/read/${this.story()?.id || '1'}`;
@@ -293,31 +342,54 @@ export class StoryDetailComponent implements OnInit {
   onDownloadClicked() {
     if (this.requireAuth()) {
       if (!this.isPremiumSubscriber()) {
-        this.router.navigate(['/settings'], { queryParams: { tab: 'subscription' } });
+        this.router.navigate(['/subscription/plans']);
       } else {
-        const story = this.story();
-        if (story) {
-          const downloads = JSON.parse(localStorage.getItem('downloaded_books') || '[]');
-          if (!downloads.find((b: any) => b.id === story.id)) {
-            downloads.push(story);
-            localStorage.setItem('downloaded_books', JSON.stringify(downloads));
-          }
-          this.router.navigate(['/library'], { queryParams: { tab: 'downloaded' } });
-        }
+        this.showDownloadModal.set(true);
+      }
+    }
+  }
+
+  onDownloadConfirmed(count: number | 'all') {
+    this.showDownloadModal.set(false);
+    const story = this.story();
+    const episodes = this.episodes();
+
+    if (story && episodes.length > 0) {
+      let chaptersToDownload = [];
+      if (count === 'all') {
+        chaptersToDownload = episodes;
+      } else {
+        chaptersToDownload = episodes.slice(0, count);
+      }
+
+      this.offlineService.downloadBatch(story.id, chaptersToDownload);
+
+      // Keep simple history of downloaded books for library view
+      const downloads = JSON.parse(
+        localStorage.getItem('downloaded_books') || '[]',
+      );
+      if (!downloads.find((b: any) => b.id === story.id)) {
+        downloads.push(story);
+        localStorage.setItem('downloaded_books', JSON.stringify(downloads));
       }
     }
   }
 
   getAvatarUrl(path: string | undefined): string {
     const baseUrl = environment.apiUrl.replace('/api', '');
-    if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser()?.username || 'You')}&background=random&color=fff&size=100&length=1`;
+    if (!path)
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser()?.username || 'You')}&background=random&color=fff&size=100&length=1`;
     if (path.startsWith('http') || path.startsWith('data:')) return path;
     return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 
-  onPostComment(event: {text: string, rating: number}) {
+  onPostComment(event: { text: string; rating: number }) {
     if (this.requireAuth()) {
-      this.storyService.addComment(event.text, this.currentUser(), event.rating);
+      this.storyService.addComment(
+        event.text,
+        this.currentUser(),
+        event.rating,
+      );
     }
   }
 
@@ -333,9 +405,13 @@ export class StoryDetailComponent implements OnInit {
     }
   }
 
-  onPostReply(event: {parentId: string, text: string}) {
+  onPostReply(event: { parentId: string; text: string }) {
     if (this.requireAuth()) {
-      this.storyService.replyToComment(event.parentId, event.text, this.currentUser());
+      this.storyService.replyToComment(
+        event.parentId,
+        event.text,
+        this.currentUser(),
+      );
     }
   }
 
@@ -343,5 +419,9 @@ export class StoryDetailComponent implements OnInit {
     if (this.requireAuth()) {
       this.storyService.reportBook(reason);
     }
+  }
+
+  onLoadMoreComments() {
+    this.storyService.loadMoreComments();
   }
 }

@@ -23,7 +23,7 @@
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-l);
   padding: 32px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .form-group {
@@ -186,7 +186,7 @@
 
 .admin-table th {
   padding: 16px 24px;
-  background: #F8FAFC;
+  background: #f8fafc;
   font-weight: 600;
   font-size: 13px;
   color: var(--ink-soft);
@@ -230,9 +230,18 @@
   font-weight: 600;
   text-transform: capitalize;
 }
-.audience-badge.all { background: #e0e7ff; color: #4338ca; }
-.audience-badge.readers { background: #dcfce7; color: #15803d; }
-.audience-badge.writers { background: #fef9c3; color: #a16207; }
+.audience-badge.all {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+.audience-badge.readers {
+  background: #dcfce7;
+  color: #15803d;
+}
+.audience-badge.writers {
+  background: #fef9c3;
+  color: #a16207;
+}
 
 .date-cell {
   font-size: 14px;

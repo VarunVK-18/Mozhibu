@@ -102,7 +102,7 @@ export interface AdminBroadcast {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdminService {
   private api = inject(ApiService);
@@ -119,27 +119,31 @@ export class AdminService {
 
   getBooks(status?: string): Observable<AdminBook[]> {
     const params = status && status !== 'reported' ? `?status=${status}` : '';
-    return this.api.get<AdminBook[]>(`/admin/books${params}`).pipe(
-      map(books => books.map(b => this.fixCoverUrl(b)))
-    );
+    return this.api
+      .get<AdminBook[]>(`/admin/books${params}`)
+      .pipe(map((books) => books.map((b) => this.fixCoverUrl(b))));
   }
 
   getReportedBooks(): Observable<AdminBook[]> {
-    return this.api.get<AdminBook[]>('/admin/reported-books').pipe(
-      map(books => books.map(b => this.fixCoverUrl(b)))
-    );
+    return this.api
+      .get<AdminBook[]>('/admin/reported-books')
+      .pipe(map((books) => books.map((b) => this.fixCoverUrl(b))));
   }
 
   getBookDetails(id: string): Observable<AdminBook> {
-    return this.api.get<AdminBook>(`/admin/books/${id}`).pipe(
-      map(book => this.fixCoverUrl(book))
-    );
+    return this.api
+      .get<AdminBook>(`/admin/books/${id}`)
+      .pipe(map((book) => this.fixCoverUrl(book)));
   }
 
-  updateBookStatus(id: string, status: string, rejectionReason?: string): Observable<any> {
-    return this.api.put(`/admin/books/${id}/status`, { status, rejectionReason }).pipe(
-      map(book => this.fixCoverUrl(book))
-    );
+  updateBookStatus(
+    id: string,
+    status: string,
+    rejectionReason?: string,
+  ): Observable<any> {
+    return this.api
+      .put(`/admin/books/${id}/status`, { status, rejectionReason })
+      .pipe(map((book) => this.fixCoverUrl(book)));
   }
 
   getUsers(): Observable<AdminUser[]> {
@@ -160,12 +164,12 @@ export class AdminService {
 
   getAuthorDetails(id: string): Observable<AdminAuthorDetail> {
     return this.api.get<AdminAuthorDetail>(`/admin/authors/${id}`).pipe(
-      map(detail => {
+      map((detail) => {
         if (detail.books) {
           detail.books = detail.books.map((b: any) => this.fixCoverUrl(b));
         }
         return detail;
-      })
+      }),
     );
   }
 
@@ -173,11 +177,18 @@ export class AdminService {
     return this.api.get('/admin/pending-authors');
   }
 
-  updatePendingAuthorStatus(id: string, action: 'approve' | 'reject'): Observable<any> {
+  updatePendingAuthorStatus(
+    id: string,
+    action: 'approve' | 'reject',
+  ): Observable<any> {
     return this.api.put(`/admin/pending-authors/${id}/status`, { action });
   }
 
-  broadcastAnnouncement(data: { title: string, message: string, audience: string }): Observable<any> {
+  broadcastAnnouncement(data: {
+    title: string;
+    message: string;
+    audience: string;
+  }): Observable<any> {
     return this.api.post('/admin/broadcast', data);
   }
 
@@ -198,9 +209,9 @@ export class AdminService {
   }
 
   getCompetitionEntries(): Observable<AdminBook[]> {
-    return this.api.get<AdminBook[]>('/admin/competition/entries').pipe(
-      map(books => books.map(b => this.fixCoverUrl(b)))
-    );
+    return this.api
+      .get<AdminBook[]>('/admin/competition/entries')
+      .pipe(map((books) => books.map((b) => this.fixCoverUrl(b))));
   }
 
   announceCompetitionWinner(bookId: string): Observable<any> {

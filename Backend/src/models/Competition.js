@@ -1,24 +1,25 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const CompetitionSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   tag: {
     type: String,
     required: true,
-    default: 'Writing competition'
+    default: "Writing competition",
   },
   title: {
     type: String,
     required: true,
-    default: 'The Twelve Tongues Prize 2026'
+    default: "The Twelve Tongues Prize 2026",
   },
   description: {
     type: String,
     required: true,
-    default: 'One theme, twelve languages. Submit an original short story in your mother tongue for a shot at ₹1,00,000 and a featured spot on the homepage.'
+    default:
+      "One theme, twelve languages. Submit an original short story in your mother tongue for a shot at ₹1,00,000 and a featured spot on the homepage.",
   },
   endDate: {
     type: Date,
@@ -27,22 +28,22 @@ const CompetitionSchema = new mongoose.Schema({
       const d = new Date();
       d.setDate(d.getDate() + 7);
       return d;
-    }
+    },
   },
   buttonText: {
     type: String,
     required: true,
-    default: 'Submit your story'
+    default: "Submit your story",
   },
   buttonLink: {
     type: String,
     required: true,
-    default: '/write/new'
+    default: "/write/new",
   },
   winnerBookId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Book'
-  }
+    ref: "Book",
+  },
 });
 
-module.exports = mongoose.model('Competition', CompetitionSchema);
+module.exports = mongoose.model("Competition", CompetitionSchema);

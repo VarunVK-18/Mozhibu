@@ -32,14 +32,16 @@ export class AuthorsComponent implements OnInit {
         const mapped = data.slice(0, 5).map((a: any, i: number) => {
           const name = a.username || 'Unknown';
           const initials = name.substring(0, 2).toUpperCase();
-          const followers = a.followersCount ? `${(a.followersCount / 1000).toFixed(1)}K` : '0';
+          const followers = a.followersCount
+            ? `${(a.followersCount / 1000).toFixed(1)}K`
+            : '0';
           return {
             id: a._id,
             initials,
             name,
             followers,
             color: COLORS[i % COLORS.length],
-            following: false
+            following: false,
           };
         });
         this.authors.set(mapped);
@@ -48,7 +50,7 @@ export class AuthorsComponent implements OnInit {
       error: (err) => {
         console.error('Failed to load authors', err);
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
@@ -57,8 +59,8 @@ export class AuthorsComponent implements OnInit {
     if (!author) return;
 
     // Toggle locally for instant feedback
-    this.authors.update(list =>
-      list.map((a, i) => i === index ? { ...a, following: !a.following } : a)
+    this.authors.update((list) =>
+      list.map((a, i) => (i === index ? { ...a, following: !a.following } : a)),
     );
 
     // Call API if logged in
@@ -66,10 +68,12 @@ export class AuthorsComponent implements OnInit {
       this.authService.followAuthor(author.id).subscribe({
         error: () => {
           // Revert if API fails
-          this.authors.update(list =>
-            list.map((a, i) => i === index ? { ...a, following: !a.following } : a)
+          this.authors.update((list) =>
+            list.map((a, i) =>
+              i === index ? { ...a, following: !a.following } : a,
+            ),
           );
-        }
+        },
       });
     }
   }

@@ -67,13 +67,18 @@ export interface StoryDetail {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class StoryService {
   // Shared mock state
   private activeStory = signal<StoryDetail | null>(null);
   private storyEpisodes = signal<StoryEpisode[]>([]);
   private storyComments = signal<StoryComment[]>([]);
+
+  public commentsPage = signal<number>(1);
+  public commentsTotalPages = signal<number>(1);
+  public loadingMoreComments = signal<boolean>(false);
+  public totalReviews = signal<number>(0);
 
   getActiveStory() {
     return this.activeStory.asReadonly();
@@ -95,19 +100,31 @@ export class StoryService {
     this.bookService.getBookById(id).subscribe({
       next: (book: any) => {
         const currentUser = this.authService.user();
-        const isLiked = currentUser && book.likes ? book.likes.includes(currentUser.id) : false;
+        const isLiked =
+          currentUser && book.likes
+            ? book.likes.includes(currentUser.id)
+            : false;
         // To check bookmark accurately, we'd need user library. We'll default to false and let the toggle handle it
-        
+
         const detail: StoryDetail = {
           id: book._id,
           title: book.title,
           subtitle: book.subtitle || '',
-          coverImage: book.cover ? (book.cover.startsWith('http') || book.cover.startsWith('data:') ? book.cover : `${baseUrl}${book.cover.startsWith('/') ? '' : '/'}${book.cover}`) : 'assets/default-cover.png',
+          coverImage: book.cover
+            ? book.cover.startsWith('http') || book.cover.startsWith('data:')
+              ? book.cover
+              : `${baseUrl}${book.cover.startsWith('/') ? '' : '/'}${book.cover}`
+            : 'assets/default-cover.png',
           author: {
             id: book.author._id,
             name: book.author.username,
-            avatar: book.author.avatar ? (book.author.avatar.startsWith('http') || book.author.avatar.startsWith('data:') ? book.author.avatar : `${baseUrl}${book.author.avatar.startsWith('/') ? '' : '/'}${book.author.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
-            isFollowed: false
+            avatar: book.author.avatar
+              ? book.author.avatar.startsWith('http') ||
+                book.author.avatar.startsWith('data:')
+                ? book.author.avatar
+                : `${baseUrl}${book.author.avatar.startsWith('/') ? '' : '/'}${book.author.avatar}`
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
+            isFollowed: false,
           },
           genres: [book.genre],
           readingTime: '30 min read',
@@ -117,7 +134,8 @@ export class StoryService {
           rating: book.rating || 0,
           reviewCount: book.reviews?.length || 0,
           chapterCount: book.chapters?.length || 0,
-          status: book.completionStatus === 'completed' ? 'Completed' : 'Ongoing',
+          status:
+            book.completionStatus === 'completed' ? 'Completed' : 'Ongoing',
           language: book.originalLanguage || 'English',
           publishedDate: book.createdAt,
           updatedDate: book.updatedAt,
@@ -125,19 +143,19 @@ export class StoryService {
           isLiked,
           isBookmarked: false,
           userProgress: {
-            hasStarted: resume
+            hasStarted: resume,
           },
-          accessType: book.accessType || 'free'
+          accessType: book.accessType || 'free',
         };
 
         this.activeStory.set(detail);
-      }
+      },
     });
 
-    this.bookService.getChapters(id).subscribe(chapters => {
+    this.bookService.getChapters(id).subscribe((chapters) => {
       const story = this.activeStory();
       const coverImage = story?.coverImage || 'assets/default-cover.png';
-      
+
       const episodes = chapters.map((c: any) => {
         const wordCount = c.content ? c.content.split(/\s+/).length : 0;
         const readTime = Math.max(1, Math.ceil(wordCount / 200));
@@ -146,36 +164,49 @@ export class StoryService {
           season: c.season || 1,
           episode: c.order,
           title: c.title,
-          thumbnail: c.cover ? (c.cover.startsWith('http') || c.cover.startsWith('data:') ? c.cover : `${baseUrl}${c.cover.startsWith('/') ? '' : '/'}${c.cover}`) : coverImage,
+          thumbnail: c.cover
+            ? c.cover.startsWith('http') || c.cover.startsWith('data:')
+              ? c.cover
+              : `${baseUrl}${c.cover.startsWith('/') ? '' : '/'}${c.cover}`
+            : coverImage,
           readingTime: `${readTime} min`,
           synopsis: (c.content || '').substring(0, 100) + '...',
           isRead: false,
           isUnlocked: !c.isLocked,
-          content: c.content
+          content: c.content,
         };
       });
-      
+
       this.storyEpisodes.set(episodes);
-      
-      const totalMinutes = episodes.reduce((total, ep) => total + parseInt(ep.readingTime), 0);
-      
-      this.activeStory.update(s => {
+
+      const totalMinutes = episodes.reduce(
+        (total, ep) => total + parseInt(ep.readingTime),
+        0,
+      );
+
+      this.activeStory.update((s) => {
         if (!s) return s;
-        return { 
-          ...s, 
+        return {
+          ...s,
           chapterCount: chapters.length,
-          readingTime: totalMinutes > 0 ? `${totalMinutes} min read` : '1 min read'
+          readingTime:
+            totalMinutes > 0 ? `${totalMinutes} min read` : '1 min read',
         };
       });
     });
 
-    this.bookService.getReviews(id).subscribe(reviews => {
+    this.bookService.getReviews(id, 1, 20).subscribe((response) => {
       const currentUser = this.authService.user();
-      
-      const formattedComments = reviews.map((r: any) => ({
+
+      const formattedComments = response.reviews.map((r: any) => ({
         id: r._id,
         authorName: r.user?.username || 'Unknown',
-        authorAvatar: r.user?.avatar ? (r.user.avatar.startsWith('http') || r.user.avatar.startsWith('data:') ? r.user.avatar : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+        authorAvatar: r.user?.avatar
+          ? r.user.avatar.startsWith('http') ||
+            r.user.avatar.startsWith('data:')
+            ? r.user.avatar
+            : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
         timestamp: new Date(r.createdAt).toLocaleDateString(),
         text: r.comment || r.text,
         likes: r.likes?.length || 0,
@@ -183,33 +214,115 @@ export class StoryService {
         isLiked: currentUser ? r.likes?.includes(currentUser.id) : false,
         isDisliked: currentUser ? r.dislikes?.includes(currentUser.id) : false,
         rating: r.rating,
-        replies: r.replies ? r.replies.map((reply: any) => ({
-          id: reply._id,
-          authorName: reply.user?.username || 'Unknown',
-          authorAvatar: reply.user?.avatar ? (reply.user.avatar.startsWith('http') || reply.user.avatar.startsWith('data:') ? reply.user.avatar : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
-          timestamp: new Date(reply.createdAt).toLocaleDateString(),
-          text: reply.comment || reply.text,
-          likes: reply.likes?.length || 0,
-          dislikes: reply.dislikes?.length || 0,
-          isLiked: currentUser ? reply.likes?.includes(currentUser.id) : false,
-          isDisliked: currentUser ? reply.dislikes?.includes(currentUser.id) : false,
-        })) : []
+        replies: r.replies
+          ? r.replies.map((reply: any) => ({
+              id: reply._id,
+              authorName: reply.user?.username || 'Unknown',
+              authorAvatar: reply.user?.avatar
+                ? reply.user.avatar.startsWith('http') ||
+                  reply.user.avatar.startsWith('data:')
+                  ? reply.user.avatar
+                  : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+              timestamp: new Date(reply.createdAt).toLocaleDateString(),
+              text: reply.comment || reply.text,
+              likes: reply.likes?.length || 0,
+              dislikes: reply.dislikes?.length || 0,
+              isLiked: currentUser
+                ? reply.likes?.includes(currentUser.id)
+                : false,
+              isDisliked: currentUser
+                ? reply.dislikes?.includes(currentUser.id)
+                : false,
+            }))
+          : [],
       }));
 
       this.storyComments.set(formattedComments);
-      this.activeStory.update(s => {
+      this.commentsPage.set(response.currentPage);
+      this.commentsTotalPages.set(response.totalPages);
+      this.totalReviews.set(response.totalReviews);
+
+      this.activeStory.update((s) => {
         if (!s) return s;
-        return { ...s, reviewCount: reviews.length };
+        return { ...s, reviewCount: response.totalReviews };
       });
+    });
+  }
+
+  loadMoreComments() {
+    const story = this.activeStory();
+    if (!story) return;
+
+    if (this.commentsPage() >= this.commentsTotalPages()) return;
+    if (this.loadingMoreComments()) return;
+
+    this.loadingMoreComments.set(true);
+    const nextPage = this.commentsPage() + 1;
+
+    this.bookService.getReviews(story.id, nextPage, 20).subscribe({
+      next: (response) => {
+        const currentUser = this.authService.user();
+
+        const newComments = response.reviews.map((r: any) => ({
+          id: r._id,
+          authorName: r.user?.username || 'Unknown',
+          authorAvatar: r.user?.avatar
+            ? r.user.avatar.startsWith('http') ||
+              r.user.avatar.startsWith('data:')
+              ? r.user.avatar
+              : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+          timestamp: new Date(r.createdAt).toLocaleDateString(),
+          text: r.comment || r.text,
+          likes: r.likes?.length || 0,
+          dislikes: r.dislikes?.length || 0,
+          isLiked: currentUser ? r.likes?.includes(currentUser.id) : false,
+          isDisliked: currentUser
+            ? r.dislikes?.includes(currentUser.id)
+            : false,
+          rating: r.rating,
+          replies: r.replies
+            ? r.replies.map((reply: any) => ({
+                id: reply._id,
+                authorName: reply.user?.username || 'Unknown',
+                authorAvatar: reply.user?.avatar
+                  ? reply.user.avatar.startsWith('http') ||
+                    reply.user.avatar.startsWith('data:')
+                    ? reply.user.avatar
+                    : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+                timestamp: new Date(reply.createdAt).toLocaleDateString(),
+                text: reply.comment || reply.text,
+                likes: reply.likes?.length || 0,
+                dislikes: reply.dislikes?.length || 0,
+                isLiked: currentUser
+                  ? reply.likes?.includes(currentUser.id)
+                  : false,
+                isDisliked: currentUser
+                  ? reply.dislikes?.includes(currentUser.id)
+                  : false,
+              }))
+            : [],
+        }));
+
+        this.storyComments.update((comments) => [...comments, ...newComments]);
+        this.commentsPage.set(response.currentPage);
+        this.commentsTotalPages.set(response.totalPages);
+        this.loadingMoreComments.set(false);
+      },
+      error: () => {
+        this.loadingMoreComments.set(false);
+      },
     });
   }
 
   toggleLike() {
     const story = this.activeStory();
     if (!story) return;
-    
+
     // Optimistic UI update
-    this.activeStory.update(s => {
+    this.activeStory.update((s) => {
       if (!s) return s;
       const isLiked = !s.isLiked;
       return { ...s, isLiked, likes: s.likes + (isLiked ? 1 : -1) };
@@ -218,12 +331,12 @@ export class StoryService {
     this.bookService.toggleLike(story.id).subscribe({
       error: () => {
         // Revert on failure
-        this.activeStory.update(s => {
+        this.activeStory.update((s) => {
           if (!s) return s;
           const isLiked = !s.isLiked;
           return { ...s, isLiked, likes: s.likes + (isLiked ? 1 : -1) };
         });
-      }
+      },
     });
   }
 
@@ -232,42 +345,60 @@ export class StoryService {
     if (!story) return;
 
     // Optimistic UI update
-    this.activeStory.update(s => {
+    this.activeStory.update((s) => {
       if (!s) return s;
       const isBookmarked = !s.isBookmarked;
-      return { ...s, isBookmarked, bookmarks: s.bookmarks + (isBookmarked ? 1 : -1) };
+      return {
+        ...s,
+        isBookmarked,
+        bookmarks: s.bookmarks + (isBookmarked ? 1 : -1),
+      };
     });
 
     this.authService.toggleBookmark(story.id).subscribe({
       error: () => {
         // Revert on failure
-        this.activeStory.update(s => {
+        this.activeStory.update((s) => {
           if (!s) return s;
           const isBookmarked = !s.isBookmarked;
-          return { ...s, isBookmarked, bookmarks: s.bookmarks + (isBookmarked ? 1 : -1) };
+          return {
+            ...s,
+            isBookmarked,
+            bookmarks: s.bookmarks + (isBookmarked ? 1 : -1),
+          };
         });
-      }
+      },
     });
   }
 
   reportBook(reason: string) {
     const story = this.activeStory();
     if (!story) return;
-    
+
     this.bookService.reportBook(story.id, reason).subscribe();
   }
 
   toggleFollow() {
-    this.activeStory.update(s => {
+    this.activeStory.update((s) => {
       if (!s) return s;
-      return { ...s, author: { ...s.author, isFollowed: !s.author.isFollowed } };
+      return {
+        ...s,
+        author: { ...s.author, isFollowed: !s.author.isFollowed },
+      };
     });
   }
 
   startReading() {
-    this.activeStory.update(s => {
+    this.activeStory.update((s) => {
       if (!s) return s;
-      return { ...s, userProgress: { hasStarted: true, lastChapterNumber: 1, percentComplete: 0 } };
+      return {
+        ...s,
+        userProgress: {
+          hasStarted: true,
+          lastChapterNumber: 1,
+          percentComplete: 0,
+        },
+      };
     });
   }
 
@@ -279,7 +410,11 @@ export class StoryService {
     const newComment: StoryComment = {
       id: Date.now().toString(),
       authorName,
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
+      authorAvatar: user?.avatar
+        ? user.avatar.startsWith('http') || user.avatar.startsWith('data:')
+          ? user.avatar
+          : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,
@@ -287,11 +422,11 @@ export class StoryService {
       isLiked: false,
       isDisliked: false,
       rating,
-      replies: []
+      replies: [],
     };
-    
+
     // Optimistic UI update
-    this.storyComments.update(comments => [newComment, ...comments]);
+    this.storyComments.update((comments) => [newComment, ...comments]);
 
     // Persist to backend
     this.bookService.addReview(story.id, text, rating).subscribe({
@@ -299,9 +434,14 @@ export class StoryService {
       error: (err) => {
         console.error('Failed to add comment', err);
         // Revert optimistic update on failure
-        this.storyComments.update(comments => comments.filter(c => c.id !== newComment.id));
-        alert(err.error?.msg || 'Failed to post comment. You may have already reviewed this story.');
-      }
+        this.storyComments.update((comments) =>
+          comments.filter((c) => c.id !== newComment.id),
+        );
+        alert(
+          err.error?.msg ||
+            'Failed to post comment. You may have already reviewed this story.',
+        );
+      },
     });
   }
 
@@ -309,8 +449,8 @@ export class StoryService {
     const story = this.activeStory();
     if (!story) return;
 
-    this.storyComments.update(comments => 
-      comments.map(c => {
+    this.storyComments.update((comments) =>
+      comments.map((c) => {
         if (c.id === commentId) {
           const wasLiked = c.isLiked;
           const wasDisliked = c.isDisliked;
@@ -319,7 +459,7 @@ export class StoryService {
             isLiked: !wasLiked,
             isDisliked: false,
             likes: c.likes + (wasLiked ? -1 : 1),
-            dislikes: c.dislikes + (wasDisliked ? -1 : 0)
+            dislikes: c.dislikes + (wasDisliked ? -1 : 0),
           };
         }
         if (c.replies) {
@@ -334,15 +474,15 @@ export class StoryService {
                   isLiked: !wasLiked,
                   isDisliked: false,
                   likes: r.likes + (wasLiked ? -1 : 1),
-                  dislikes: r.dislikes + (wasDisliked ? -1 : 0)
+                  dislikes: r.dislikes + (wasDisliked ? -1 : 0),
                 };
               }
               return r;
-            })
+            }),
           };
         }
         return c;
-      })
+      }),
     );
 
     this.bookService.toggleCommentLike(story.id, commentId).subscribe();
@@ -352,8 +492,8 @@ export class StoryService {
     const story = this.activeStory();
     if (!story) return;
 
-    this.storyComments.update(comments => 
-      comments.map(c => {
+    this.storyComments.update((comments) =>
+      comments.map((c) => {
         if (c.id === commentId) {
           const wasLiked = c.isLiked;
           const wasDisliked = c.isDisliked;
@@ -362,7 +502,7 @@ export class StoryService {
             isDisliked: !wasDisliked,
             isLiked: false,
             dislikes: c.dislikes + (wasDisliked ? -1 : 1),
-            likes: c.likes + (wasLiked ? -1 : 0)
+            likes: c.likes + (wasLiked ? -1 : 0),
           };
         }
         if (c.replies) {
@@ -377,15 +517,15 @@ export class StoryService {
                   isDisliked: !wasDisliked,
                   isLiked: false,
                   dislikes: r.dislikes + (wasDisliked ? -1 : 1),
-                  likes: r.likes + (wasLiked ? -1 : 0)
+                  likes: r.likes + (wasLiked ? -1 : 0),
                 };
               }
               return r;
-            })
+            }),
           };
         }
         return c;
-      })
+      }),
     );
 
     this.bookService.toggleCommentDislike(story.id, commentId).subscribe();
@@ -399,23 +539,27 @@ export class StoryService {
     const newReply: StoryComment = {
       id: Date.now().toString(),
       authorName,
-      authorAvatar: user?.avatar ? (user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
+      authorAvatar: user?.avatar
+        ? user.avatar.startsWith('http') || user.avatar.startsWith('data:')
+          ? user.avatar
+          : `${environment.apiUrl.replace('/api', '')}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100&length=1`,
       timestamp: 'Just now',
       text,
       likes: 0,
       dislikes: 0,
       isLiked: false,
       isDisliked: false,
-      replies: []
+      replies: [],
     };
 
-    this.storyComments.update(comments => 
-      comments.map(c => {
+    this.storyComments.update((comments) =>
+      comments.map((c) => {
         if (c.id === commentId) {
           return { ...c, replies: [...(c.replies || []), newReply] };
         }
         return c;
-      })
+      }),
     );
 
     this.bookService.replyToComment(story.id, commentId, text).subscribe();

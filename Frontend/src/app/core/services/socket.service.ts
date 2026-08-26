@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { Subject } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SocketService {
   private socket?: Socket;
@@ -17,7 +17,7 @@ export class SocketService {
     if (this.socket) {
       this.socket.disconnect();
     }
-    
+
     // Connect to backend (stripping /api from the end of the URL)
     const backendUrl = environment.apiUrl.replace(/\/api$/, '');
     this.socket = io(backendUrl);
@@ -27,7 +27,7 @@ export class SocketService {
       if (user && user.id) {
         this.socket?.emit('authenticate', user.id);
       } else if (user && (user as any)._id) {
-         this.socket?.emit('authenticate', (user as any)._id);
+        this.socket?.emit('authenticate', (user as any)._id);
       }
     });
 

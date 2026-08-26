@@ -8,101 +8,155 @@ import { CommonModule, DecimalPipe } from '@angular/common';
   template: `
     <div class="meta-row-container">
       <div class="meta-item">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
         <span>{{ readingTime }}</span>
       </div>
-      
+
       <div class="meta-divider"></div>
-      
+
       <div class="meta-item">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-        <span>{{ views | number:'1.0-0' }} views</span>
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span>{{ views | number: '1.0-0' }} views</span>
       </div>
-      
+
       <div class="meta-divider"></div>
-      
+
       <div class="meta-item">
-        <svg class="icon star-icon" viewBox="0 0 24 24" fill="#FFB800" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-        <span>{{ rating | number:'1.1-1' }} ({{ reviewCount | number:'1.0-0' }})</span>
+        <svg
+          class="icon star-icon"
+          viewBox="0 0 24 24"
+          fill="#FFB800"
+          stroke="none"
+        >
+          <path
+            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+          ></path>
+        </svg>
+        <span
+          >{{ rating | number: '1.1-1' }} ({{
+            reviewCount | number: '1.0-0'
+          }})</span
+        >
       </div>
-      
+
       <div class="meta-divider"></div>
-      
+
       <div class="meta-item">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path
+            d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+          ></path>
+        </svg>
         <span>{{ chapterCount }} Chapters</span>
       </div>
-      
+
       <div class="meta-divider hide-mobile"></div>
-      
+
       <div class="meta-item badge hide-mobile" [ngClass]="status.toLowerCase()">
         {{ status }}
       </div>
-      
+
       <div class="meta-divider hide-mobile"></div>
-      
+
       <div class="meta-item text-secondary hide-mobile">
         <span>{{ language }}</span>
       </div>
-      
+
       <div class="meta-item text-secondary hide-mobile">
-        <span>Updated: {{ updatedDate | date:'mediumDate' }}</span>
+        <span>Updated: {{ updatedDate | date: 'mediumDate' }}</span>
       </div>
     </div>
   `,
-  styles: [`
-    .meta-row-container {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      padding: 20px 0;
-      border-bottom: 1px solid var(--border-soft);
-      font-size: 14px;
-      color: var(--ink);
-      font-weight: 500;
-    }
-    
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .icon {
-      width: 16px;
-      height: 16px;
-      color: var(--ink-soft);
-    }
-    
-    .meta-divider {
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--border-soft);
-    }
-    
-    .badge {
-      padding: 4px 10px;
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .badge.ongoing { background: var(--paper-warm); color: #b45309; }
-    .badge.completed { background: var(--forest-tint); color: var(--forest-deep); }
-    
-    .text-secondary {
-      color: var(--ink-soft);
-      font-weight: 400;
-    }
-    
-    @media (max-width: 768px) {
-      .hide-mobile { display: none; }
-      .meta-row-container { gap: 12px; }
-    }
-  `]
+  styles: [
+    `
+      .meta-row-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border-soft);
+        font-size: 14px;
+        color: var(--ink);
+        font-weight: 500;
+      }
+
+      .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .icon {
+        width: 16px;
+        height: 16px;
+        color: var(--ink-soft);
+      }
+
+      .meta-divider {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--border-soft);
+      }
+
+      .badge {
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .badge.ongoing {
+        background: var(--paper-warm);
+        color: #b45309;
+      }
+      .badge.completed {
+        background: var(--forest-tint);
+        color: var(--forest-deep);
+      }
+
+      .text-secondary {
+        color: var(--ink-soft);
+        font-weight: 400;
+      }
+
+      @media (max-width: 768px) {
+        .hide-mobile {
+          display: none;
+        }
+        .meta-row-container {
+          gap: 12px;
+        }
+      }
+    `,
+  ],
 })
 export class StoryMetaRowComponent {
   @Input() readingTime!: string;

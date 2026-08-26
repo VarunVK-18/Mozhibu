@@ -5,11 +5,18 @@ import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { LoadingService } from './core/services/loading.service';
+import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HeaderComponent, FooterComponent, CommonModule],
+  imports: [
+    RouterOutlet,
+    HeaderComponent,
+    FooterComponent,
+    CommonModule,
+    ConfirmModalComponent,
+  ],
   template: `
     @if (!isStandaloneRoute) {
       <app-header></app-header>
@@ -20,10 +27,15 @@ import { LoadingService } from './core/services/loading.service';
     @if (!isStandaloneRoute) {
       <app-footer></app-footer>
     }
+    <app-confirm-modal></app-confirm-modal>
   `,
-  styles: [`
-    main { min-height: calc(100vh - 73px); }
-  `]
+  styles: [
+    `
+      main {
+        min-height: calc(100vh - 73px);
+      }
+    `,
+  ],
 })
 export class AppComponent {
   private router = inject(Router);
@@ -31,10 +43,12 @@ export class AppComponent {
   isStandaloneRoute = false;
 
   constructor() {
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.isStandaloneRoute = event.urlAfterRedirects.startsWith('/admin') || event.urlAfterRedirects.startsWith('/read');
-    });
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        this.isStandaloneRoute =
+          event.urlAfterRedirects.startsWith('/admin') ||
+          event.urlAfterRedirects.startsWith('/read');
+      });
   }
 }

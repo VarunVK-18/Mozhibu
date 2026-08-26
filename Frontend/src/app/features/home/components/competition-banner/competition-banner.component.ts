@@ -1,7 +1,10 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { CompetitionService, CompetitionConfig } from '../../../../core/services/competition.service';
+import {
+  CompetitionService,
+  CompetitionConfig,
+} from '../../../../core/services/competition.service';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { HttpClient } from '@angular/common/http';
@@ -19,11 +22,11 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   private http = inject(HttpClient);
   private router = inject(Router);
-  
+
   config: CompetitionConfig | null = null;
   showUpgradeModal = signal(false);
   isUpgrading = signal(false);
-  
+
   days = 0;
   hours = 0;
   mins = 0;
@@ -50,7 +53,7 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to load competition config', err);
-      }
+      },
     });
   }
 
@@ -73,7 +76,9 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
       }
 
       this.days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      this.hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      this.hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
       this.mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     };
 
@@ -88,14 +93,14 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
 
   handleCtaClick(event: Event) {
     if (!this.config?.buttonLink) return;
-    
+
     // If external link, let the standard href handle it
     if (this.isExternalLink(this.config.buttonLink)) {
       return;
     }
 
     const user = this.authService.user();
-    
+
     // If not logged in, route to login
     if (!user) {
       this.router.navigate(['/login']);
@@ -124,7 +129,10 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
     this.http.put('/api/users/upgrade-role', {}).subscribe({
       next: (res: any) => {
         if (res.user) {
-          this.authService.user.set({...this.authService.user()!, ...res.user});
+          this.authService.user.set({
+            ...this.authService.user()!,
+            ...res.user,
+          });
           this.closeUpgradeModal();
           // Navigate to the competition link
           if (this.config?.buttonLink) {
@@ -138,8 +146,10 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error(err);
         this.isUpgrading.set(false);
-        alert('Failed to upgrade. Please try again or go to your profile settings.');
-      }
+        alert(
+          'Failed to upgrade. Please try again or go to your profile settings.',
+        );
+      },
     });
   }
 

@@ -1,22 +1,29 @@
 <footer class="footer">
   <div class="wrap">
     <div class="footer-top">
-
       <!-- Brand -->
       <div class="footer-brand">
         <a href="#" class="logo">
-        <img src="assets/logo.png" alt="Mozhibu logo" class="logo-img">Mozhibu
-      </a>
-        <p>{{ 'footer.tagline' | translate }}</p>
+          <img
+            src="assets/logo.png"
+            alt="Mozhibu logo"
+            class="logo-img"
+          />Mozhibu
+        </a>
+        <p>{{ "footer.tagline" | translate }}</p>
         <div class="newsletter-input">
-          <input type="email" [placeholder]="'footer.emailPlaceholder' | translate" id="newsletter-email">
-          <button type="button">{{ 'footer.joinBtn' | translate }}</button>
+          <input
+            type="email"
+            [placeholder]="'footer.emailPlaceholder' | translate"
+            id="newsletter-email"
+          />
+          <button type="button">{{ "footer.joinBtn" | translate }}</button>
         </div>
       </div>
 
       <!-- Explore -->
       <div class="footer-col">
-        <h5>{{ 'footer.explore' | translate }}</h5>
+        <h5>{{ "footer.explore" | translate }}</h5>
         @for (link of exploreLinks; track $index) {
           <a href="#">{{ link }}</a>
         }
@@ -24,7 +31,7 @@
 
       <!-- Write -->
       <div class="footer-col">
-        <h5>{{ 'footer.write' | translate }}</h5>
+        <h5>{{ "footer.write" | translate }}</h5>
         @for (link of writeLinks; track $index) {
           <a href="#">{{ link }}</a>
         }
@@ -32,7 +39,7 @@
 
       <!-- Company -->
       <div class="footer-col">
-        <h5>{{ 'footer.company' | translate }}</h5>
+        <h5>{{ "footer.company" | translate }}</h5>
         @for (link of companyLinks; track $index) {
           <a href="#">{{ link }}</a>
         }
@@ -40,7 +47,7 @@
 
       <!-- Languages -->
       <div class="footer-col">
-        <h5>{{ 'footer.readIn' | translate }}</h5>
+        <h5>{{ "footer.readIn" | translate }}</h5>
         <div class="footer-langs">
           <span>தமிழ்</span><span>తెలుగు</span><span>മലയാളം</span>
           <span>ಕನ್ನಡ</span><span>বাংলা</span><span>हिंदी</span>
@@ -51,11 +58,11 @@
     </div>
 
     <div class="footer-bottom">
-      <span>{{ 'footer.copyright' | translate }}</span>
+      <span>{{ "footer.copyright" | translate }}</span>
       <div class="socials">
-        <a href="#">{{ 'footer.instagram' | translate }}</a>
-        <a href="#">{{ 'footer.x' | translate }}</a>
-        <a href="#">{{ 'footer.youtube' | translate }}</a>
+        <a href="#">{{ "footer.instagram" | translate }}</a>
+        <a href="#">{{ "footer.x" | translate }}</a>
+        <a href="#">{{ "footer.youtube" | translate }}</a>
       </div>
     </div>
   </div>

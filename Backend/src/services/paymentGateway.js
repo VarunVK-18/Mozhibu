@@ -4,22 +4,22 @@
  * Currently implemented: Razorpay
  */
 
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 
 // ─── Base Interface ───────────────────────────────────────────
 class PaymentGateway {
   async createOrder(amountInPaise, currency, metadata) {
-    throw new Error('createOrder() must be implemented by adapter');
+    throw new Error("createOrder() must be implemented by adapter");
   }
   async verifyPayment(orderId, paymentId, signature) {
-    throw new Error('verifyPayment() must be implemented by adapter');
+    throw new Error("verifyPayment() must be implemented by adapter");
   }
   async refund(paymentId, amountInPaise) {
-    throw new Error('refund() must be implemented by adapter');
+    throw new Error("refund() must be implemented by adapter");
   }
   verifyWebhookSignature(body, signature, secret) {
-    throw new Error('verifyWebhookSignature() must be implemented by adapter');
+    throw new Error("verifyWebhookSignature() must be implemented by adapter");
   }
 }
 
@@ -29,7 +29,7 @@ class RazorpayAdapter extends PaymentGateway {
     super();
     this.client = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
   }
 
@@ -40,12 +40,12 @@ class RazorpayAdapter extends PaymentGateway {
    * @param {object} metadata - { userId, planId, couponCode }
    * @returns Razorpay order object
    */
-  async createOrder(amountInPaise, currency = 'INR', metadata = {}) {
+  async createOrder(amountInPaise, currency = "INR", metadata = {}) {
     const order = await this.client.orders.create({
       amount: amountInPaise,
       currency,
       receipt: `sub_${Date.now()}`,
-      notes: metadata
+      notes: metadata,
     });
     return order;
   }
@@ -56,9 +56,9 @@ class RazorpayAdapter extends PaymentGateway {
   verifyPayment(orderId, paymentId, signature) {
     const body = `${orderId}|${paymentId}`;
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body)
-      .digest('hex');
+      .digest("hex");
     return expectedSignature === signature;
   }
 
@@ -68,9 +68,9 @@ class RazorpayAdapter extends PaymentGateway {
   verifyWebhookSignature(rawBody, signature, secret) {
     const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET;
     const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
+      .createHmac("sha256", webhookSecret)
       .update(rawBody)
-      .digest('hex');
+      .digest("hex");
     return expectedSignature === signature;
   }
 
@@ -78,14 +78,16 @@ class RazorpayAdapter extends PaymentGateway {
    * Initiates a refund for a payment.
    */
   async refund(paymentId, amountInPaise) {
-    return await this.client.payments.refund(paymentId, { amount: amountInPaise });
+    return await this.client.payments.refund(paymentId, {
+      amount: amountInPaise,
+    });
   }
 }
 
 // ─── Factory: returns configured adapter ─────────────────────
-const getGateway = (provider = 'razorpay') => {
+const getGateway = (provider = "razorpay") => {
   switch (provider) {
-    case 'razorpay':
+    case "razorpay":
       return new RazorpayAdapter();
     default:
       throw new Error(`Unsupported payment gateway: ${provider}`);

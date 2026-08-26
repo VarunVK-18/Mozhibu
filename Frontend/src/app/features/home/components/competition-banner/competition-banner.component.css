@@ -82,24 +82,48 @@
   margin-bottom: 14px;
 }
 
-.btn-light { background: #fff; color: var(--forest-deep); }
-.btn-light:hover { background: #F1EADC; }
+.btn-light {
+  background: #fff;
+  color: var(--forest-deep);
+}
+.btn-light:hover {
+  background: #f1eadc;
+}
 
 @media (max-width: 680px) {
-  .competition { flex-direction: column; align-items: flex-start; padding: 32px 26px; }
-  .competition-cta { align-items: flex-start; width: 100%; }
+  .competition {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 32px 26px;
+  }
+  .competition-cta {
+    align-items: flex-start;
+    width: 100%;
+  }
 }
 @media (max-width: 480px) {
-  .competition { padding: 24px 16px; gap: 24px; }
-  .competition h3 { font-size: 22px; }
-  .competition p { font-size: 13.5px; }
-  .countdown b { font-size: 24px; }
+  .competition {
+    padding: 24px 16px;
+    gap: 24px;
+  }
+  .competition h3 {
+    font-size: 22px;
+  }
+  .competition p {
+    font-size: 13.5px;
+  }
+  .countdown b {
+    font-size: 24px;
+  }
 }
 
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 9999;
   display: flex;
@@ -119,7 +143,8 @@
 }
 .close-btn {
   position: absolute;
-  top: 16px; right: 16px;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
   font-size: 28px;

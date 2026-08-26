@@ -2,10 +2,10 @@
   <div class="wrap">
     <div class="section-head">
       <div>
-        <h2>{{ 'authors.title' | translate }}</h2>
-        <p>{{ 'authors.subtitle' | translate }}</p>
+        <h2>{{ "authors.title" | translate }}</h2>
+        <p>{{ "authors.subtitle" | translate }}</p>
       </div>
-      <button class="view-all">{{ 'authors.seeAll' | translate }}</button>
+      <button class="view-all">{{ "authors.seeAll" | translate }}</button>
     </div>
 
     <div class="section-loader-container" *ngIf="isLoading()">
@@ -21,12 +21,17 @@
             {{ author.initials }}
           </div>
           <h4>{{ author.name }}</h4>
-          <div class="followers">{{ author.followers }} {{ 'authors.followers' | translate }}</div>
+          <div class="followers">
+            {{ author.followers }} {{ "authors.followers" | translate }}
+          </div>
           <button
             class="follow-btn"
             [class.following]="author.following"
-            (click)="toggleFollow(i)">
-            {{ author.following ? '✓ Following' : ('authors.follow' | translate) }}
+            (click)="toggleFollow(i)"
+          >
+            {{
+              author.following ? "✓ Following" : ("authors.follow" | translate)
+            }}
           </button>
         </div>
       }

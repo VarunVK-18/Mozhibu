@@ -97,8 +97,8 @@ describe('Users API', () => {
 
   describe('POST /api/users/me/avatar', () => {
     it('should successfully upload an avatar image', async () => {
-      // Create a dummy file buffer to upload
-      const dummyFile = Buffer.from('dummy image content');
+      // Create a valid 1x1 PNG dummy file buffer to upload
+      const dummyFile = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
       
       const res = await request(app)
         .post('/api/users/me/avatar')
@@ -107,7 +107,7 @@ describe('Users API', () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body.msg).toEqual('Avatar uploaded successfully');
-      expect(res.body.avatar).toMatch(/\/uploads\/avatars\//);
+      expect(res.body.avatar).toMatch(/^data:image\/jpeg;base64,/);
     });
 
     it('should return 400 if no file is provided', async () => {

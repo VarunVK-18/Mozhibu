@@ -18,18 +18,18 @@ export class LangStripComponent {
   activeIndex = signal(0);
 
   readonly chips: LangChip[] = [
-    { native: 'தமிழ்',   en: 'Tamil' },
-    { native: 'తెలుగు',   en: 'Telugu' },
+    { native: 'தமிழ்', en: 'Tamil' },
+    { native: 'తెలుగు', en: 'Telugu' },
     { native: 'മലയാളം', en: 'Malayalam' },
-    { native: 'ಕನ್ನಡ',   en: 'Kannada' },
-    { native: 'বাংলা',    en: 'Bengali' },
-    { native: 'हिंदी',     en: 'Hindi' },
-    { native: 'ਪੰਜਾਬੀ',  en: 'Punjabi' },
-    { native: 'मराठी',    en: 'Marathi' },
-    { native: 'اردو',      en: 'Urdu' },
+    { native: 'ಕನ್ನಡ', en: 'Kannada' },
+    { native: 'বাংলা', en: 'Bengali' },
+    { native: 'हिंदी', en: 'Hindi' },
+    { native: 'ਪੰਜਾਬੀ', en: 'Punjabi' },
+    { native: 'मराठी', en: 'Marathi' },
+    { native: 'اردو', en: 'Urdu' },
     { native: 'ગુજરાતી', en: 'Gujarati' },
-    { native: 'ଓଡ଼ିଆ',   en: 'Odia' },
-    { native: 'English',  en: 'English' },
+    { native: 'ଓଡ଼ିଆ', en: 'Odia' },
+    { native: 'English', en: 'English' },
   ];
 
   selectChip(index: number): void {

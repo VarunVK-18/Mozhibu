@@ -17,14 +17,14 @@ export interface SearchResult {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SearchService {
   private api = inject(ApiService);
 
   search(params: SearchParams): Observable<SearchResult> {
     let queryParams = '?';
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       const val = (params as any)[key];
       if (val) {
         queryParams += `${key}=${encodeURIComponent(val)}&`;
@@ -32,7 +32,7 @@ export class SearchService {
     });
     // Remove trailing '&' or '?'
     queryParams = queryParams.slice(0, -1);
-    
+
     return this.api.get(`/search${queryParams}`);
   }
 }

@@ -1,16 +1,32 @@
-import { Component, HostListener, signal, computed, OnInit, OnDestroy, inject } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  signal,
+  computed,
+  OnInit,
+  OnDestroy,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LanguageService, Lang, LangOption } from '../../core/services/language.service';
+import {
+  LanguageService,
+  Lang,
+  LangOption,
+} from '../../core/services/language.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { AuthService } from '../../core/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { AdminBook } from '../../core/services/admin.service';
-import { NotificationService, NotificationItem } from '../../core/services/notification.service';
+import {
+  NotificationService,
+  NotificationItem,
+} from '../../core/services/notification.service';
 import { SocketService } from '../../core/services/socket.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { ApiService } from '../../core/services/api.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -29,14 +45,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showAuthorModal = signal(false);
   isHeaderHidden = signal(false);
   private lastScrollY = 0;
-  
+
   notifications = signal<NotificationItem[]>([]);
-  
-  activityNotifications = computed(() => this.notifications().filter(n => ['like', 'comment', 'follower', 'following'].includes(n.type)));
-  generalNotifications = computed(() => this.notifications().filter(n => ['new_chapter', 'competition', 'announcement', 'system'].includes(n.type)));
-  
-  unreadActivityCount = computed(() => this.activityNotifications().filter(n => !n.isRead).length);
-  unreadGeneralCount = computed(() => this.generalNotifications().filter(n => !n.isRead).length);
+
+  activityNotifications = computed(() =>
+    this.notifications().filter((n) =>
+      ['like', 'comment', 'follower', 'following'].includes(n.type),
+    ),
+  );
+  generalNotifications = computed(() =>
+    this.notifications().filter((n) =>
+      ['new_chapter', 'competition', 'announcement', 'system'].includes(n.type),
+    ),
+  );
+
+  unreadActivityCount = computed(
+    () => this.activityNotifications().filter((n) => !n.isRead).length,
+  );
+  unreadGeneralCount = computed(
+    () => this.generalNotifications().filter((n) => !n.isRead).length,
+  );
   isPremium = signal(false);
 
   private destroy$ = new Subject<void>();
@@ -48,6 +76,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private socketService = inject(SocketService);
   private subService = inject(SubscriptionService);
   private api = inject(ApiService);
+  private confirmService = inject(ConfirmService);
+
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
     return this.api.getImageUrl(path);
@@ -64,7 +94,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onWriteClick(event: Event) {
     event.preventDefault();
     const user = this.authService.user();
-    
+
     if (!user) {
       this.router.navigate(['/login']);
       return;
@@ -98,15 +128,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleLangMenu(): void {
-    this.langMenuOpen.update(v => !v);
+    this.langMenuOpen.update((v) => !v);
   }
 
   toggleMobileMenu(): void {
-    this.mobileMenuOpen.update(v => !v);
+    this.mobileMenuOpen.update((v) => !v);
   }
 
   toggleNotifications(): void {
-    this.notificationsOpen.update(v => !v);
+    this.notificationsOpen.update((v) => !v);
     if (this.notificationsOpen()) {
       this.engagementOpen.set(false);
       this.profileMenuOpen.set(false);
@@ -115,7 +145,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleEngagement(): void {
-    this.engagementOpen.update(v => !v);
+    this.engagementOpen.update((v) => !v);
     if (this.engagementOpen()) {
       this.notificationsOpen.set(false);
       this.profileMenuOpen.set(false);
@@ -124,7 +154,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleProfileMenu(): void {
-    this.profileMenuOpen.update(v => !v);
+    this.profileMenuOpen.update((v) => !v);
     if (this.profileMenuOpen()) {
       this.notificationsOpen.set(false);
       this.engagementOpen.set(false);
@@ -136,7 +166,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.langService.currentLang() !== code) {
       this.langService.setLanguage(code);
       this.langMenuOpen.set(false);
-      
+
       // Smoothly reload the current route to fetch translated data
       const currentUrl = this.router.url;
       this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
@@ -156,21 +186,31 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!target.closest('.user-profile-wrapper')) {
       this.profileMenuOpen.set(false);
     }
-    if (!target.closest('.notifications-wrapper') && !target.closest('.icon-btn[aria-label="Notifications"]')) {
+    if (
+      !target.closest('.notifications-wrapper') &&
+      !target.closest('.icon-btn[aria-label="Notifications"]')
+    ) {
       this.notificationsOpen.set(false);
     }
-    if (!target.closest('.engagement-wrapper') && !target.closest('.icon-btn[aria-label="Engagement"]')) {
+    if (
+      !target.closest('.engagement-wrapper') &&
+      !target.closest('.icon-btn[aria-label="Engagement"]')
+    ) {
       this.engagementOpen.set(false);
     }
-    if (!target.closest('.mobile-menu-container') && !target.closest('.hamburger-btn')) {
+    if (
+      !target.closest('.mobile-menu-container') &&
+      !target.closest('.hamburger-btn')
+    ) {
       this.mobileMenuOpen.set(false);
     }
   }
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
-    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-    
+    const currentScrollY =
+      window.pageYOffset || document.documentElement.scrollTop || 0;
+
     // If scrolling down and past the header height, hide it
     if (currentScrollY > this.lastScrollY && currentScrollY > 80) {
       if (!this.isHeaderHidden()) {
@@ -181,14 +221,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.notificationsOpen.set(false);
         this.engagementOpen.set(false);
       }
-    } 
+    }
     // If scrolling up, show it
     else if (currentScrollY < this.lastScrollY) {
       if (this.isHeaderHidden()) {
         this.isHeaderHidden.set(false);
       }
     }
-    
+
     // For Mobile or negative scrolling
     this.lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
   }
@@ -199,18 +239,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.authService.user()) {
       this.socketService.connect();
       this.fetchNotifications();
-      
+
       this.socketService.notificationReceived
         .pipe(takeUntil(this.destroy$))
         .subscribe(() => {
           this.fetchNotifications();
         });
-        
+
       this.subService.getMySubscription().subscribe({
         next: (sub) => {
           this.isPremium.set(sub?.active || false);
         },
-        error: () => {}
+        error: () => {},
       });
     }
   }
@@ -225,19 +265,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
       next: (notifs) => {
         this.notifications.set(notifs);
       },
-      error: (err) => console.error('Failed to fetch notifications', err)
+      error: (err) => console.error('Failed to fetch notifications', err),
     });
+  }
+
+  goToProfile(event: Event, userId: string) {
+    event.stopPropagation();
+    this.router.navigate(['/author', userId]);
+    this.engagementOpen.set(false);
+    this.notificationsOpen.set(false);
   }
 
   handleNotificationClick(notification: NotificationItem) {
     if (!notification.isRead) {
       this.notificationService.markAsRead(notification._id).subscribe(() => {
-        this.notifications.update(notifs => 
-          notifs.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
+        this.notifications.update((notifs) =>
+          notifs.map((n) =>
+            n._id === notification._id ? { ...n, isRead: true } : n,
+          ),
         );
       });
     }
-    
+
     if (notification.link) {
       this.router.navigateByUrl(notification.link);
       this.notificationsOpen.set(false);
@@ -249,8 +298,29 @@ export class HeaderComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
     this.notificationService.markAllAsRead().subscribe(() => {
-      this.notifications.update(notifs => notifs.map(n => ({...n, isRead: true})));
+      this.notifications.update((notifs) =>
+        notifs.map((n) => ({ ...n, isRead: true })),
+      );
     });
+  }
+
+  clearAllNotifications(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.confirmService
+      .confirm(
+        'Clear Notifications',
+        'Are you sure you want to clear all notifications?',
+        true,
+      )
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.notificationService.clearAll().subscribe(() => {
+            this.notifications.set([]);
+          });
+        }
+      });
   }
 
   get camelCaseName(): string {
@@ -259,33 +329,40 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Format username to camelCase (e.g. split by space and camelcase)
     const words = user.username.trim().split(/\s+/);
     if (words.length === 1) return words[0].toLowerCase();
-    
+
     const first = words[0].toLowerCase();
-    const rest = words.slice(1).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('');
+    const rest = words
+      .slice(1)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join('');
     return first + rest;
   }
 
   get firstInitial(): string {
     const user = this.authService.user();
-    return (user && user.username) ? user.username.charAt(0).toUpperCase() : '';
+    return user && user.username ? user.username.charAt(0).toUpperCase() : '';
   }
 
   onProfileClick(): void {
     if (!this.authService.user()) {
       this.router.navigate(['/login']);
     } else {
-      this.profileMenuOpen.update(v => !v);
+      this.profileMenuOpen.update((v) => !v);
     }
   }
 
-  onLogout(): void {
-    if (confirm('Are you sure you want to log out?')) {
-      this.authService.logout();
-      this.isPremium.set(false);
-      this.socketService.disconnect();
-      this.profileMenuOpen.set(false);
-      window.location.href = '/';
-    }
+  onLogout() {
+    this.confirmService
+      .confirm('Log Out', 'Are you sure you want to log out?')
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.authService.logout();
+          this.isPremium.set(false);
+          this.socketService.disconnect();
+          this.profileMenuOpen.set(false);
+          window.location.href = '/';
+        }
+      });
   }
 
   requireAuth(event: Event, action?: () => void): void {

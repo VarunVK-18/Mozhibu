@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { LanguageService } from './language.service';
 
@@ -11,7 +14,7 @@ describe('LanguageService', () => {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [LanguageService]
+      providers: [LanguageService],
     });
     service = TestBed.inject(LanguageService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -31,11 +34,11 @@ describe('LanguageService', () => {
     // Flush the pending request from the beforeEach initialization
     const initialReq = httpMock.expectOne('assets/i18n/en.json');
     initialReq.flush({});
-    
+
     localStorage.setItem('preferredLang', 'hi');
     const httpClient = TestBed.inject(HttpClient);
     const customService = new LanguageService(httpClient);
-    
+
     expect(customService.currentLang()).toBe('hi');
     const req = httpMock.expectOne('assets/i18n/hi.json');
     req.flush({ nav: { home: 'होम' } });
@@ -63,8 +66,8 @@ describe('LanguageService', () => {
     const initialReq = httpMock.expectOne('assets/i18n/en.json');
     initialReq.flush({
       libraryPage: {
-        title: 'Your Library'
-      }
+        title: 'Your Library',
+      },
     });
 
     const translation = service.translate('libraryPage.title');

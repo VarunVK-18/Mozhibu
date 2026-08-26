@@ -9,14 +9,11 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj('ApiService', ['get', 'post', 'put']);
-    
+
     TestBed.configureTestingModule({
-      providers: [
-        AuthService,
-        { provide: ApiService, useValue: spy }
-      ]
+      providers: [AuthService, { provide: ApiService, useValue: spy }],
     });
-    
+
     service = TestBed.inject(AuthService);
     apiServiceSpy = TestBed.inject(ApiService) as jasmine.SpyObj<ApiService>;
   });
@@ -31,8 +28,8 @@ describe('AuthService', () => {
         _id: '1',
         book: { title: 'Test Book' },
         currentChapter: { order: 5 },
-        progressPercentage: 50
-      }
+        progressPercentage: 50,
+      },
     ];
 
     apiServiceSpy.get.and.returnValue(of(mockResponse));
@@ -54,7 +51,7 @@ describe('AuthService', () => {
       expect(apiServiceSpy.post).toHaveBeenCalledWith('/users/me/progress', {
         bookId: 'book123',
         chapterId: 'chap456',
-        progressPercentage: 75
+        progressPercentage: 75,
       });
       done();
     });

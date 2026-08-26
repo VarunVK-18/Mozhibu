@@ -1,7 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -13,26 +18,36 @@ import { AuthService } from '../../../core/services/auth.service';
       <div class="signup-card">
         <h2>Complete Your Profile</h2>
         <p>Just a few more details to finish setting up your account.</p>
-        
+
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
-          
           <div class="role-selector">
             <p class="role-label">What brings you to Mozhibu?</p>
             <div class="role-options">
-              <label class="role-option" [class.selected]="profileForm.get('role')?.value === 'reader'">
+              <label
+                class="role-option"
+                [class.selected]="profileForm.get('role')?.value === 'reader'"
+              >
                 <input type="radio" formControlName="role" value="reader" />
                 <span class="role-title">I want to read</span>
               </label>
-              <label class="role-option" [class.selected]="profileForm.get('role')?.value === 'writer'">
+              <label
+                class="role-option"
+                [class.selected]="profileForm.get('role')?.value === 'writer'"
+              >
                 <input type="radio" formControlName="role" value="writer" />
                 <span class="role-title">I want to publish</span>
               </label>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label>Mobile</label>
-            <input type="text" formControlName="mobile" class="form-control" placeholder="+1 234 567 8900" />
+            <input
+              type="text"
+              formControlName="mobile"
+              class="form-control"
+              placeholder="+1 234 567 8900"
+            />
           </div>
 
           <div class="form-row">
@@ -49,7 +64,12 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
             <div class="form-group">
               <label>Favorite Genres (Optional)</label>
-              <input type="text" formControlName="favoriteGenres" class="form-control" placeholder="e.g. Romance, Sci-Fi" />
+              <input
+                type="text"
+                formControlName="favoriteGenres"
+                class="form-control"
+                placeholder="e.g. Romance, Sci-Fi"
+              />
             </div>
           </div>
 
@@ -64,33 +84,122 @@ import { AuthService } from '../../../core/services/auth.service';
       </div>
     </div>
   `,
-  styles: [`
-    .signup-wrap { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 150px); background: var(--paper); padding: 40px 20px; }
-    .signup-card { background: var(--card); padding: 40px 48px; border-radius: var(--radius-l); border: 1px solid var(--border-soft); box-shadow: 0 10px 30px -10px rgba(43, 38, 32, 0.1); max-width: 600px; width: 100%; }
-    .signup-card h2 { margin-bottom: 8px; font-family: var(--display); font-size: 24px; text-align: center; }
-    .signup-card p { color: var(--ink-soft); margin-bottom: 24px; font-size: 14px; text-align: center; }
-    
-    .role-selector { margin-bottom: 24px; }
-    .role-label { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 12px; }
-    .role-options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .role-option { border: 1px solid var(--border-soft); border-radius: var(--radius-m); padding: 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; transition: all 0.2s; background: #fff; }
-    .role-option.selected { border-color: var(--forest); background: var(--forest-tint); }
-    .role-option input { display: none; }
-    .role-title { font-family: var(--display); font-weight: 600; font-size: 15px; color: var(--ink); }
-    
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: var(--ink); }
-    .form-control { width: 100%; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: var(--radius-s); font-family: var(--body); font-size: 14px; }
-    .error-msg { color: var(--rose); font-size: 13px; margin-bottom: 16px; text-align: center; background: var(--rose-tint); padding: 8px; border-radius: 4px; }
-    .btn { width: 100%; margin-top: 8px; }
-  `]
+  styles: [
+    `
+      .signup-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 150px);
+        background: var(--paper);
+        padding: 40px 20px;
+      }
+      .signup-card {
+        background: var(--card);
+        padding: 40px 48px;
+        border-radius: var(--radius-l);
+        border: 1px solid var(--border-soft);
+        box-shadow: 0 10px 30px -10px rgba(43, 38, 32, 0.1);
+        max-width: 600px;
+        width: 100%;
+      }
+      .signup-card h2 {
+        margin-bottom: 8px;
+        font-family: var(--display);
+        font-size: 24px;
+        text-align: center;
+      }
+      .signup-card p {
+        color: var(--ink-soft);
+        margin-bottom: 24px;
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .role-selector {
+        margin-bottom: 24px;
+      }
+      .role-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 12px;
+      }
+      .role-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .role-option {
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-m);
+        padding: 16px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.2s;
+        background: #fff;
+      }
+      .role-option.selected {
+        border-color: var(--forest);
+        background: var(--forest-tint);
+      }
+      .role-option input {
+        display: none;
+      }
+      .role-title {
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ink);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+      .form-control {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-s);
+        font-family: var(--body);
+        font-size: 14px;
+      }
+      .error-msg {
+        color: var(--rose);
+        font-size: 13px;
+        margin-bottom: 16px;
+        text-align: center;
+        background: var(--rose-tint);
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .btn {
+        width: 100%;
+        margin-top: 8px;
+      }
+    `,
+  ],
 })
 export class CompleteProfileComponent implements OnInit {
   auth = inject(AuthService);
   router = inject(Router);
   fb = inject(FormBuilder);
-  
+
   googleData: any = null;
   errorMessage = '';
   isLoading = false;
@@ -99,7 +208,7 @@ export class CompleteProfileComponent implements OnInit {
     mobile: ['', Validators.required],
     preferredLanguage: ['', Validators.required],
     favoriteGenres: [''],
-    role: ['reader', Validators.required]
+    role: ['reader', Validators.required],
   });
 
   ngOnInit() {
@@ -132,11 +241,14 @@ export class CompleteProfileComponent implements OnInit {
       ...this.profileForm.value,
       email: this.googleData.email,
       name: this.googleData.name,
-      picture: this.googleData.picture
+      picture: this.googleData.picture,
     };
-    
+
     if (typeof formData.favoriteGenres === 'string') {
-      formData.favoriteGenres = formData.favoriteGenres.split(',').map((g: string) => g.trim()).filter(Boolean);
+      formData.favoriteGenres = formData.favoriteGenres
+        .split(',')
+        .map((g: string) => g.trim())
+        .filter(Boolean);
     }
 
     this.auth.completeGoogleProfile(formData).subscribe({
@@ -147,8 +259,11 @@ export class CompleteProfileComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.msg || err.message || 'An error occurred during registration.';
-      }
+        this.errorMessage =
+          err.error?.msg ||
+          err.message ||
+          'An error occurred during registration.';
+      },
     });
   }
 }
