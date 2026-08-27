@@ -793,22 +793,39 @@ import { ConfirmService } from '../../../core/services/confirm.service';
       .btn-danger:hover:not(:disabled) {
         background: #b91c1c;
       }
-      @media (max-width: 600px) {
-        .control-row {
-          flex-direction: column;
-          align-items: stretch;
-        }
-        .control-row button {
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 480px) {
+      @media (max-width: 768px) {
         .settings-page {
           padding: 24px 16px;
         }
+        .settings-tabs {
+          overflow-x: auto;
+          white-space: nowrap;
+          justify-content: flex-start;
+          padding-bottom: 8px;
+        }
         .settings-card {
           padding: 24px 16px;
+        }
+        .avatar-upload-section {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .avatar-actions {
+          justify-content: center;
+        }
+        .form-row {
+          flex-direction: column;
+          gap: 16px;
+        }
+        .control-row {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+        }
+        .control-row button {
+          width: 100%;
+          margin-top: 16px;
         }
         .upgrade-btn {
           padding: 12px 16px;

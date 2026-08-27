@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); require('dotenv').config(); mongoose.connect(process.env.MONGODB_URI).then(async () => { const User = require('./src/models/User'); const authors = await User.find(); console.log(authors.map(a => ({username: a.username, followersCount: a.followersCount}))); process.exit(); })

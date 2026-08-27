@@ -9,6 +9,7 @@ import {
 import { ApiService } from '../../core/services/api.service';
 import { finalize } from 'rxjs/operators';
 import { StoryCardComponent } from '../../shared/components/story-card/story-card.component';
+import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -16,7 +17,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, StoryCardComponent, SafeUrlPipe],
+  imports: [CommonModule, RouterModule, StoryCardComponent, UserCardComponent, SafeUrlPipe],
   template: `
     <div class="profile-layout">
       <!-- Profile Banner -->
@@ -113,38 +114,7 @@ import { environment } from '../../../environments/environment';
               @if (publishedStories().length > 0) {
                 <div class="results-grid">
                   @for (item of publishedStories(); track item._id) {
-                    <div class="book-card" [routerLink]="['/story', item._id]">
-                      <div class="cover-wrapper">
-                        <img
-                          [src]="getCoverUrl(item.cover)"
-                          alt="Book cover"
-                          class="book-cover"
-                          (error)="onCoverError($event)"
-                        />
-                        <span
-                          class="status-badge"
-                          [class.completed]="
-                            item.completionStatus === 'completed'
-                          "
-                        >
-                          {{
-                            item.completionStatus === 'completed'
-                              ? 'Completed'
-                              : 'Ongoing'
-                          }}
-                        </span>
-                      </div>
-                      <div class="book-info">
-                        <h4 class="book-title">{{ item.title }}</h4>
-                        <div class="book-meta">
-                          <span class="meta-item">👁 {{ item.views || 0 }}</span>
-                          <span class="meta-item"
-                            >♥ {{ item.likesCount || 0 }}</span
-                          >
-                          <span class="genre-badge">{{ item.genre }}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <app-story-card [story]="item"></app-story-card>
                   }
                 </div>
               } @else {
@@ -180,26 +150,9 @@ import { environment } from '../../../environments/environment';
           <!-- FOLLOWING -->
           <div *ngIf="activeTab() === 'following'" class="tab-pane">
             @if (following().length > 0) {
-              <div class="authors-list">
+              <div class="results-grid">
                 @for (author of following(); track author.id) {
-                  <div
-                    class="author-card"
-                    [routerLink]="['/author', author.id]"
-                  >
-                    <div class="author-info">
-                      <img
-                        [src]="author.avatar"
-                        [alt]="author.name"
-                        class="author-avatar-sm"
-                        (error)="onAvatarError($event, author.name)"
-                      />
-                      <div>
-                        <h3>{{ author.name }}</h3>
-                        <p>{{ author.followers }} followers</p>
-                      </div>
-                    </div>
-                    <button class="btn-outline">Following</button>
-                  </div>
+                  <app-user-card [user]="author"></app-user-card>
                 }
               </div>
             } @else {
@@ -222,25 +175,9 @@ import { environment } from '../../../environments/environment';
           <!-- FOLLOWERS -->
           <div *ngIf="activeTab() === 'followers'" class="tab-pane">
             @if (followers().length > 0) {
-              <div class="authors-list">
+              <div class="results-grid">
                 @for (follower of followers(); track follower.id) {
-                  <div
-                    class="author-card"
-                    [routerLink]="['/author', follower.id]"
-                  >
-                    <div class="author-info">
-                      <img
-                        [src]="follower.avatar"
-                        [alt]="follower.name"
-                        class="author-avatar-sm"
-                        (error)="onAvatarError($event, follower.name)"
-                      />
-                      <div>
-                        <h3>{{ follower.name }}</h3>
-                        <p>{{ follower.followers }} followers</p>
-                      </div>
-                    </div>
-                  </div>
+                  <app-user-card [user]="follower"></app-user-card>
                 }
               </div>
             } @else {
@@ -637,15 +574,47 @@ import { environment } from '../../../environments/environment';
           grid-template-columns: 1fr;
         }
       }
+
+      @media (max-width: 768px) {
+        .profile-header {
+          flex-direction: column;
+          text-align: center;
+          gap: 16px;
+        }
+        .author-actions {
+          margin-left: 0;
+          margin-top: 16px;
+        }
+        .profile-tabs {
+          overflow-x: auto;
+          white-space: nowrap;
+          justify-content: flex-start;
+          padding-bottom: 8px;
+        }
+        .profile-content {
+          padding: 24px 16px;
+        }
+        .results-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+        .history-list {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .author-avatar {
+          width: 96px;
+          height: 96px;
+        }
+      }
     `,
   ],
 })
 export class UserProfileComponent implements OnInit {
   authService = inject(AuthService);
-  authorService = inject(AuthorService);
+  private authorService = inject(AuthorService);
   api = inject(ApiService);
-  http = inject(HttpClient);
-
+  private http = inject(HttpClient);
   user = this.authService.user;
   authorStatus = signal<string>('');
 

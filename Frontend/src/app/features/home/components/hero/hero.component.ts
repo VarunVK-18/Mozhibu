@@ -626,11 +626,11 @@ export class HeroComponent implements OnInit, OnDestroy {
     // Fetch Authors
     this.authService.getAuthors().subscribe({
       next: (data) => {
-        this.authors = data.slice(0, 3).map((a: any) => {
+        this.authors = data.slice(0, 5).map((a: any) => {
           return {
             id: a._id,
             name: a.username || 'Unknown',
-            avatar: a.avatar || '',
+            avatar: this.api.getImageUrl(a.avatar) || '',
             followers: a.followersCount
               ? `${(a.followersCount / 1000).toFixed(1)}K`
               : '0',

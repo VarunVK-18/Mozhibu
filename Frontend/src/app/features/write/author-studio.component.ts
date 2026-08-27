@@ -545,27 +545,48 @@ interface AuthorStory {
       }
 
       @media (max-width: 768px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
         .hero-header {
           flex-direction: column;
           align-items: flex-start;
+          gap: 16px;
+        }
+        .hero-header button {
+          width: 100%;
+          justify-content: center;
         }
         .section-header {
           flex-direction: column;
           align-items: flex-start;
           gap: 16px;
         }
-        .story-card {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .story-cover {
+        .filter-tabs {
+          overflow-x: auto;
+          white-space: nowrap;
           width: 100%;
-          height: 200px;
+          padding-bottom: 8px;
+        }
+        .story-card {
+          align-items: center;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+        .story-details {
+          width: calc(100% - 96px);
+          flex: none;
+        }
+        .story-stats {
+          flex-wrap: wrap;
         }
         .story-actions {
           width: 100%;
           justify-content: flex-end;
-          margin-top: 16px;
         }
       }
     `,

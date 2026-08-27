@@ -42,6 +42,11 @@ export interface UserProfile {
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+        width: 100%;
+      }
       .user-card {
         background: var(--card);
         border: 1px solid var(--border-soft);
@@ -51,7 +56,8 @@ export interface UserProfile {
         flex-direction: column;
         align-items: center;
         text-align: center;
-        width: 150px;
+        width: 100%;
+        height: 100%;
         flex-shrink: 0;
         box-sizing: border-box;
         cursor: pointer;
@@ -111,6 +117,7 @@ export interface UserProfile {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin-top: auto;
       }
       .follow-btn.following {
         background: var(--forest);
@@ -125,7 +132,6 @@ export interface UserProfile {
 
       @media (max-width: 768px) {
         .user-card {
-          width: 124px;
           padding: 12px;
         }
         .user-avatar {

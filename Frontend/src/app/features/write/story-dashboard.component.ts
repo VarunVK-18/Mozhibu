@@ -347,6 +347,10 @@ import { Subject, filter, takeUntil } from 'rxjs';
       }
 
       @media (max-width: 768px) {
+        .wrap {
+          padding: 0 16px;
+        }
+
         .book-summary {
           flex-direction: column;
           align-items: center;
@@ -380,7 +384,9 @@ import { Subject, filter, takeUntil } from 'rxjs';
 
         .chapter-status {
           width: 100%;
-          justify-content: space-between;
+          justify-content: flex-start;
+          flex-wrap: wrap;
+          gap: 12px;
         }
       }
     `,

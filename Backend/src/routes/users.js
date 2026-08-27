@@ -202,7 +202,9 @@ router.get("/author/:id", async (req, res) => {
     const books = await Book.find({
       author: req.params.id,
       status: "published",
-    }).sort({ createdAt: -1 });
+    })
+      .populate("author", "username avatar")
+      .sort({ createdAt: -1 });
 
     const targetLang = req.headers["x-app-language"] || "en";
     const translatedBooks = await translateBooks(books, targetLang);

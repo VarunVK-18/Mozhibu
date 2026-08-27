@@ -243,6 +243,10 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
         gap: 24px;
         width: max-content;
       }
+      .users-track app-user-card {
+        width: 150px;
+        flex-shrink: 0;
+      }
       @media (max-width: 768px) {
         .page-wrapper {
           padding: 0 16px 48px 16px;

@@ -590,18 +590,11 @@
           >{{ "nav.write" | translate }}</a
         >
 
-        <div class="mobile-divider"></div>
         <a
-          routerLink="/community"
+          routerLink="/library"
           routerLinkActive="active"
           (click)="mobileMenuOpen.set(false)"
-          >{{ "nav.community" | translate }}</a
-        >
-        <a
-          routerLink="/competitions"
-          routerLinkActive="active"
-          (click)="mobileMenuOpen.set(false)"
-          >{{ "nav.competitions" | translate }}</a
+          >Library</a
         >
       } @else {
         <a href="#" (click)="onWriteClick($event); mobileMenuOpen.set(false)">{{

@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
+import { ApiService } from '../../../../core/services/api.service';
 
 @Component({
   selector: 'app-story-hero',
@@ -53,6 +54,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
             [src]="author.avatar | safeUrl"
             [alt]="author.name"
             class="author-avatar"
+            (error)="handleImageError($event)"
           />
           <span class="author-name">By {{ author.name }}</span>
         </div>
@@ -188,4 +190,14 @@ export class StoryHeroComponent {
   @Input() accessType?: string;
 
   @Output() authorClicked = new EventEmitter<string>();
+
+  api = inject(ApiService);
+
+  handleImageError(event: any) {
+    if (this.author && this.author.name) {
+      event.target.src = this.api.getFallbackAvatar(this.author.name);
+    } else {
+      event.target.src = this.api.getFallbackAvatar('Unknown');
+    }
+  }
 }
