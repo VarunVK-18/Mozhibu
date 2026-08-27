@@ -294,7 +294,8 @@ import { environment } from '../../../environments/environment';
     `
       .search-layout {
         display: flex;
-        min-height: calc(100vh - 73px);
+        height: calc(100vh - 73px);
+        overflow: hidden;
         background: var(--paper);
       }
 
@@ -308,6 +309,7 @@ import { environment } from '../../../environments/environment';
         display: flex;
         flex-direction: column;
         gap: 32px;
+        overflow-y: auto;
       }
 
       .sidebar-title {
@@ -379,7 +381,7 @@ import { environment } from '../../../environments/environment';
         flex: 1;
         display: flex;
         flex-direction: column;
-        overflow-y: auto;
+        overflow: hidden;
       }
 
       .search-header {
@@ -503,6 +505,7 @@ import { environment } from '../../../environments/environment';
       .search-results {
         padding: 48px;
         flex: 1;
+        overflow-y: auto;
       }
 
       .loading-state,

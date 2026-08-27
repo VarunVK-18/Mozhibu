@@ -149,16 +149,16 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
             </div>
           </section>
 
-          <!-- Followers Users -->
+          <!-- Authors section -->
           <section class="user-section">
             <div class="section-header">
-              <h2 class="section-title">Followers</h2>
+              <h2 class="section-title">Authors</h2>
               <a routerLink="/community" class="view-all">View All</a>
             </div>
             <div class="scroll-container">
               <div class="users-track">
                 <app-user-card
-                  *ngFor="let user of followerUsers"
+                  *ngFor="let user of authorUsers"
                   [user]="user"
                 ></app-user-card>
               </div>
@@ -310,9 +310,15 @@ export class HomeComponent implements OnInit {
     });
 
     if (this.authService.user()) {
-      this.authService.getFollowing().subscribe({
-        next: (authors) => {
-          this.followingUsers = authors.map((a: any) => ({
+      const currentUser = this.authService.user()!;
+      forkJoin({
+        following: this.authService.getFollowing(),
+        authors: this.authService.getAuthors()
+      }).subscribe({
+        next: (res: any) => {
+          const followingIds = new Set(res.following.map((f: any) => f._id));
+          
+          this.followingUsers = res.following.map((a: any) => ({
             id: a._id,
             name: a.username,
             avatar: a.avatar
@@ -321,21 +327,18 @@ export class HomeComponent implements OnInit {
             followers: a.followersCount || 0,
             isFollowing: true,
           }));
-        },
-      });
 
-      // Also get all authors for the "Followers" track just to showcase other authors on the platform for now
-      // Alternatively this would be an endpoint to get users following the current user
-      this.authService.getAuthors().subscribe({
-        next: (authors) => {
-          this.followerUsers = authors.map((a: any) => ({
-            id: a._id,
-            name: a.username,
-            avatar: a.avatar
-              ? this.apiService.getImageUrl(a.avatar)
-              : this.apiService.getFallbackAvatar(a.username),
-            followers: a.followersCount || 0,
-          }));
+          this.authorUsers = res.authors
+            .filter((a: any) => a._id !== currentUser.id && !followingIds.has(a._id))
+            .map((a: any) => ({
+              id: a._id,
+              name: a.username,
+              avatar: a.avatar
+                ? this.apiService.getImageUrl(a.avatar)
+                : this.apiService.getFallbackAvatar(a.username),
+              followers: a.followersCount || 0,
+              isFollowing: false,
+            }));
         },
       });
     }
@@ -407,6 +410,6 @@ export class HomeComponent implements OnInit {
   }
 
   followingUsers: UserProfile[] = [];
-  followerUsers: UserProfile[] = [];
+  authorUsers: UserProfile[] = [];
   announcements: Announcement[] = [];
 }

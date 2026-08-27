@@ -4,7 +4,7 @@
       <h2>{{ "continueReading.title" | translate }}</h2>
       <p>{{ "continueReading.subtitle" | translate }}</p>
     </div>
-    <button class="view-all" routerLink="/library">
+    <button class="view-all" routerLink="/library" [queryParams]="{ tab: 'history' }">
       {{ "continueReading.goToLibrary" | translate }}
     </button>
   </div>

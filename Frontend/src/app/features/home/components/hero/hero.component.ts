@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -448,14 +448,13 @@ import { forkJoin } from 'rxjs';
         }
 
         .featured-card {
-          padding: 0;
+          padding: 32px 20px 48px 20px;
           min-height: auto;
-          background: transparent;
-          border-radius: 0;
-          overflow: visible;
+          border-radius: var(--radius-l);
+          overflow: hidden;
         }
         .featured-bg-glow {
-          display: none;
+          display: block;
         }
 
         /* Completely reset slides for standard mobile flow */
@@ -473,6 +472,7 @@ import { forkJoin } from 'rxjs';
           visibility: hidden;
           transition: opacity 0.5s ease-in-out;
           pointer-events: none;
+          align-items: center;
         }
         .carousel-slide.active {
           position: relative;
@@ -481,24 +481,20 @@ import { forkJoin } from 'rxjs';
           pointer-events: auto;
         }
 
-        /* Clean landscape banner */
         .mobile-hero-bg {
-          display: block;
-          width: 100%;
-          height: 220px;
-          background-size: cover;
-          background-position: center;
-          border-radius: var(--radius-l);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-          margin-bottom: 24px;
-        }
-        .mobile-hero-bg::after {
-          display: none; /* Remove any gradient overlays */
+          display: none !important;
         }
 
-        /* Desktop cover hidden */
         .featured-cover {
-          display: none;
+          display: block;
+          width: 140px;
+          height: 210px;
+          margin: 0 auto 24px auto;
+          transform: none;
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+        .featured-cover:hover {
+          transform: scale(1.02);
         }
 
         /* Text content below the banner */
@@ -507,73 +503,68 @@ import { forkJoin } from 'rxjs';
           background: transparent;
           display: flex;
           flex-direction: column;
-          align-items: flex-start;
-          text-align: left;
+          align-items: center;
+          text-align: center;
         }
 
         .featured-eyebrow {
-          color: var(--ink-soft);
-          margin-bottom: 8px;
+          color: #94a3b8;
+          margin-bottom: 12px;
         }
 
         .featured-title {
-          color: var(--ink);
-          font-size: 20px;
-          margin-bottom: 10px;
+          color: #fff;
+          font-size: 24px;
+          margin-bottom: 12px;
           text-shadow: none;
           line-height: 1.3;
         }
 
         .featured-desc {
           display: -webkit-box;
-          color: var(--ink-soft);
+          color: #94a3b8;
           font-size: 14px;
           margin-bottom: 20px;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          max-width: 100%;
         }
 
         .featured-meta {
-          color: var(--ink-soft);
-          justify-content: flex-start;
+          color: #cbd5e1;
+          justify-content: center;
           margin-bottom: 24px;
           text-shadow: none;
         }
 
         .author-text {
-          color: var(--ink-soft);
+          color: #cbd5e1;
         }
 
         .genre-pill {
-          background: var(--paper-soft);
-          color: var(--ink);
-          border: 1px solid var(--border-soft);
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+          border: none;
         }
 
         .read-btn {
           width: 100%;
           justify-content: center;
-          background: var(--ink);
-          color: var(--paper);
-          border: 1px solid var(--border);
+          background: #fff;
+          color: #0f172a;
+          border: none;
         }
 
-        /* Dots placed right below the banner image */
+        /* Dots placed at the bottom of the card */
         .carousel-indicators {
           position: absolute;
-          top: 232px; /* 220px height + 12px gap */
+          bottom: 20px;
           left: 0;
           right: 0;
-          bottom: auto;
+          top: auto;
           justify-content: center;
           padding: 0;
-        }
-        .indicator {
-          background: var(--border-strong);
-        }
-        .indicator.active {
-          background: var(--forest);
         }
       }
       .section-loader-container {
@@ -609,6 +600,23 @@ export class HeroComponent implements OnInit, OnDestroy {
 
   authors: any[] = [];
   isLoadingAuthors = true;
+
+  constructor() {
+    effect(() => {
+      if (this.authService.user()) {
+        this.authService.getFollowing().subscribe({
+          next: (followingList) => {
+            const followingIds = new Set(followingList.map((f: any) => f._id));
+            this.authors = this.authors.map(a => ({
+              ...a,
+              following: followingIds.has(a.id)
+            }));
+          },
+          error: (err) => console.error('Failed to load following list', err)
+        });
+      }
+    });
+  }
 
   featuredBooks: any[] = [];
   activeIndex = 0;
@@ -718,7 +726,7 @@ export class HeroComponent implements OnInit, OnDestroy {
 
   onStartReading(bookId?: string) {
     if (this.authService.user()) {
-      this.router.navigate(['/library']);
+      this.router.navigate(['/library'], { queryParams: { tab: 'history' } });
     } else {
       this.router.navigate(['/login']);
     }

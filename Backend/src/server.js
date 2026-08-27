@@ -11,6 +11,7 @@ const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
 const cron = require("node-cron");
+const cookieParser = require("cookie-parser");
 const { computeEngagementScores } = require("./services/engagementScorer");
 const { computeMonthlyRevenue } = require("./services/revenueEngine");
 
@@ -50,9 +51,28 @@ app.set("userSockets", userSockets);
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Security headers
 app.use(compression()); // Compress responses
-app.use(cors()); // CORS must be before rate limiters so they include correct headers
+app.use(cookieParser());
+app.use(cors({
+  origin: function (origin, callback) {
+    const allowedOrigins = [process.env.FRONTEND_URL];
+    
+    // Only allow localhost if we are NOT in production
+    if (process.env.NODE_ENV !== "production") {
+      allowedOrigins.push("http://localhost:4200");
+    }
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+})); // CORS must be before rate limiters so they include correct headers
 
 // Global Rate Limiting
 const globalLimiter = rateLimit({
@@ -180,3 +200,5 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 module.exports = server;
+
+// triggered restart

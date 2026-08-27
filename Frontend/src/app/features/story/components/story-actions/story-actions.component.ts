@@ -34,7 +34,7 @@ import { CommonModule } from '@angular/common';
       </button>
 
       <button
-        class="action-btn"
+        class="action-btn bookmark-btn"
         [class.active]="isBookmarked"
         (click)="bookmarkClicked.emit()"
       >
@@ -51,7 +51,7 @@ import { CommonModule } from '@angular/common';
       </button>
 
       <button
-        class="action-btn"
+        class="action-btn like-btn"
         [class.active]="isLiked"
         (click)="likeClicked.emit()"
       >
@@ -227,10 +227,15 @@ import { CommonModule } from '@angular/common';
       .action-btn:hover {
         background: var(--paper-soft);
       }
-      .action-btn.active {
+      .action-btn.active.like-btn {
+        color: var(--rose);
+        border-color: var(--border-soft);
+        background: var(--paper);
+      }
+      .action-btn.active.bookmark-btn {
         color: var(--forest);
-        border-color: var(--forest-tint);
-        background: var(--forest-tint);
+        border-color: var(--border-soft);
+        background: var(--paper);
       }
       .action-btn.icon-only {
         padding: 10px;

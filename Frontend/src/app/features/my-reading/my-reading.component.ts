@@ -504,7 +504,7 @@ export class MyReadingComponent implements OnInit {
               title: p.book?.title || 'Unknown Title',
               author:
                 typeof p.book?.author === 'object'
-                  ? p.book?.author?.username
+                  ? (p.book?.author?.username || p.book?.author?.name)
                   : p.book?.author || 'Unknown Author',
               cover: p.book?.cover || this.api.getFallbackCover(),
               currentChapter: p.currentChapter?.order || p.currentChapter || 1,

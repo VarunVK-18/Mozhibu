@@ -1,7 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 
 export interface Story {
@@ -24,7 +25,7 @@ export interface Story {
   template: `
     <div
       class="story-card group"
-      [routerLink]="['/story', story.id || story._id]"
+      (click)="onCardClick($event)"
     >
       <div class="cover-wrapper">
         <img
@@ -308,8 +309,20 @@ export interface Story {
 export class StoryCardComponent {
   @Input() story!: Story;
   api = inject(ApiService);
+  router = inject(Router);
+  authService = inject(AuthService);
 
   onImgError(event: any) {
     event.target.src = this.api.getFallbackCover();
+  }
+
+  onCardClick(event: Event) {
+    if (!this.authService.user()) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.router.navigate(['/story', this.story.id || this.story._id]);
   }
 }

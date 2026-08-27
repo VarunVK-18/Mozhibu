@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
+const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -18,8 +19,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey123";
 
 // @route POST /api/auth/register
 router.post("/register", async (req, res) => {
-  console.log("--- NEW REGISTRATION REQUEST ---");
-  console.log("Request Body:", req.body);
   try {
     const {
       username,
@@ -72,7 +71,12 @@ router.post("/register", async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.json({
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 5 * 24 * 60 * 60 * 1000,
+      }).json({
         token,
         user: {
           id: user.id,
@@ -97,10 +101,6 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("Login attempt:", {
-      email,
-      passwordLength: password ? password.length : 0,
-    });
 
     // Check if user exists
     let user = await User.findOne({ email });
@@ -140,7 +140,12 @@ router.post("/login", async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.json({
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 5 * 24 * 60 * 60 * 1000,
+      }).json({
         token,
         user: {
           id: user.id,
@@ -157,6 +162,18 @@ router.post("/login", async (req, res) => {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout user and clear cookie
+// @access  Public
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
+  res.json({ msg: "Logged out successfully" });
 });
 
 // @route   POST /api/auth/google
@@ -213,7 +230,12 @@ router.post("/google", async (req, res) => {
             user.preferredLanguage &&
             user.mobile !== "Not Provided"
           );
-          res.json({
+          res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 5 * 24 * 60 * 60 * 1000,
+          }).json({
             token,
             isProfileComplete,
             user: {
@@ -260,7 +282,12 @@ router.post("/google", async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     return jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.json({
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        maxAge: 5 * 24 * 60 * 60 * 1000,
+      }).json({
         token,
         isProfileComplete: false,
         user: {
@@ -416,6 +443,49 @@ router.post("/reset-password", async (req, res) => {
     await user.save();
 
     res.json({ msg: "Password successfully updated! You can now log in." });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route   PUT /api/auth/change-password
+// @desc    Change user password
+// @access  Private
+router.put("/change-password", protect, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    
+    // Find the user with password field
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (user.authProvider !== "normal") {
+      return res.status(400).json({ msg: "Cannot change password for social login accounts." });
+    }
+
+    // Check old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Incorrect old password." });
+    }
+
+    // Validate new password
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/;
+    if (!newPassword || !passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        msg: "Password must be 8-16 characters long, contain at least one uppercase letter and one number, and no emojis.",
+      });
+    }
+
+    // Hash and save new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ msg: "Password successfully updated!" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");

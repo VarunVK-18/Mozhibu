@@ -122,11 +122,15 @@ router.post("/me/bookmarks/:bookId", protect, async (req, res) => {
         (id) => id.toString() !== req.params.bookId,
       );
       await user.save();
+      if (book.bookmarksCount > 0) book.bookmarksCount -= 1;
+      await book.save();
       res.json({ msg: "Bookmark removed", isBookmarked: false });
     } else {
       // Add bookmark
       user.savedBooks.push(req.params.bookId);
       await user.save();
+      book.bookmarksCount = (book.bookmarksCount || 0) + 1;
+      await book.save();
       res.json({ msg: "Bookmarked successfully", isBookmarked: true });
     }
   } catch (err) {
@@ -275,66 +279,21 @@ router.post("/follow/:authorId", protect, async (req, res) => {
   }
 });
 
-// @route GET /api/users/me/progress
-// @desc Get current user's reading progress
-router.get("/me/progress", protect, async (req, res) => {
-  try {
-    const progress = await ReadingProgress.find({ user: req.user.id })
-      .populate("book", "title cover chapters genre")
-      .sort({ lastReadAt: -1 });
-    res.json(progress);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: "Server Error" });
-  }
-});
 
-// @route POST /api/users/me/progress
-// @desc Create or update reading progress
-router.post("/me/progress", protect, async (req, res) => {
-  try {
-    const { bookId, chapterId, progressPercentage } = req.body;
-
-    if (!bookId) {
-      return res.status(400).json({ msg: "Book ID is required" });
-    }
-
-    let progress = await ReadingProgress.findOne({
-      user: req.user.id,
-      book: bookId,
-    });
-
-    if (progress) {
-      // Update existing
-      if (chapterId) progress.currentChapter = chapterId;
-      if (progressPercentage !== undefined)
-        progress.progressPercentage = progressPercentage;
-      progress.lastReadAt = Date.now();
-      await progress.save();
-    } else {
-      // Create new
-      progress = new ReadingProgress({
-        user: req.user.id,
-        book: bookId,
-        currentChapter: chapterId,
-        progressPercentage: progressPercentage || 0,
-      });
-      await progress.save();
-    }
-
-    res.json(progress);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ msg: "Server Error" });
-  }
-});
 
 // @route GET /api/users/me/progress
 // @desc Get reading progress for user
 router.get("/me/progress", protect, async (req, res) => {
   try {
     const progress = await ReadingProgress.find({ user: req.user.id })
-      .populate("book", "title cover author")
+      .populate({
+        path: "book",
+        select: "title cover author chapters genre",
+        populate: {
+          path: "author",
+          select: "username avatar"
+        }
+      })
       .populate("currentChapter", "title order")
       .sort({ lastReadAt: -1 });
 

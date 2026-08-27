@@ -64,6 +64,16 @@ import { Subject, filter, takeUntil } from 'rxjs';
                   >
                     + Add New Chapter
                   </button>
+                  @if (book.status === 'draft' || book.status === 'published') {
+                    <button
+                      class="btn-outline"
+                      (click)="togglePublishStatus()"
+                      [style.borderColor]="book.status === 'draft' ? 'var(--forest)' : ''"
+                      [style.color]="book.status === 'draft' ? 'var(--forest)' : ''"
+                    >
+                      {{ book.status === 'published' ? 'Unpublish Story' : 'Publish Story' }}
+                    </button>
+                  }
                   <button
                     class="btn-outline"
                     [routerLink]="['/write/book', book._id, 'settings']"
@@ -99,10 +109,22 @@ import { Subject, filter, takeUntil } from 'rxjs';
                 @for (chapter of chapters; track chapter._id) {
                   <div class="chapter-item">
                     <div class="chapter-info">
-                      <span class="chapter-number"
-                        >Chapter {{ chapter.order }}</span
-                      >
-                      <h4 class="chapter-title">{{ chapter.title }}</h4>
+                      <div class="chapter-thumbnail">
+                        <img
+                          [src]="
+                            chapter.cover
+                              ? (api.getImageUrl(chapter.cover) | safeUrl)
+                              : 'assets/default-cover.png'
+                          "
+                          [alt]="chapter.title"
+                        />
+                      </div>
+                      <div class="chapter-text">
+                        <span class="chapter-number"
+                          >Chapter {{ chapter.order }}</span
+                        >
+                        <h4 class="chapter-title">{{ chapter.title }}</h4>
+                      </div>
                     </div>
                     <div class="chapter-status">
                       <span
@@ -112,6 +134,12 @@ import { Subject, filter, takeUntil } from 'rxjs';
                           chapter.status === 'published' ? 'Published' : 'Draft'
                         }}</span
                       >
+                      <button
+                        class="btn-outline btn-sm"
+                        (click)="toggleChapterPublish(chapter)"
+                      >
+                        {{ chapter.status === 'published' ? 'Unpublish' : 'Publish' }}
+                      </button>
                       <button
                         class="btn-outline btn-sm"
                         [routerLink]="[
@@ -259,6 +287,18 @@ import { Subject, filter, takeUntil } from 'rxjs';
         display: flex;
         align-items: center;
         gap: 16px;
+      }
+      .chapter-thumbnail img {
+        width: 40px;
+        height: 56px;
+        border-radius: 4px;
+        object-fit: cover;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .chapter-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
       }
 
       .chapter-number {
@@ -442,8 +482,55 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to update status', err);
-        alert('Failed to update book status');
+        this.showAlert('Failed to update book status');
       },
+    });
+  }
+
+  togglePublishStatus() {
+    if (!this.book) return;
+
+    const newStatus = this.book.status === 'published' ? 'draft' : 'published';
+
+    if (newStatus === 'published' && !this.book.cover) {
+      this.showAlert('Please upload a cover image before publishing the story.');
+      return;
+    }
+    this.bookService.updateBook(this.book._id, { status: newStatus }).subscribe({
+      next: (res) => {
+        this.book.status = res.status;
+      },
+      error: (err) => {
+        console.error('Failed to update publish status', err);
+        this.showAlert('Failed to update story status');
+      },
+    });
+  }
+
+  toggleChapterPublish(chapter: any) {
+    if (!this.book) return;
+    
+    const newStatus = chapter.status === 'published' ? 'draft' : 'published';
+    
+    if (newStatus === 'published') {
+      if (this.book.status !== 'published') {
+        this.showAlert('You must publish the story before you can publish individual chapters.');
+        return;
+      }
+      if (!chapter.cover) {
+        this.showAlert('Please upload a cover image for this chapter before publishing.');
+        return;
+      }
+    }
+    
+    this.bookService.updateChapter(this.book._id, chapter._id, { status: newStatus }).subscribe({
+      next: (res) => {
+        chapter.status = res.status;
+      },
+      error: (err) => {
+        console.error('Failed to update chapter publish status', err);
+        this.showAlert('Failed to update chapter status');
+      }
     });
   }
 
@@ -463,10 +550,14 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
             },
             error: (err) => {
               console.error('Failed to delete chapter', err);
-              alert('Failed to delete chapter. Please try again.');
+              this.showAlert('Failed to delete chapter. Please try again.');
             },
           });
         }
       });
+  }
+
+  private showAlert(message: string) {
+    this.confirmService.confirm('Notice', message, false, 'OK', '').subscribe();
   }
 }

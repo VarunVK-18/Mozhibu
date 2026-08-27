@@ -240,6 +240,15 @@
   font-weight: 600;
   font-size: 14px;
   color: var(--ink);
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.avatar-ring {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-profile-wrapper {
@@ -668,8 +677,15 @@
 }
 
 @media (max-width: 480px) {
-  .header-actions {
+  .header-row {
+    padding: 10px 12px;
     gap: 4px;
+  }
+  .header-left {
+    gap: 12px;
+  }
+  .header-actions {
+    gap: 2px;
   }
   .lang-dropdown-wrapper {
     display: none;
@@ -678,26 +694,34 @@
     display: none;
   }
   .logo {
-    gap: 6px;
+    gap: 4px;
   }
   .logo .logo-img {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
   }
   .brand-name {
-    font-size: 16px;
+    font-size: 15px;
     letter-spacing: 0;
   }
   .brand-tagline {
-    font-size: 7px;
-    gap: 4px;
-  }
-  .tag-line {
-    width: 10px;
+    display: none;
   }
   .icon-btn {
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
+  }
+  .icon-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .user-profile {
+    padding: 0;
   }
   .user-info {
     display: none;
@@ -709,9 +733,9 @@
   .search-dropdown,
   .notifications-dropdown {
     position: fixed;
-    top: 64px;
-    left: 16px;
-    right: 16px;
+    top: 60px;
+    left: 12px;
+    right: 12px;
     width: auto;
     max-width: none;
   }

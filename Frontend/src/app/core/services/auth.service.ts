@@ -13,6 +13,7 @@ export interface User {
   avatar?: string;
   followersCount?: number;
   bio?: string;
+  savedBooks?: string[];
 }
 
 @Injectable({
@@ -25,8 +26,7 @@ export class AuthService {
   constructor() {
     // Check if user exists in local storage on startup
     const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    if (storedUser && token) {
+    if (storedUser) {
       this.user.set(JSON.parse(storedUser));
       // Fetch latest user data from backend to prevent stale local storage (e.g. missing avatar)
       this.api.get<User>('/users/me').subscribe({
@@ -39,8 +39,8 @@ export class AuthService {
           localStorage.setItem('user', JSON.stringify(this.user()));
         },
         error: () => {
-          // If token is invalid or expired
-          // this.logout();
+          // If cookie is invalid or expired
+          this.logout();
         },
       });
     }
@@ -81,9 +81,20 @@ export class AuthService {
   }
 
   logout() {
-    this.user.set(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    this.api.post('/auth/logout', {}).subscribe({
+      next: () => {
+        this.user.set(null);
+        localStorage.removeItem('user');
+      },
+      error: () => {
+        this.user.set(null);
+        localStorage.removeItem('user');
+      }
+    });
+  }
+
+  changePassword(data: any): Observable<any> {
+    return this.api.put('/auth/change-password', data);
   }
 
   getLibrary(): Observable<any[]> {
@@ -107,7 +118,24 @@ export class AuthService {
   }
 
   toggleBookmark(bookId: string): Observable<any> {
-    return this.api.post(`/users/me/bookmarks/${bookId}`, {});
+    return this.api.post(`/users/me/bookmarks/${bookId}`, {}).pipe(
+      tap((res: any) => {
+        const currentUser = this.user();
+        if (currentUser) {
+          let updatedSavedBooks = currentUser.savedBooks || [];
+          if (res.isBookmarked) {
+            if (!updatedSavedBooks.includes(bookId)) {
+               updatedSavedBooks.push(bookId);
+            }
+          } else {
+             updatedSavedBooks = updatedSavedBooks.filter((id: string) => id !== bookId);
+          }
+          const updatedUser = { ...currentUser, savedBooks: updatedSavedBooks };
+          this.user.set(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+      })
+    );
   }
 
   getReadingProgress(): Observable<any[]> {
@@ -177,9 +205,8 @@ export class AuthService {
   }
 
   private handleAuthResponse(res: any) {
-    if (res && res.token && res.user) {
+    if (res && res.user) {
       this.user.set(res.user);
-      localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
     }
   }

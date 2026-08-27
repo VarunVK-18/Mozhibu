@@ -26,6 +26,7 @@ const BookSchema = new mongoose.Schema(
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     likesCount: { type: Number, default: 0 },
+    bookmarksCount: { type: Number, default: 0 },
     reportCount: { type: Number, default: 0 },
     titleTranslations: { type: Map, of: String, default: {} },
     tags: { type: [String], default: [] },

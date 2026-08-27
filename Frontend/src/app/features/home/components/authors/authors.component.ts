@@ -46,6 +46,19 @@ export class AuthorsComponent implements OnInit {
         });
         this.authors.set(mapped);
         this.isLoading.set(false);
+
+        if (this.authService.user()) {
+          this.authService.getFollowing().subscribe({
+            next: (followingList) => {
+              const followingIds = new Set(followingList.map((f: any) => f._id));
+              this.authors.update(list => list.map(a => ({
+                ...a,
+                following: followingIds.has(a.id)
+              })));
+            },
+            error: (err) => console.error('Failed to load following list', err)
+          });
+        }
       },
       error: (err) => {
         console.error('Failed to load authors', err);

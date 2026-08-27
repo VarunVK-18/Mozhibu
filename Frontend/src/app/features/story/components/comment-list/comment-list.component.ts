@@ -101,7 +101,7 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
           }
           <textarea
             [(ngModel)]="newCommentText"
-            [placeholder]="'Write a review (with rating) or a comment...'"
+            [placeholder]="'Write a review (with rating)...'"
             rows="1"
             (focus)="isFocused = true"
             (blur)="onBlur()"
@@ -126,10 +126,10 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                 </button>
                 <button
                   class="btn-submit"
-                  [disabled]="!newCommentText.trim()"
+                  [disabled]="!newCommentText.trim() || newRating === 0"
                   (click)="submitComment()"
                 >
-                  {{ newRating > 0 ? 'Post Review' : 'Post Comment' }}
+                  Post Review
                 </button>
               </div>
             </div>
@@ -376,7 +376,7 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                 class="replies-list"
                 *ngIf="comment.replies && comment.replies.length > 0"
               >
-                @for (reply of comment.replies; track reply.id) {
+                @for (reply of (expandedReplies.has(comment.id) ? comment.replies : comment.replies.slice(0, 2)); track reply.id) {
                   <div class="comment-card reply-card">
                     <img
                       [src]="reply.authorAvatar"
@@ -584,6 +584,12 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                     </div>
                   </div>
                 }
+                
+                @if (comment.replies.length > 2) {
+                  <button class="btn-text" style="margin-top: 8px; color: var(--forest); margin-left: 0; padding-left: 0;" (click)="toggleReplies(comment.id)">
+                    {{ expandedReplies.has(comment.id) ? 'Show less' : 'View ' + (comment.replies.length - 2) + ' more replies' }}
+                  </button>
+                }
               </div>
             </div>
           </div>
@@ -601,36 +607,17 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
         </div>
       </div>
 
-      <!-- Comments and Reviews Grid -->
-      <div class="comments-reviews-grid">
-        <!-- Left: Comments -->
-        <div class="comments-column">
-          <h3 class="column-title">Comments ({{ unratedComments.length }})</h3>
-          <div class="comments-list">
-            @for (comment of sortedUnratedComments; track comment.id) {
-              <ng-container
-                *ngTemplateOutlet="
-                  commentThread;
-                  context: { $implicit: comment }
-                "
-              ></ng-container>
-            }
-          </div>
-        </div>
-
-        <!-- Right: Reviews -->
-        <div class="reviews-column">
-          <h3 class="column-title">Reviews ({{ ratedComments.length }})</h3>
-          <div class="comments-list">
-            @for (comment of sortedRatedComments; track comment.id) {
-              <ng-container
-                *ngTemplateOutlet="
-                  commentThread;
-                  context: { $implicit: comment }
-                "
-              ></ng-container>
-            }
-          </div>
+      <!-- Reviews List -->
+      <div class="reviews-list-container">
+        <div class="comments-list" style="max-width: 800px;">
+          @for (comment of sortedComments; track comment.id) {
+            <ng-container
+              *ngTemplateOutlet="
+                commentThread;
+                context: { $implicit: comment }
+              "
+            ></ng-container>
+          }
         </div>
       </div>
 
@@ -1148,6 +1135,14 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
         background-color: var(--paper-soft);
       }
 
+      .star-icon {
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .star-icon:hover {
+        transform: scale(1.1);
+      }
+
       @keyframes popBounce {
         0% {
           transform: scale(1);
@@ -1283,12 +1278,8 @@ export class CommentListComponent {
 
   sortOrder: 'newest' | 'popular' = 'popular';
 
-  get sortedUnratedComments() {
-    return this.sortList(this.unratedComments);
-  }
-
-  get sortedRatedComments() {
-    return this.sortList(this.ratedComments);
+  get sortedComments() {
+    return this.sortList(this.comments);
   }
 
   private sortList(source: any[]) {
@@ -1328,8 +1319,18 @@ export class CommentListComponent {
   @Output() postReply = new EventEmitter<{ parentId: string; text: string }>();
   @Output() loadMore = new EventEmitter<void>();
 
+  expandedReplies = new Set<string>();
+
+  toggleReplies(commentId: string) {
+    if (this.expandedReplies.has(commentId)) {
+      this.expandedReplies.delete(commentId);
+    } else {
+      this.expandedReplies.add(commentId);
+    }
+  }
+
   newCommentText = '';
-  newRating = 5;
+  newRating = 0;
   isFocused = false;
   activeReplyId: string | null = null;
   replyText = '';
@@ -1423,20 +1424,19 @@ export class CommentListComponent {
 
   cancelComment() {
     this.newCommentText = '';
-    this.newRating = 5;
+    this.newRating = 0;
     this.isFocused = false;
   }
 
   submitComment() {
-    if (this.newCommentText.trim()) {
-      // If user selected a rating > 0, we consider it a review, otherwise a comment.
+    if (this.newCommentText.trim() && this.newRating > 0) {
       const ratingToSubmit = this.newRating;
       this.postComment.emit({
         text: this.newCommentText.trim(),
         rating: ratingToSubmit,
       });
       this.newCommentText = '';
-      this.newRating = 5;
+      this.newRating = 0;
       this.isFocused = false;
     }
   }

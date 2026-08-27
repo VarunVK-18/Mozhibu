@@ -464,15 +464,15 @@ export class AuthorProfileComponent implements OnInit {
     const user = this.authService.user();
     if (!user || !this.profile) return;
 
-    // Check if the current user is following this author.
-    // The current user model might have `following` array if fetched recently.
-    // Since we don't have the current user's `following` array populated directly in the signal
-    // unless they just logged in, we might need to rely on the backend response.
-    // Wait, the backend follow endpoint returns `following: boolean`.
-    // Let's just assume we will fetch it correctly or rely on the toggle response for now.
-    // A proper way would be to fetch `/users/me/following` but for now we can just assume false.
-    // TODO: Improve this if needed.
-    this.isFollowing = false;
+    this.authService.getFollowing().subscribe({
+      next: (following) => {
+        this.isFollowing = following.some((f: any) => f._id === this.profile!.author._id);
+      },
+      error: (err) => {
+        console.error('Failed to check following status', err);
+        this.isFollowing = false;
+      }
+    });
   }
 
   toggleFollow() {

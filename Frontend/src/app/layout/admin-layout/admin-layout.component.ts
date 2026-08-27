@@ -2,6 +2,7 @@ import { Component, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -665,8 +666,16 @@ export class AdminLayoutComponent {
     }
   }
 
+  private confirmService = inject(ConfirmService);
+
   logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.confirmService
+      .confirm('Log Out', 'Are you sure you want to log out?')
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
+      });
   }
 }

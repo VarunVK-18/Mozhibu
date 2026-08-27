@@ -6,6 +6,7 @@ import {
   OnInit,
   OnDestroy,
   inject,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -233,26 +234,31 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
   }
 
-  constructor() {}
+  constructor() {
+    effect(() => {
+      const user = this.authService.user();
+      if (user) {
+        this.socketService.connect();
+        this.fetchNotifications();
+        
+        this.subService.getMySubscription().subscribe({
+          next: (sub) => {
+            this.isPremium.set(sub?.active || false);
+          },
+          error: () => {},
+        });
+      }
+    });
+  }
 
   ngOnInit() {
-    if (this.authService.user()) {
-      this.socketService.connect();
-      this.fetchNotifications();
-
-      this.socketService.notificationReceived
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
+    this.socketService.notificationReceived
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.authService.user()) {
           this.fetchNotifications();
-        });
-
-      this.subService.getMySubscription().subscribe({
-        next: (sub) => {
-          this.isPremium.set(sub?.active || false);
-        },
-        error: () => {},
+        }
       });
-    }
   }
 
   ngOnDestroy() {

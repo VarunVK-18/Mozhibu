@@ -107,7 +107,7 @@ import { environment } from '../../../environments/environment';
           }
 
           <div class="form-group">
-            <label>Story Title</label>
+            <label>Story Title <span class="required-asterisk">*</span></label>
             <input
               type="text"
               class="input-field"
@@ -118,7 +118,7 @@ import { environment } from '../../../environments/environment';
           </div>
 
           <div class="form-group">
-            <label>Primary Genre</label>
+            <label>Primary Genre <span class="required-asterisk">*</span></label>
             <select
               class="input-field select-field"
               [(ngModel)]="story.genre"
@@ -403,6 +403,9 @@ import { environment } from '../../../environments/environment';
         color: var(--ink);
         text-transform: uppercase;
       }
+      .required-asterisk {
+        color: #c62828;
+      }
       .input-field {
         width: 100%;
         padding: 10px 14px;
@@ -507,7 +510,6 @@ import { environment } from '../../../environments/environment';
         line-height: 1.8;
         color: var(--ink);
         resize: none;
-        text-transform: capitalize;
       }
       .content-textarea::placeholder {
         color: var(--ink-faint);
@@ -519,7 +521,6 @@ import { environment } from '../../../environments/environment';
         border: 1px solid var(--border);
         border-radius: 6px;
         color: var(--ink);
-        text-transform: capitalize;
       }
       .input-field::placeholder {
         color: var(--ink-soft);
@@ -783,8 +784,13 @@ export class StoryEditorComponent implements OnInit {
       genre: this.story.genre,
       description: this.story.description,
       tags: tagsArray,
-      status: isDraft ? 'draft' : 'published',
     };
+    
+    if (!isAutoSave) {
+      bookData.status = isDraft ? 'draft' : 'published';
+    } else if (!this.bookId) {
+      bookData.status = 'draft';
+    }
     if (this.story.series) {
       bookData.series = this.story.series;
     }
@@ -869,12 +875,17 @@ export class StoryEditorComponent implements OnInit {
   }
 
   private submitChapter(isDraft: boolean, isAutoSave: boolean) {
-    const chapterData = {
+    const chapterData: any = {
       title: this.chapter.title,
       content: this.chapter.content,
       season: 1,
-      status: isDraft ? 'draft' : 'published',
     };
+    
+    if (!isAutoSave) {
+      chapterData.status = isDraft ? 'draft' : 'published';
+    } else if (!this.chapterId) {
+      chapterData.status = 'draft';
+    }
 
     if (this.chapterId) {
       this.bookService

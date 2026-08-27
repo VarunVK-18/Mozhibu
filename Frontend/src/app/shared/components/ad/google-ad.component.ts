@@ -5,6 +5,7 @@ import {
   Inject,
   PLATFORM_ID,
   ChangeDetectionStrategy,
+  ElementRef,
 } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 
@@ -76,18 +77,28 @@ export class GoogleAdComponent implements AfterViewInit {
   @Input() fullWidthResponsive: boolean = true;
   @Input() minHeight: number = 250; // Prevents layout shift while loading
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private el: ElementRef
+  ) {}
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      try {
-        // Safe push to google ads array
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push(
-          {},
-        );
-      } catch (e) {
-        console.error('AdSense push failed:', e);
-      }
+      // Use setTimeout to ensure layout has been painted
+      setTimeout(() => {
+        try {
+          const containerWidth = this.el.nativeElement.offsetWidth;
+          // AdSense throws an error if it tries to render in a 0-width container
+          if (containerWidth > 0) {
+            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+          }
+        } catch (e: any) {
+          // Suppress known AdSense 0-width errors which happen during rapid resizing
+          if (!e.message?.includes('availableWidth=0')) {
+            console.error('AdSense push failed:', e);
+          }
+        }
+      }, 100);
     }
   }
 }

@@ -104,7 +104,11 @@ export class StoryService {
           currentUser && book.likes
             ? book.likes.includes(currentUser.id)
             : false;
-        // To check bookmark accurately, we'd need user library. We'll default to false and let the toggle handle it
+        // Check bookmark accurately using user's savedBooks
+        const isBookmarked =
+          currentUser && currentUser.savedBooks
+            ? currentUser.savedBooks.includes(book._id)
+            : false;
 
         const detail: StoryDetail = {
           id: book._id,
@@ -130,7 +134,7 @@ export class StoryService {
           readingTime: '30 min read',
           views: book.views || 0,
           likes: book.likesCount || 0,
-          bookmarks: book.bookmarks || 0,
+          bookmarks: book.bookmarksCount || 0,
           rating: book.rating || 0,
           reviewCount: book.reviews?.length || 0,
           chapterCount: book.chapters?.length || 0,
@@ -141,7 +145,7 @@ export class StoryService {
           updatedDate: book.updatedAt,
           synopsis: book.description || 'No synopsis available.',
           isLiked,
-          isBookmarked: false,
+          isBookmarked,
           userProgress: {
             hasStarted: resume,
           },
@@ -325,7 +329,7 @@ export class StoryService {
     this.activeStory.update((s) => {
       if (!s) return s;
       const isLiked = !s.isLiked;
-      return { ...s, isLiked, likes: s.likes + (isLiked ? 1 : -1) };
+      return { ...s, isLiked, likes: Math.max(0, s.likes + (isLiked ? 1 : -1)) };
     });
 
     this.bookService.toggleLike(story.id).subscribe({
@@ -334,7 +338,7 @@ export class StoryService {
         this.activeStory.update((s) => {
           if (!s) return s;
           const isLiked = !s.isLiked;
-          return { ...s, isLiked, likes: s.likes + (isLiked ? 1 : -1) };
+          return { ...s, isLiked, likes: Math.max(0, s.likes + (isLiked ? 1 : -1)) };
         });
       },
     });
@@ -351,7 +355,7 @@ export class StoryService {
       return {
         ...s,
         isBookmarked,
-        bookmarks: s.bookmarks + (isBookmarked ? 1 : -1),
+        bookmarks: Math.max(0, s.bookmarks + (isBookmarked ? 1 : -1)),
       };
     });
 
@@ -364,7 +368,7 @@ export class StoryService {
           return {
             ...s,
             isBookmarked,
-            bookmarks: s.bookmarks + (isBookmarked ? 1 : -1),
+            bookmarks: Math.max(0, s.bookmarks + (isBookmarked ? 1 : -1)),
           };
         });
       },

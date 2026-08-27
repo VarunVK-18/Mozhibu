@@ -5,6 +5,7 @@ import {
   StoryCardComponent,
   Story,
 } from '../../shared/components/story-card/story-card.component';
+import { Subject, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import {
   UserCardComponent,
   UserProfile,
@@ -12,6 +13,7 @@ import {
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
+import { AuthorService } from '../../core/services/author.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
@@ -20,9 +22,9 @@ type LibraryTab =
   | 'downloaded'
   | 'history'
   | 'completed'
-  | 'following'
   | 'favorites'
-  | 'collections';
+  | 'collections'
+  | 'competitions';
 
 @Component({
   selector: 'app-library',
@@ -114,13 +116,7 @@ type LibraryTab =
             >
               Completed
             </button>
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'following'"
-              (click)="activeTab.set('following')"
-            >
-              Following
-            </button>
+
             <button
               class="tab-btn"
               [class.active]="activeTab() === 'favorites'"
@@ -135,11 +131,28 @@ type LibraryTab =
             >
               Collections
             </button>
+            <button
+              class="tab-btn"
+              *ngIf="authService.user()?.role === 'writer' || authService.user()?.role === 'superadmin'"
+              [class.active]="activeTab() === 'competitions'"
+              (click)="activeTab.set('competitions')"
+            >
+              Competitions
+            </button>
           </div>
         </div>
 
         <!-- Tab Contents -->
-        <div class="tab-content" [ngSwitch]="activeTab()">
+        @if (isLoading()) {
+          <div class="story-grid" style="margin-top: 24px;">
+            <div class="skeleton-card" *ngFor="let i of [1, 2, 3, 4, 5, 6, 7, 8]">
+              <div class="skeleton skeleton-cover"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text short"></div>
+            </div>
+          </div>
+        } @else {
+          <div class="tab-content" [ngSwitch]="activeTab()">
           <!-- BOOKMARKS -->
           <div *ngSwitchCase="'bookmarks'">
             <ng-container
@@ -206,37 +219,26 @@ type LibraryTab =
             ></ng-container>
           </div>
 
-          <!-- FOLLOWING -->
-          <div *ngSwitchCase="'following'">
-            @if (filteredFollowing.length > 0) {
-              <div class="authors-list">
-                @for (author of filteredFollowing; track author.id) {
-                  <app-user-card [user]="author"></app-user-card>
-                }
-              </div>
+          <!-- COMPETITIONS -->
+          <div *ngSwitchCase="'competitions'">
+            @if (filteredCompetitions.length > 0) {
+              <ng-container
+                *ngTemplateOutlet="
+                  storyGrid;
+                  context: { list: filteredCompetitions }
+                "
+              ></ng-container>
             } @else {
               <div class="empty-state">
-                <div class="empty-icon">
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <path d="M12 20h9"></path>
-                    <path
-                      d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                    ></path>
-                  </svg>
-                </div>
-                <h2>No Authors Found</h2>
-                <p>You aren't following any authors that match this search.</p>
-                <button class="btn-primary" routerLink="/">Find Authors</button>
+                <p>You haven't submitted any stories to a competition yet.</p>
+                <button class="btn-primary" routerLink="/competitions">
+                  View Active Competitions
+                </button>
               </div>
             }
           </div>
+
+
 
           <!-- FAVORITES -->
           <div *ngSwitchCase="'favorites'">
@@ -276,7 +278,8 @@ type LibraryTab =
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        }
       </div>
     </div>
 
@@ -581,18 +584,21 @@ type LibraryTab =
 })
 export class LibraryComponent implements OnInit {
   authService = inject(AuthService);
+  authorService = inject(AuthorService);
   subService = inject(SubscriptionService);
   api = inject(ApiService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
   activeTab = signal<LibraryTab>('bookmarks');
+  isLoading = signal(true);
 
   // Raw Data
   allBookmarks: Story[] = [];
   allHistory: Story[] = [];
   allFollowing: UserProfile[] = [];
   allDownloaded: Story[] = [];
+  allCompetitions: Story[] = [];
 
   // Filtered Data
   filteredBookmarks: Story[] = [];
@@ -600,6 +606,7 @@ export class LibraryComponent implements OnInit {
   filteredCompleted: Story[] = [];
   filteredDownloaded: Story[] = []; // Currently mock data
   filteredFollowing: UserProfile[] = [];
+  filteredCompetitions: Story[] = [];
 
   // Control States
   searchQuery = '';
@@ -622,9 +629,9 @@ export class LibraryComponent implements OnInit {
             'downloaded',
             'history',
             'completed',
-            'following',
             'favorites',
             'collections',
+            'competitions',
           ].includes(tab)
         ) {
           this.activeTab.set(tab);
@@ -648,60 +655,81 @@ export class LibraryComponent implements OnInit {
   }
 
   loadData() {
-    // 1. Bookmarks
-    this.authService.getLibrary().subscribe((books) => {
-      this.allBookmarks = books.map((b) => this.mapToStory(b));
-      this.extractGenres(this.allBookmarks);
-      this.applyFilters();
-    });
+    this.isLoading.set(true);
 
-    // 2. Following
-    this.authService.getFollowing().subscribe((authors) => {
-      this.allFollowing = authors.map((a) => ({
-        id: a._id,
-        name: a.username,
-        avatar: this.getAvatarUrl(a.avatar, a.username),
-        followers: a.followersCount || 0,
-      }));
-      this.applyFilters();
-    });
+    forkJoin({
+      books: this.authService.getLibrary(),
+      authors: this.authService.getFollowing(),
+      progressItems: this.authService.getReadingProgress()
+    }).subscribe({
+      next: ({ books, authors, progressItems }) => {
+        // 1. Bookmarks
+        this.allBookmarks = books.map((b) => this.mapToStory(b));
+        this.extractGenres(this.allBookmarks);
 
-    // 3. History (also used for Completed)
-    this.authService.getReadingProgress().subscribe((progressItems) => {
-      this.allHistory = progressItems.map((p: any) => {
-        const s = this.mapToStory(p.book);
-        s.rating = p.progressPercentage || 0; // Temporarily map progress percentage to rating for filter
-        return s;
-      });
-      this.extractGenres(this.allHistory);
-      this.applyFilters();
-    });
+        // 2. Following
+        this.allFollowing = authors.map((a) => ({
+          id: a._id,
+          name: a.username,
+          avatar: this.getAvatarUrl(a.avatar, a.username),
+          followers: a.followersCount || 0,
+        }));
 
-    // 4. Downloaded (Mock from LocalStorage)
-    const storedDownloads = JSON.parse(
-      localStorage.getItem('downloaded_books') || '[]',
-    );
-    this.allDownloaded = storedDownloads.map((b: any) => ({
-      id: b.id,
-      title: b.title || 'Unknown Title',
-      author:
-        typeof b.author === 'object'
-          ? b.author?.username
-          : b.author || 'Unknown Author',
-      cover: b.coverImage || b.cover || this.api.getFallbackCover(),
-      genre: b.genres?.[0] || b.genre || '',
-    }));
-    this.extractGenres(this.allDownloaded);
-    this.applyFilters();
+        // 3. History
+        this.allHistory = progressItems.map((p: any) => {
+          const s = this.mapToStory(p.book);
+          s.rating = p.progressPercentage || 0; 
+          return s;
+        });
+        this.extractGenres(this.allHistory);
+
+        // 4. Downloaded (Mock from LocalStorage)
+        const storedDownloads = JSON.parse(
+          localStorage.getItem('downloaded_books') || '[]',
+        );
+        this.allDownloaded = storedDownloads.map((b: any) => ({
+          id: b.id,
+          title: b.title || 'Unknown Title',
+          author: typeof b.author === 'object' ? (b.author?.username || b.author?.name) : b.author || 'Unknown Author',
+          cover: b.coverImage || b.cover || this.api.getFallbackCover(),
+          genre: b.genres?.[0] || b.genre || '',
+        }));
+        this.extractGenres(this.allDownloaded);
+
+        // 5. Competitions
+        if (this.authService.user()?.role === 'writer' || this.authService.user()?.role === 'superadmin') {
+          this.authorService.getAuthorProfile(this.authService.user()!.id).subscribe({
+            next: (profile) => {
+              const allBooks = profile.books || [];
+              this.allCompetitions = allBooks
+                .filter((b: any) => b.competitionTag)
+                .map((b: any) => this.mapToStory(b));
+              this.extractGenres(this.allCompetitions);
+              this.applyFilters();
+              this.isLoading.set(false);
+            },
+            error: () => {
+              this.applyFilters();
+              this.isLoading.set(false);
+            }
+          });
+        } else {
+          this.applyFilters();
+          this.isLoading.set(false);
+        }
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
   }
-
   private mapToStory(b: any): Story {
     return {
       id: b._id,
       title: b.title || 'Unknown Title',
       author:
         typeof b.author === 'object'
-          ? b.author?.username
+          ? (b.author?.username || b.author?.name)
           : b.author || 'Unknown Author',
       cover: b.cover || this.api.getFallbackCover(),
       genre: b.genre || '',
@@ -757,6 +785,7 @@ export class LibraryComponent implements OnInit {
     this.filteredHistory = filterAndSort(this.allHistory);
     this.filteredCompleted = filterAndSort(this.allHistory, true);
     this.filteredDownloaded = filterAndSort(this.allDownloaded);
+    this.filteredCompetitions = filterAndSort(this.allCompetitions);
 
     // Filter Following
     let fol = this.allFollowing;

@@ -1135,6 +1135,13 @@ export class ChapterEditorComponent implements OnInit {
       return;
     }
 
+    if (!isDraft && !this.coverPreviewUrl()) {
+      if (!isAutoSave) {
+        this.errorMessage = 'Please upload a chapter cover image before publishing.';
+      }
+      return;
+    }
+
     this.isSaving = true;
     this.errorMessage = '';
 
@@ -1188,8 +1195,13 @@ export class ChapterEditorComponent implements OnInit {
       content: this.editorContent,
       accessType: this.accessType,
       season: this.season,
-      status: isDraft ? 'draft' : this.scheduledAt ? 'scheduled' : 'published',
     };
+    
+    if (!isAutoSave) {
+      chapterData.status = isDraft ? 'draft' : this.scheduledAt ? 'scheduled' : 'published';
+    } else if (!this.chapterId || this.chapterId === 'new') {
+      chapterData.status = 'draft';
+    }
 
     if (this.scheduledAt) {
       chapterData.scheduledAt = this.scheduledAt;

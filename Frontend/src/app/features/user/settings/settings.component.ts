@@ -288,6 +288,39 @@ import { ConfirmService } from '../../../core/services/confirm.service';
               </div>
             }
 
+            <!-- Security Settings -->
+            <div class="settings-card security-settings">
+              <h3>Security Settings</h3>
+              <p class="section-desc">Update your password to keep your account secure.</p>
+              
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Old Password</label>
+                <input type="password" class="form-control" [ngModel]="oldPassword()" (ngModelChange)="oldPassword.set($event)">
+              </div>
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New Password</label>
+                <input type="password" class="form-control" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)">
+              </div>
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Confirm New Password</label>
+                <input type="password" class="form-control" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)">
+              </div>
+              
+              <div *ngIf="passwordChangeError()" class="error-text" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <span>{{ passwordChangeError() }}</span>
+                <button *ngIf="showForgotPassword()" class="btn-read-more" style="color: var(--forest); font-weight: 600; border: none; background: transparent; cursor: pointer; text-decoration: underline;" (click)="forgotPassword()">Forgot Password?</button>
+              </div>
+              <div *ngIf="passwordChangeSuccess()" class="success-text" style="margin-bottom: 16px;">
+                {{ passwordChangeSuccess() }}
+              </div>
+              
+              <div class="settings-actions">
+                <button class="btn btn-primary" [disabled]="passwordChangeLoading() || !oldPassword() || !newPassword() || !confirmPassword()" (click)="changePassword()">
+                  {{ passwordChangeLoading() ? 'Updating...' : 'Update Password' }}
+                </button>
+              </div>
+            </div>
+
             <!-- Account Controls (Danger Zone) -->
             <div class="settings-card danger-zone">
               <h3>Danger Zone</h3>
@@ -810,6 +843,14 @@ export class SettingsComponent implements OnInit {
   profileUpdateError = signal<string | null>(null);
   profileUpdateSuccess = signal(false);
 
+  oldPassword = signal('');
+  newPassword = signal('');
+  confirmPassword = signal('');
+  passwordChangeLoading = signal(false);
+  passwordChangeError = signal<string | null>(null);
+  passwordChangeSuccess = signal<string | null>(null);
+  showForgotPassword = signal(false);
+
   ngOnInit() {
     // If not logged in, redirect to login
     if (!this.auth.user()) {
@@ -871,6 +912,50 @@ export class SettingsComponent implements OnInit {
         );
       },
     });
+  }
+
+  changePassword() {
+    if (this.newPassword() !== this.confirmPassword()) {
+      this.passwordChangeError.set("New passwords don't match.");
+      return;
+    }
+    this.passwordChangeLoading.set(true);
+    this.passwordChangeError.set(null);
+    this.passwordChangeSuccess.set(null);
+    this.showForgotPassword.set(false);
+
+    this.auth.changePassword({ oldPassword: this.oldPassword(), newPassword: this.newPassword() }).subscribe({
+      next: (res) => {
+        this.passwordChangeLoading.set(false);
+        this.passwordChangeSuccess.set(res.msg || 'Password updated successfully!');
+        this.oldPassword.set('');
+        this.newPassword.set('');
+        this.confirmPassword.set('');
+        setTimeout(() => this.passwordChangeSuccess.set(null), 3000);
+      },
+      error: (err) => {
+        this.passwordChangeLoading.set(false);
+        const msg = err.error?.msg || 'Failed to update password.';
+        this.passwordChangeError.set(msg);
+        if (msg.toLowerCase().includes('incorrect old password')) {
+          this.showForgotPassword.set(true);
+        }
+      }
+    });
+  }
+
+  forgotPassword() {
+    const email = prompt("Please enter your email to receive a password reset link:", this.auth.user()?.email || '');
+    if (email) {
+      this.auth.forgotPassword(email).subscribe({
+        next: (res) => {
+          alert(res.msg || 'Password reset link sent.');
+        },
+        error: (err) => {
+          alert(err.error?.msg || 'Failed to send reset link.');
+        }
+      });
+    }
   }
 
   getAvatarUrl(path: string | undefined): string {

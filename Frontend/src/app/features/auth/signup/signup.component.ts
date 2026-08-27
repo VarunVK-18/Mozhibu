@@ -139,7 +139,7 @@ export function passwordMatchValidator(
                 type="text"
                 formControlName="username"
                 class="form-control"
-                placeholder="Username (min 3 chars, letters/numbers, no numbers-only)"
+                placeholder="Username"
                 (input)="onUsernameInput($event)"
               />
               <div
@@ -167,7 +167,7 @@ export function passwordMatchValidator(
                 type="text"
                 formControlName="mobile"
                 class="form-control"
-                placeholder="Mobile Number (10 digits)"
+                placeholder="Mobile Number"
               />
               <div
                 *ngIf="
@@ -186,7 +186,7 @@ export function passwordMatchValidator(
               type="email"
               formControlName="email"
               class="form-control"
-              placeholder="Email Address (e.g. name&#64;domain.com)"
+              placeholder="Email Address"
             />
           </div>
 

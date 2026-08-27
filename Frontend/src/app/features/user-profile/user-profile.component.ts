@@ -82,28 +82,6 @@ import { environment } from '../../../environments/environment';
           </button>
           <button
             class="tab-btn"
-            *ngIf="user()?.role === 'writer' || user()?.role === 'superadmin'"
-            [class.active]="activeTab() === 'competitions'"
-            (click)="activeTab.set('competitions')"
-          >
-            Competition Entries ({{ competitionStories().length }})
-          </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab() === 'library'"
-            (click)="activeTab.set('library')"
-          >
-            Saved ({{ savedStories().length }})
-          </button>
-          <button
-            class="tab-btn"
-            [class.active]="activeTab() === 'history'"
-            (click)="activeTab.set('history')"
-          >
-            Reading History ({{ readingHistory().length }})
-          </button>
-          <button
-            class="tab-btn"
             [class.active]="activeTab() === 'following'"
             (click)="activeTab.set('following')"
           >
@@ -121,9 +99,12 @@ import { environment } from '../../../environments/environment';
 
       <div class="profile-content">
         @if (isLoading()) {
-          <div class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading your data...</p>
+          <div class="results-grid">
+            <div class="skeleton-card" *ngFor="let i of [1, 2, 3, 4, 5, 6]">
+              <div class="skeleton skeleton-cover"></div>
+              <div class="skeleton skeleton-text"></div>
+              <div class="skeleton skeleton-text short"></div>
+            </div>
           </div>
         } @else {
           <!-- PUBLISHED CONTENTS -->
@@ -195,124 +176,6 @@ import { environment } from '../../../environments/environment';
             }
           </div>
 
-          <!-- COMPETITION ENTRIES -->
-          <div *ngIf="activeTab() === 'competitions'" class="tab-pane">
-            @if (competitionStories().length > 0) {
-              <div class="results-grid">
-                @for (item of competitionStories(); track item._id) {
-                  <div class="book-card" [routerLink]="['/story', item._id]">
-                    <div class="cover-wrapper">
-                      <img
-                        [src]="getCoverUrl(item.cover)"
-                        alt="Book cover"
-                        class="book-cover"
-                        (error)="onCoverError($event)"
-                      />
-                      <span
-                        class="status-badge"
-                        style="background: var(--honey); color: var(--ink);"
-                      >
-                        Competition Entry
-                      </span>
-                    </div>
-                    <div class="book-info">
-                      <h4 class="book-title">{{ item.title }}</h4>
-                      <div class="book-meta">
-                        <span class="meta-item">👁 {{ item.views || 0 }}</span>
-                        <span class="meta-item"
-                          >♥ {{ item.likesCount || 0 }}</span
-                        >
-                        <span class="genre-badge">{{ item.genre }}</span>
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="empty-state">
-                <p>You haven't submitted any stories to a competition yet.</p>
-                <button class="btn-primary" routerLink="/competitions">
-                  View Active Competitions
-                </button>
-              </div>
-            }
-          </div>
-
-          <!-- SAVED (LIBRARY) -->
-          <div *ngIf="activeTab() === 'library'" class="tab-pane">
-            @if (savedStories().length > 0) {
-              <div class="results-grid">
-                @for (story of savedStories(); track story.id) {
-                  <app-story-card [story]="story"></app-story-card>
-                }
-              </div>
-            } @else {
-              <div class="empty-state">
-                <p>
-                  No saved stories yet. Explore the discovery page and bookmark
-                  stories to build your collection.
-                </p>
-                <button class="btn-primary" routerLink="/search">
-                  Discover Stories
-                </button>
-              </div>
-            }
-          </div>
-
-          <!-- READING HISTORY -->
-          <div *ngIf="activeTab() === 'history'" class="tab-pane">
-            @if (readingHistory().length > 0) {
-              <div class="history-list">
-                @for (book of readingHistory(); track book.id) {
-                  <div
-                    class="history-card-clean"
-                    [routerLink]="['/story', book.storyId]"
-                  >
-                    <img
-                      [src]="getCoverUrl(book.cover)"
-                      [alt]="book.title"
-                      class="history-cover"
-                      (error)="onCoverError($event)"
-                    />
-                    <div class="history-info">
-                      <h3>{{ book.title }}</h3>
-                      <p class="history-author">By {{ book.author }}</p>
-                      <div class="mini-progress-container">
-                        <div class="mini-bar">
-                          <div
-                            class="mini-fill"
-                            [style.width.%]="book.progressPercentage"
-                          ></div>
-                        </div>
-                      </div>
-                      <p class="last-read">
-                        Last read: {{ book.lastReadDate }}
-                      </p>
-                    </div>
-                    <div class="history-actions">
-                      <button
-                        class="btn-icon"
-                        [routerLink]="['/read', book.storyId]"
-                        (click)="$event.stopPropagation()"
-                      >
-                        Read
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="empty-state">
-                <p>
-                  You haven't read any books yet. Head over to the discovery
-                  page to start exploring!
-                </p>
-                <button class="btn-primary" routerLink="/search">
-                  Discover Books
-                </button>
-              </div>
-            }
-          </div>
 
           <!-- FOLLOWING -->
           <div *ngIf="activeTab() === 'following'" class="tab-pane">
@@ -788,20 +651,13 @@ export class UserProfileComponent implements OnInit {
 
   activeTab = signal<
     | 'published'
-    | 'competitions'
-    | 'library'
-    | 'history'
     | 'following'
     | 'followers'
   >('published');
   isLoading = signal<boolean>(true);
 
   publishedStories = signal<any[]>([]);
-  competitionStories = signal<any[]>([]);
   followersCount = signal<number>(0);
-
-  savedStories = signal<any[]>([]);
-  readingHistory = signal<any[]>([]);
   following = signal<any[]>([]);
   followers = signal<any[]>([]);
 
@@ -813,8 +669,7 @@ export class UserProfileComponent implements OnInit {
   loadAllData() {
     this.isLoading.set(true);
     let completedReqs = 0;
-    const totalReqs = 5;
-
+    const totalReqs = 3;
     const checkDone = () => {
       completedReqs++;
       if (completedReqs >= totalReqs) {
@@ -828,7 +683,6 @@ export class UserProfileComponent implements OnInit {
         next: (profile) => {
           const allBooks = profile.books || [];
           this.publishedStories.set(allBooks.filter((b) => !b.competitionTag));
-          this.competitionStories.set(allBooks.filter((b) => b.competitionTag));
           this.followersCount.set(profile.author.followersCount || 0);
           checkDone();
         },
@@ -838,53 +692,7 @@ export class UserProfileComponent implements OnInit {
       checkDone();
     }
 
-    // 2. Load Library
-    this.authService.getLibrary().subscribe({
-      next: (books: any[]) => {
-        this.savedStories.set(
-          books.map((b) => ({
-            id: b._id,
-            title: b.title,
-            author: b.author?.username || 'Unknown',
-            cover: b.cover || 'assets/placeholder.jpg',
-            genre: b.genre,
-          })),
-        );
-        checkDone();
-      },
-      error: () => checkDone(),
-    });
-
-    // 3. Load Reading History
-    this.authService.getReadingProgress().subscribe({
-      next: (progressData) => {
-        const history = progressData
-          .map((p: any) => ({
-            id: p._id,
-            storyId: p.book?._id,
-            title: p.book?.title || 'Unknown Title',
-            author:
-              typeof p.book?.author === 'object'
-                ? p.book?.author?.username
-                : p.book?.author || 'Unknown Author',
-            cover: p.book?.cover || 'assets/placeholder.jpg',
-            currentChapter: p.currentChapter?.order || p.currentChapter || 1,
-            totalChapters: p.book?.chapters?.length || 10,
-            progressPercentage: p.progressPercentage || 0,
-            lastReadDate: new Date(p.lastReadAt).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-          }))
-          .filter((h: any) => h.storyId);
-        this.readingHistory.set(history);
-        checkDone();
-      },
-      error: () => checkDone(),
-    });
-
-    // 4. Load Following
+    // 2. Load Following
     this.authService.getFollowing().subscribe({
       next: (authors: any[]) => {
         const currentUser = this.authService.user();
