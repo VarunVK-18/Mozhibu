@@ -56,7 +56,9 @@ app.use(compression()); // Compress responses
 app.use(cookieParser());
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [process.env.FRONTEND_URL];
+    // Safely remove trailing slashes from FRONTEND_URL if user accidentally added one
+    const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
+    const allowedOrigins = [frontendUrl];
     
     // Only allow localhost if we are NOT in production
     if (process.env.NODE_ENV !== "production") {
@@ -69,7 +71,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    return callback(new Error("Not allowed by CORS"));
+    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origin '${frontendUrl}'`);
+    return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
   },
   credentials: true,
 })); // CORS must be before rate limiters so they include correct headers
