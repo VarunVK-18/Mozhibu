@@ -8,6 +8,7 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { environment } from '../../../environments/environment';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-author-profile',
@@ -407,6 +408,7 @@ export class AuthorProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private authorService = inject(AuthorService);
   private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
   api = inject(ApiService);
 
   profile: AuthorProfile | null = null;
@@ -477,7 +479,7 @@ export class AuthorProfileComponent implements OnInit {
 
   toggleFollow() {
     if (!this.authService.user()) {
-      alert('Please log in to follow authors.');
+      this.confirmService.confirm('Note', 'Please log in to follow authors.', false, 'OK', '').subscribe();
       return;
     }
 
@@ -499,7 +501,7 @@ export class AuthorProfileComponent implements OnInit {
           // Revert on error
           this.isFollowing = !this.isFollowing;
           this.profile!.author.followersCount += this.isFollowing ? 1 : -1;
-          alert(err.error?.msg || 'Failed to follow author');
+          this.confirmService.confirm('Note', err.error?.msg || 'Failed to follow author', false, 'OK', '').subscribe();
         },
       });
     }

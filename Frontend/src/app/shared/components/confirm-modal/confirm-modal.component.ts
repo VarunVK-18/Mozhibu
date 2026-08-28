@@ -32,9 +32,11 @@ import { ConfirmService } from '../../../core/services/confirm.service';
           </div>
 
           <div class="modal-actions">
-            <button class="btn-cancel" (click)="cancel()">
-              {{ confirmService.state().cancelText }}
-            </button>
+            @if (confirmService.state().cancelText) {
+              <button class="btn-cancel" (click)="cancel()">
+                {{ confirmService.state().cancelText }}
+              </button>
+            }
             <button
               class="btn-confirm"
               [class.destructive]="confirmService.state().isDestructive"

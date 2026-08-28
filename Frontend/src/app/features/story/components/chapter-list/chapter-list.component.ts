@@ -101,7 +101,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
                   <span class="ep-duration">{{ ep.readingTime }}</span>
                 </div>
               </div>
-              <p class="ep-synopsis">{{ ep.synopsis }}</p>
+              <p class="ep-synopsis" [innerHTML]="ep.synopsis"></p>
             </div>
           </a>
         }

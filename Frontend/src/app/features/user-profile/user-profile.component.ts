@@ -678,6 +678,7 @@ export class UserProfileComponent implements OnInit {
               name: a.username,
               avatar: this.getAvatarUrl(a.avatar, a.username),
               followers: (a.followersCount / 1000).toFixed(1) + 'K',
+              isFollowing: true,
             })),
         );
         checkDone();
@@ -702,6 +703,7 @@ export class UserProfileComponent implements OnInit {
               name: a.username,
               avatar: this.getAvatarUrl(a.avatar, a.username),
               followers: (a.followersCount / 1000).toFixed(1) + 'K',
+              isFollowing: this.following().some(f => f.id === a._id)
             })),
         );
         checkDone();

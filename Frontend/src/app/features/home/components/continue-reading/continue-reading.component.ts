@@ -47,36 +47,20 @@ export class ContinueReadingComponent implements OnInit {
                 initials: p.book.title.substring(0, 2).toUpperCase(),
                 colorClass: `cv-${(index % 8) + 1}`,
                 title: p.book.title,
-                meta: `Chapter 1 of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
+                meta: `Chapter ${p.currentChapter?.order || 1} of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
                 progress: p.progressPercentage || 0,
                 cover: p.book.cover,
               }));
           } else {
-            this.loadFallbackBooks();
+            this.items = [];
           }
         },
-        error: () => this.loadFallbackBooks(),
+        error: () => {
+          this.items = [];
+        },
       });
     } else {
-      this.loadFallbackBooks();
+      this.items = [];
     }
-  }
-
-  loadFallbackBooks() {
-    this.bookService.getBooks().subscribe({
-      next: (res: any) => {
-        const books = res.books;
-        // Take up to 3 books and mock the user progress for the UI
-        this.items = books.slice(0, 3).map((book: any, index: number) => ({
-          id: book._id,
-          initials: book.title.substring(0, 2).toUpperCase(),
-          colorClass: `cv-${(index % 8) + 1}`,
-          title: book.title,
-          meta: `Chapter ${Math.floor(Math.random() * 10) + 1} of ${book.chapters?.length || 20} · ${book.genre || 'Story'}`,
-          progress: Math.floor(Math.random() * 80) + 10,
-          cover: book.cover,
-        }));
-      },
-    });
   }
 }

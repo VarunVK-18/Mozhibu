@@ -358,17 +358,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   onLogout() {
-    this.confirmService
-      .confirm('Log Out', 'Are you sure you want to log out?')
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.authService.logout();
-          this.isPremium.set(false);
-          this.socketService.disconnect();
-          this.profileMenuOpen.set(false);
-          window.location.href = '/';
-        }
-      });
+    this.authService.logout();
+    this.isPremium.set(false);
+    this.socketService.disconnect();
+    this.profileMenuOpen.set(false);
+    window.location.href = '/';
   }
 
   requireAuth(event: Event, action?: () => void): void {

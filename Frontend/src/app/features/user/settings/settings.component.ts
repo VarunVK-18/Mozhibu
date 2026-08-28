@@ -282,8 +282,8 @@ import { ConfirmService } from '../../../core/services/confirm.service';
                   You already have author privileges! Head over to the Author
                   Studio to publish and manage your books.
                 </p>
-                <button class="btn-outline" disabled>
-                  Go to Studio (Coming Soon)
+                <button class="btn-outline" routerLink="/write">
+                  Go to Author Studio
                 </button>
               </div>
             }

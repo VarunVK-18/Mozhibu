@@ -20,6 +20,7 @@ export function passwordMatchValidator(
 ): ValidationErrors | null {
   const password = control.get('password')?.value;
   const confirmPassword = control.get('confirmPassword')?.value;
+  if (!confirmPassword) return null;
   return password === confirmPassword ? null : { passwordMismatch: true };
 }
 
@@ -141,25 +142,10 @@ export function passwordMatchValidator(
                 class="form-control"
                 placeholder="Username"
                 (input)="onUsernameInput($event)"
+                (blur)="trimField('username')"
               />
-              <div
-                *ngIf="
-                  signupForm.get('username')?.touched &&
-                  signupForm.get('username')?.hasError('pattern')
-                "
-                class="field-error"
-              >
-                Username can only contain letters and numbers, and cannot be
-                only numbers.
-              </div>
-              <div
-                *ngIf="
-                  signupForm.get('username')?.touched &&
-                  signupForm.get('username')?.hasError('minlength')
-                "
-                class="field-error"
-              >
-                Username must be at least 3 characters.
+              <div *ngIf="getErrorMessage('username')" class="field-error">
+                {{ getErrorMessage('username') }}
               </div>
             </div>
             <div class="form-group">
@@ -168,15 +154,10 @@ export function passwordMatchValidator(
                 formControlName="mobile"
                 class="form-control"
                 placeholder="Mobile Number"
+                (input)="onMobileInput($event)"
               />
-              <div
-                *ngIf="
-                  signupForm.get('mobile')?.touched &&
-                  signupForm.get('mobile')?.hasError('pattern')
-                "
-                class="field-error"
-              >
-                Mobile number must be exactly 10 digits.
+              <div *ngIf="getErrorMessage('mobile')" class="field-error">
+                {{ getErrorMessage('mobile') }}
               </div>
             </div>
           </div>
@@ -187,7 +168,11 @@ export function passwordMatchValidator(
               formControlName="email"
               class="form-control"
               placeholder="Email Address"
+              (blur)="trimField('email')"
             />
+            <div *ngIf="getErrorMessage('email')" class="field-error">
+              {{ getErrorMessage('email') }}
+            </div>
           </div>
 
           <div class="form-row">
@@ -198,6 +183,8 @@ export function passwordMatchValidator(
                   formControlName="password"
                   class="form-control"
                   placeholder="Password"
+                  maxlength="16"
+                  (input)="onPasswordInput($event)"
                 />
                 <button
                   type="button"
@@ -238,15 +225,8 @@ export function passwordMatchValidator(
                   </svg>
                 </button>
               </div>
-              <div
-                *ngIf="
-                  signupForm.get('password')?.touched &&
-                  signupForm.get('password')?.hasError('pattern')
-                "
-                class="field-error"
-              >
-                Password must be 8-16 characters, have 1 uppercase, 1 number,
-                and no emojis.
+              <div *ngIf="getErrorMessage('password')" class="field-error">
+                {{ getErrorMessage('password') }}
               </div>
             </div>
 
@@ -257,6 +237,7 @@ export function passwordMatchValidator(
                   formControlName="confirmPassword"
                   class="form-control"
                   placeholder="Confirm Password"
+                  maxlength="16"
                 />
                 <button
                   type="button"
@@ -297,14 +278,8 @@ export function passwordMatchValidator(
                   </svg>
                 </button>
               </div>
-              <div
-                *ngIf="
-                  signupForm.hasError('passwordMismatch') &&
-                  signupForm.get('confirmPassword')?.touched
-                "
-                class="field-error"
-              >
-                Passwords do not match.
+              <div *ngIf="getErrorMessage('confirmPassword')" class="field-error">
+                {{ getErrorMessage('confirmPassword') }}
               </div>
             </div>
           </div>
@@ -319,6 +294,9 @@ export function passwordMatchValidator(
                 <option value="te">Telugu</option>
                 <option value="bn">Bengali</option>
               </select>
+              <div *ngIf="getErrorMessage('preferredLanguage')" class="field-error">
+                {{ getErrorMessage('preferredLanguage') }}
+              </div>
             </div>
             <div class="form-group">
               <select formControlName="favoriteGenres" class="form-control">
@@ -333,10 +311,13 @@ export function passwordMatchValidator(
                 <option value="Comedy">Comedy</option>
                 <option value="Drama">Drama</option>
               </select>
+              <div *ngIf="getErrorMessage('favoriteGenres')" class="field-error">
+                {{ getErrorMessage('favoriteGenres') }}
+              </div>
             </div>
           </div>
 
-          <div *ngIf="errorMessage" class="error-msg">
+          <div *ngIf="errorMessage && errorMessage !== 'Please fill out all mandatory details correctly.'" class="error-msg">
             {{ errorMessage }}
           </div>
 
@@ -633,26 +614,28 @@ export class SignupComponent implements OnInit {
     });
   }
 
-  // Regex: At least 8 chars, 1 uppercase, 1 number
-  passwordRegex = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
-
   signupForm: FormGroup = this.fb.group(
     {
       username: [
         '',
         [
           Validators.required,
-          Validators.minLength(3),
-          Validators.pattern(/^(?!\d+$)[a-zA-Z0-9]+$/),
+          Validators.pattern(/^[A-Za-z0-9_]{3,30}$/),
         ],
       ],
-      mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      mobile: [
+        '',
+        [
+          Validators.required,
+          Validators.pattern(/^[6-9][0-9]{9}$/),
+        ],
+      ],
       email: [
         '',
         [
           Validators.required,
           Validators.pattern(
-            /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
           ),
         ],
       ],
@@ -660,15 +643,15 @@ export class SignupComponent implements OnInit {
         '',
         [
           Validators.required,
-          Validators.pattern(/^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/),
+          Validators.pattern(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s])[^\s]{8,16}$/),
         ],
       ],
       confirmPassword: ['', Validators.required],
       preferredLanguage: ['', Validators.required],
-      favoriteGenres: [''],
+      favoriteGenres: ['', Validators.required],
       role: ['reader', Validators.required],
     },
-    { validators: passwordMatchValidator },
+    { validators: passwordMatchValidator }
   );
 
   errorMessage = '';
@@ -679,20 +662,83 @@ export class SignupComponent implements OnInit {
   onUsernameInput(event: Event) {
     const input = event.target as HTMLInputElement;
     let value = input.value;
-
-    // Remove any non-alphanumeric characters
-    value = value.replace(/[^a-zA-Z0-9\s]/g, '');
-
-    // Convert to camelCase
-    value = value
-      .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
-        return index === 0 ? word.toLowerCase() : word.toUpperCase();
-      })
-      .replace(/\s+/g, '');
-
+    value = value.replace(/[^A-Za-z0-9_]/g, '');
     this.signupForm.patchValue({ username: value }, { emitEvent: false });
-    // Update the input value directly so the user sees the change immediately
     input.value = value;
+  }
+
+  onMobileInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+    value = value.replace(/[^0-9]/g, '').slice(0, 10);
+    this.signupForm.patchValue({ mobile: value }, { emitEvent: false });
+    input.value = value;
+  }
+
+  onPasswordInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+    value = value.replace(/\s/g, '');
+    this.signupForm.patchValue({ password: value }, { emitEvent: false });
+    input.value = value;
+  }
+
+  trimField(field: string) {
+    const control = this.signupForm.get(field);
+    if (control && typeof control.value === 'string') {
+      control.setValue(control.value.trim());
+    }
+  }
+
+  getErrorMessage(field: string): string {
+    const control = this.signupForm.get(field);
+    if (!control || !control.touched) return '';
+
+    if (field === 'confirmPassword' && this.signupForm.hasError('passwordMismatch')) {
+      return 'Passwords do not match.';
+    }
+
+    if (control.hasError('required')) {
+      switch (field) {
+        case 'username': return 'Username is required.';
+        case 'mobile': return 'Mobile number is required.';
+        case 'email': return 'Email address is required.';
+        case 'password': return 'Password is required.';
+        case 'confirmPassword': return 'Please confirm your password.';
+        case 'preferredLanguage': return 'Please select a language.';
+        case 'favoriteGenres': return 'Please select a genre.';
+      }
+    }
+
+    if (control.hasError('pattern')) {
+      switch (field) {
+        case 'username': return 'Username must be 3–30 characters and contain only letters, numbers, or underscores.';
+        case 'mobile': return 'Enter a valid 10-digit mobile number.';
+        case 'email': return 'Enter a valid email address.';
+        case 'password': return 'Password must be 8–16 characters, include 1 uppercase letter, 1 number, and 1 special character.';
+      }
+    }
+
+    return '';
+  }
+
+  focusFirstInvalidField() {
+    for (const key of Object.keys(this.signupForm.controls)) {
+      if (this.signupForm.controls[key].invalid) {
+        const invalidControl = document.querySelector(`[formControlName="${key}"]`);
+        if (invalidControl) {
+          (invalidControl as HTMLElement).focus();
+          break;
+        }
+      }
+    }
+    
+    if (this.signupForm.hasError('passwordMismatch')) {
+      const confirmPasswordControl = document.querySelector(`[formControlName="confirmPassword"]`);
+      if (confirmPasswordControl) {
+        (confirmPasswordControl as HTMLElement).focus();
+      }
+    }
   }
 
   togglePassword() {
@@ -705,8 +751,8 @@ export class SignupComponent implements OnInit {
 
   onSubmit() {
     if (this.signupForm.invalid) {
-      this.errorMessage = 'Please fill out all mandatory details correctly.';
       this.signupForm.markAllAsTouched();
+      this.focusFirstInvalidField();
       return;
     }
 

@@ -407,6 +407,11 @@ router.post("/broadcast", async (req, res) => {
         .json({ msg: "Please provide title, message, and audience" });
     }
 
+    const validAudiences = ["all", "readers", "writers"];
+    if (!validAudiences.includes(audience)) {
+      return res.status(400).json({ msg: "Invalid audience type" });
+    }
+
     let query = { _id: { $ne: req.user.id } };
     if (audience === "readers") {
       query.role = "reader";

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminService, AdminBook } from '../../../core/services/admin.service';
 import { ApiService } from '../../../core/services/api.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-admin-competition',
@@ -262,6 +263,7 @@ import { ApiService } from '../../../core/services/api.service';
 export class AdminCompetitionComponent implements OnInit {
   private adminService = inject(AdminService);
   api = inject(ApiService);
+  private confirmService = inject(ConfirmService);
 
   isLoading = true;
   isLoadingEntries = false;
@@ -347,28 +349,34 @@ export class AdminCompetitionComponent implements OnInit {
   }
 
   notifyWriters() {
-    if (
-      !confirm(
-        'This will send a notification to ALL writers on the platform to join this competition. Proceed?',
-      )
-    )
-      return;
-    this.isNotifying = true;
-    this.adminService
-      .sendCompetitionNotification(
-        `The "${this.config.title}" competition is now open! Click here to submit your story.`,
-      )
-      .subscribe({
-        next: () => {
-          this.isNotifying = false;
-          alert('All writers have been notified successfully.');
-        },
-        error: (err) => {
-          console.error(err);
-          this.isNotifying = false;
-          alert('Failed to send notifications.');
-        },
-      });
+    this.confirmService.confirm(
+      'Notify Writers',
+      'This will send a notification to ALL writers on the platform to join this competition. Proceed?'
+    ).subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.isNotifying = true;
+      this.successMessage = '';
+      this.errorMessage = '';
+
+      this.adminService
+        .sendCompetitionNotification(
+          `The "${this.config.title}" competition is now open! Click here to submit your story.`,
+        )
+        .subscribe({
+          next: () => {
+            this.isNotifying = false;
+            this.successMessage = 'All writers have been notified successfully.';
+            setTimeout(() => this.successMessage = '', 3000);
+          },
+          error: (err) => {
+            console.error(err);
+            this.isNotifying = false;
+            this.errorMessage = 'Failed to send notifications.';
+            setTimeout(() => this.errorMessage = '', 3000);
+          },
+        });
+    });
   }
 
   onCoverError(event: any) {
@@ -376,24 +384,32 @@ export class AdminCompetitionComponent implements OnInit {
   }
 
   announceWinner(bookId: string) {
-    if (
-      !confirm(
-        'Are you sure? This will immediately end the competition, set this book as the winner, and notify EVERYONE on the platform!',
-      )
-    )
-      return;
-    this.isAnnouncing = true;
-    this.adminService.announceCompetitionWinner(bookId).subscribe({
-      next: (res) => {
-        this.isAnnouncing = false;
-        this.config = res.competition;
-        alert('Winner announced successfully! The competition is now closed.');
-      },
-      error: (err) => {
-        console.error(err);
-        this.isAnnouncing = false;
-        alert('Failed to announce winner.');
-      },
+    this.confirmService.confirm(
+      'Announce Winner',
+      'Are you sure? This will immediately end the competition, set this book as the winner, and notify EVERYONE on the platform!',
+      true, 
+      'Yes, Announce Winner'
+    ).subscribe((confirmed) => {
+      if (!confirmed) return;
+
+      this.isAnnouncing = true;
+      this.successMessage = '';
+      this.errorMessage = '';
+
+      this.adminService.announceCompetitionWinner(bookId).subscribe({
+        next: (res) => {
+          this.isAnnouncing = false;
+          this.config = res.competition;
+          this.successMessage = 'Winner announced successfully! The competition is now closed.';
+          setTimeout(() => this.successMessage = '', 5000);
+        },
+        error: (err) => {
+          console.error(err);
+          this.isAnnouncing = false;
+          this.errorMessage = 'Failed to announce winner.';
+          setTimeout(() => this.errorMessage = '', 5000);
+        },
+      });
     });
   }
 }
