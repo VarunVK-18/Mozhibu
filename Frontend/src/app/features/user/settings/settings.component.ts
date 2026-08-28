@@ -293,24 +293,38 @@ import { ConfirmService } from '../../../core/services/confirm.service';
               <h3>Security Settings</h3>
               <p class="section-desc">Update your password to keep your account secure.</p>
               
-              <div class="form-group" style="margin-bottom: 16px;">
+              <div class="form-group" style="margin-bottom: 16px; position: relative;">
                 <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Old Password</label>
-                <input type="password" class="form-control" [ngModel]="oldPassword()" (ngModelChange)="oldPassword.set($event)">
+                <input [type]="showOldPassword() ? 'text' : 'password'" class="form-control" [ngModel]="oldPassword()" (ngModelChange)="oldPassword.set($event)" style="padding-right: 40px;">
+                <button (click)="showOldPassword.set(!showOldPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
               </div>
-              <div class="form-group" style="margin-bottom: 16px;">
+              <div class="form-group" style="margin-bottom: 16px; position: relative;">
                 <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New Password</label>
-                <input type="password" class="form-control" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)">
+                <input [type]="showNewPassword() ? 'text' : 'password'" class="form-control" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" style="padding-right: 40px;">
+                <button (click)="showNewPassword.set(!showNewPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
               </div>
-              <div class="form-group" style="margin-bottom: 16px;">
+              <div class="form-group" style="margin-bottom: 16px; position: relative;">
                 <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Confirm New Password</label>
-                <input type="password" class="form-control" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)">
+                <input [type]="showConfirmPassword() ? 'text' : 'password'" class="form-control" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" style="padding-right: 40px;">
+                <button (click)="showConfirmPassword.set(!showConfirmPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                </button>
               </div>
               
-              <div *ngIf="passwordChangeError()" class="error-text" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+              <div *ngIf="passwordChangeError()" class="error-text" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 12px; background-color: #fee2e2; color: #b91c1c; border-radius: 6px; font-weight: 500; border: 1px solid #fecaca;">
                 <span>{{ passwordChangeError() }}</span>
-                <button *ngIf="showForgotPassword()" class="btn-read-more" style="color: var(--forest); font-weight: 600; border: none; background: transparent; cursor: pointer; text-decoration: underline;" (click)="forgotPassword()">Forgot Password?</button>
+                <button *ngIf="showForgotPassword()" class="btn-read-more" style="color: #b91c1c; font-weight: 600; border: none; background: transparent; cursor: pointer; text-decoration: underline;" (click)="forgotPassword()">Forgot Password?</button>
               </div>
-              <div *ngIf="passwordChangeSuccess()" class="success-text" style="margin-bottom: 16px;">
+              
+              <div *ngIf="passwordChangeSuccess()" class="success-text" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 12px; background-color: #dcfce7; color: #15803d; border-radius: 6px; font-weight: 500; border: 1px solid #bbf7d0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 {{ passwordChangeSuccess() }}
               </div>
               
@@ -863,6 +877,9 @@ export class SettingsComponent implements OnInit {
   oldPassword = signal('');
   newPassword = signal('');
   confirmPassword = signal('');
+  showOldPassword = signal(false);
+  showNewPassword = signal(false);
+  showConfirmPassword = signal(false);
   passwordChangeLoading = signal(false);
   passwordChangeError = signal<string | null>(null);
   passwordChangeSuccess = signal<string | null>(null);

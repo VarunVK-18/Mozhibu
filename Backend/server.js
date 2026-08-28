@@ -12,8 +12,8 @@ const rateLimit = require("express-rate-limit");
 const path = require("path");
 const cron = require("node-cron");
 const cookieParser = require("cookie-parser");
-const { computeEngagementScores } = require("./services/engagementScorer");
-const { computeMonthlyRevenue } = require("./services/revenueEngine");
+const { computeEngagementScores } = require("./src/services/engagementScorer");
+const { computeMonthlyRevenue } = require("./src/services/revenueEngine");
 
 const app = express();
 const server = http.createServer(app);
@@ -118,17 +118,17 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 // Routes
-const authRoutes = require("./routes/auth");
-const bookRoutes = require("./routes/books");
-const adminRoutes = require("./routes/admin");
-const userRoutes = require("./routes/users");
-const notificationRoutes = require("./routes/notifications");
-const competitionRoutes = require("./routes/competitions");
-const searchRoutes = require("./routes/search");
+const authRoutes = require("./src/routes/auth");
+const bookRoutes = require("./src/routes/books");
+const adminRoutes = require("./src/routes/admin");
+const userRoutes = require("./src/routes/users");
+const notificationRoutes = require("./src/routes/notifications");
+const competitionRoutes = require("./src/routes/competitions");
+const searchRoutes = require("./src/routes/search");
 
-const subscriptionRoutes = require("./routes/subscriptions");
-const revenueRoutes = require("./routes/revenue");
-const earningsRoutes = require("./routes/earnings");
+const subscriptionRoutes = require("./src/routes/subscriptions");
+const revenueRoutes = require("./src/routes/revenue");
+const earningsRoutes = require("./src/routes/earnings");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
@@ -189,7 +189,7 @@ cron.schedule("0 3 1 * *", async () => {
 // Daily: expire subscriptions past end_date
 cron.schedule("0 0 * * *", async () => {
   try {
-    const UserSubscription = require("./models/UserSubscription");
+    const UserSubscription = require("./src/models/UserSubscription");
     const result = await UserSubscription.updateMany(
       { status: "active", endDate: { $lt: new Date() } },
       { $set: { status: "expired" } },

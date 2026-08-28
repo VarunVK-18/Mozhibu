@@ -12,7 +12,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 import { environment } from '../../../environments/environment';
-import * as Sanscript from '@indic-transliteration/sanscript';
+
 
 @Component({
   selector: 'app-chapter-editor',
@@ -333,7 +333,6 @@ import * as Sanscript from '@indic-transliteration/sanscript';
             #editor
             (input)="onEditorInput()"
             (keydown)="onEditorKeyDown($event)"
-            [innerHTML]="editorContent"
             placeholder="Start writing your chapter here..."
           ></div>
         </div>
@@ -761,6 +760,139 @@ export class ChapterEditorComponent implements OnInit {
   croppedBlob: Blob | null = null;
   activeBlob: Blob | null = null;
 
+  // ─── Tamil Transliteration (Tanglish → Tamil) ─────────────────────────────
+  // Single-pass context-aware syllable parser. No pre-processing markers.
+  // 'n' is resolved at parse time based on surrounding characters.
+
+  transliterateToTamil(rawInput: string): string {
+    // ── Pre-process: doubled-consonant + word-final 'a' → long 'aa' ──────
+    // e.g.  amma → ammaa → அம்மா   appa → appaa → அப்பா
+    //       kanna → kannaa → கன்னா  anna → annaa → அன்னா
+    // Only fires when word ends in CC+a (same consonant twice then 'a').
+    const raw = rawInput.replace(/([a-zA-Z])\1a$/g, '$1$1aa');
+
+    const VIRAMA    = '\u0BCD'; // ் (pulli)
+    const N_DENTAL  = '\u0BA8'; // ந  (default n)
+    const N_RETRO   = '\u0BA3'; // ண  (before k/g/d/t)
+    const N_ALVEOL  = '\u0BA9'; // ன  (geminate nn, word-final)
+    const VOWELS    = new Set(['a','e','i','o','u','A','E','I','O','U']);
+
+    // [romanized, Tamil-base]. 2-char entries MUST come before 1-char.
+    const CONS: [string, string][] = [
+      ['ng', '\u0B99'], ['nj', '\u0B9E'], ['ny', '\u0B9E'],
+      ['sh', '\u0BB7'], ['Sh', '\u0BB7'], ['zh', '\u0BB4'],
+      ['ch', '\u0B9A'],
+      ['th', '\u0BA4'], ['dh', '\u0BA4'],
+      ['ph', '\u0BAA'], ['gh', '\u0B95'], ['kh', '\u0B95'],
+      ['dr', '\u0BB1'], ['tr', '\u0BB1'],   // dr/tr → ற (hard retroflex r)
+      ['k', '\u0B95'], ['g', '\u0B95'],
+      ['c', '\u0B9A'], ['j', '\u0B9C'],
+      ['T', '\u0B9F'], ['D', '\u0B9F'],
+      ['t', '\u0B9F'], ['d', '\u0B9F'],
+      ['N', '\u0BA3'],                      // explicit retroflex ண (capital N)
+      // 'n' handled separately via resolveN()
+      ['p', '\u0BAA'], ['b', '\u0BAA'], ['m', '\u0BAE'],
+      ['y', '\u0BAF'],
+      ['R', '\u0BB1'], ['r', '\u0BB0'],     // R=ற, r=ர
+      ['L', '\u0BB3'], ['l', '\u0BB2'],     // L=ள, l=ல
+      ['v', '\u0BB5'], ['w', '\u0BB5'],
+      ['h', '\u0BB9'], ['s', '\u0BB8'],
+      ['z', '\u0BB4'], ['f', '\u0BAA'],
+      ['x', '\u0B95\u0BCD\u0BB8'],
+    ];
+
+    // [romanized, standalone-form, matra]. 2-char FIRST.
+    const VOWS: [string, string, string][] = [
+      ['aa', '\u0B86', '\u0BBE'], ['ii', '\u0B88', '\u0BC0'],
+      ['ee', '\u0B88', '\u0BC0'], ['uu', '\u0B8A', '\u0BC2'],
+      ['oo', '\u0B8A', '\u0BC2'], ['ai', '\u0B90', '\u0BC8'],
+      ['au', '\u0B94', '\u0BCC'], ['ae', '\u0B8F', '\u0BC7'],
+      ['a', '\u0B85', ''],  ['i', '\u0B87', '\u0BBF'],
+      ['u', '\u0B89', '\u0BC1'], ['e', '\u0B8E', '\u0BC6'],
+      ['o', '\u0B92', '\u0BCA'],
+    ];
+
+    const matchCons = (pos: number): [string, string] | null => {
+      for (const [r, b] of CONS) {
+        if (raw.substring(pos, pos + r.length) === r) return [r, b];
+      }
+      return null;
+    };
+
+    const matchVow = (pos: number): [string, string, string] | null => {
+      for (const e of VOWS) {
+        if (raw.substring(pos, pos + e[0].length) === e[0]) return e;
+      }
+      return null;
+    };
+
+    // Decide which Tamil 'n' character to use based on context:
+    //  · nn geminate (both occurrences)  → ன  (alveolar)
+    //  · word-final n                    → ன  (alveolar)
+    //  · before k/g (through vowels)     → ண  (retroflex)
+    //  · before d/t (not dh/th)          → ண  (retroflex)
+    //  · otherwise                       → ந  (dental, default)
+    const resolveN = (pos: number): string => {
+      // geminate: this is first 'n' of 'nn'
+      if (raw[pos + 1] === 'n') return N_ALVEOL;
+      // geminate: this is second 'n' of 'nn'
+      if (pos > 0 && raw[pos - 1] === 'n') return N_ALVEOL;
+
+      // scan ahead past vowels to find next consonant
+      let j = pos + 1;
+      while (j < raw.length && VOWELS.has(raw[j])) j++;
+
+      const nc  = raw[j] ?? '';
+      const nc2 = raw[j + 1] ?? '';
+
+      if ('kg'.includes(nc))                                    return N_RETRO;
+      if ((nc === 'd' && nc2 !== 'h') || (nc === 't' && nc2 !== 'h')) return N_RETRO;
+
+      // word-final
+      if (j >= raw.length) return N_ALVEOL;
+
+      return N_DENTAL;
+    };
+
+    // ── Single-pass syllable parser ────────────────────────────────────────
+    let result = '';
+    let i = 0;
+
+    while (i < raw.length) {
+
+      // ── special: 'n' (context-sensitive) ──────────────────────────────
+      if (raw[i] === 'n') {
+        const base = resolveN(i);
+        i++;
+        const vow = matchVow(i);
+        if (vow) { i += vow[0].length; result += base + vow[2]; }
+        else      { result += base + VIRAMA; }
+        continue;
+      }
+
+      // ── consonant ─────────────────────────────────────────────────────
+      const cons = matchCons(i);
+      if (cons) {
+        const [cRom, cBase] = cons;
+        i += cRom.length;
+        const vow = matchVow(i);
+        if (vow) { i += vow[0].length; result += cBase + vow[2]; }
+        else      { result += cBase + VIRAMA; }
+        continue;
+      }
+
+      // ── vowel (standalone) ────────────────────────────────────────────
+      const vow = matchVow(i);
+      if (vow) { i += vow[0].length; result += vow[1]; continue; }
+
+      // ── unknown: pass through ─────────────────────────────────────────
+      result += raw[i++];
+    }
+
+    return result;
+  }
+
+
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
       this.bookId = params.get('id');
@@ -817,6 +949,8 @@ export class ChapterEditorComponent implements OnInit {
         }
 
         this.updateMetrics(this.editorContent);
+        // Use setTimeout to ensure the DOM is ready before setting content
+        setTimeout(() => this.setEditorContent(this.editorContent), 0);
       } catch (err) {
         console.error('Failed to parse chapter draft from local storage', err);
       }
@@ -865,6 +999,8 @@ export class ChapterEditorComponent implements OnInit {
         }
 
         this.updateMetrics(this.editorContent);
+        // Safely set editor DOM content after fetch
+        setTimeout(() => this.setEditorContent(this.editorContent), 0);
       },
       error: (err) => console.error('Failed to fetch chapter', err),
     });
@@ -890,10 +1026,71 @@ export class ChapterEditorComponent implements OnInit {
   onEditorInput() {
     if (!this.editorRef) return;
     const html = this.editorRef.nativeElement.innerHTML;
-    if (this.editorContent !== html) {
-      this.editorContent = html;
-      this.updateMetrics(this.editorRef.nativeElement.innerText);
-      this.onContentChange();
+    // Only update internal state — do NOT set innerHTML back (causes cursor jump)
+    this.editorContent = html;
+    this.updateMetrics(this.editorRef.nativeElement.innerText);
+    this.onContentChange();
+  }
+
+  // Set editor content safely without losing cursor position
+  private setEditorContent(html: string) {
+    if (!this.editorRef) return;
+    const el = this.editorRef.nativeElement;
+    const isFocused = document.activeElement === el;
+
+    if (isFocused) {
+      // Save cursor position as character offset
+      const savedPos = this.saveCursorPosition(el);
+      el.innerHTML = html;
+      this.restoreCursorPosition(el, savedPos);
+    } else {
+      el.innerHTML = html;
+    }
+  }
+
+  private saveCursorPosition(container: HTMLElement): number {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return 0;
+    const range = selection.getRangeAt(0);
+    const preRange = document.createRange();
+    preRange.selectNodeContents(container);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    return preRange.toString().length;
+  }
+
+  private restoreCursorPosition(container: HTMLElement, charOffset: number) {
+    const selection = window.getSelection();
+    if (!selection) return;
+    let remaining = charOffset;
+    let found = false;
+
+    const walk = (node: Node): boolean => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const len = node.textContent?.length || 0;
+        if (remaining <= len) {
+          const range = document.createRange();
+          range.setStart(node, remaining);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return true;
+        }
+        remaining -= len;
+      } else {
+        for (const child of Array.from(node.childNodes)) {
+          if (walk(child)) return true;
+        }
+      }
+      return false;
+    };
+
+    if (!walk(container)) {
+      // Fallback: move cursor to end
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
     }
   }
 
@@ -923,30 +1120,34 @@ export class ChapterEditorComponent implements OnInit {
         const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
 
         if (match) {
+          event.preventDefault(); // prevent the space/enter from being added before we replace
+
           const englishWord = match[0];
-          const tamilWord = (Sanscript as any).t(
-            englishWord,
-            'itrans',
-            'tamil',
+          const tamilWord = this.transliterateToTamil(englishWord);
+
+          const fullText = textNode.textContent || '';
+          const beforeWord = fullText.substring(
+            0,
+            range.startOffset - englishWord.length,
           );
+          const afterCursor = fullText.substring(range.startOffset);
 
-          const newText =
-            textNode.textContent?.substring(
-              0,
-              range.startOffset - englishWord.length,
-            ) +
-            tamilWord +
-            textNode.textContent?.substring(range.startOffset);
+          // Add a space after the Tamil word (or newline char placeholder)
+          const separator = event.key === 'Enter' ? '' : ' ';
+          textNode.textContent = beforeWord + tamilWord + separator + afterCursor;
 
-          textNode.textContent = newText || '';
-
-          // Move cursor to right after the replaced word
+          // Move cursor to right after the replaced word + separator
           const newCursorPos =
-            range.startOffset - englishWord.length + tamilWord.length;
+            beforeWord.length + tamilWord.length + separator.length;
           range.setStart(textNode, newCursorPos);
           range.setEnd(textNode, newCursorPos);
           selection.removeAllRanges();
           selection.addRange(range);
+
+          // If Enter was pressed, insert a paragraph break
+          if (event.key === 'Enter') {
+            document.execCommand('insertParagraph', false);
+          }
 
           this.onEditorInput();
         }
