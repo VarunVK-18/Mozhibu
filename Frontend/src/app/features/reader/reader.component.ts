@@ -156,6 +156,45 @@ import { StoryService } from '../../core/services/story.service';
           </button>
 
           <div class="settings-group">
+            <!-- Auto Scroll Controls -->
+            <button
+              class="icon-btn"
+              (click)="toggleAutoScroll()"
+              [title]="isAutoScrolling() ? 'Pause Auto-Scroll' : 'Start Auto-Scroll'"
+            >
+              @if (isAutoScrolling()) {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+              } @else {
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              }
+            </button>
+            <button
+              class="icon-btn"
+              (click)="decreaseScrollSpeed()"
+              [disabled]="scrollSpeed() <= 0.5"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+            <span class="font-size-display" style="width: 40px;">{{ scrollSpeed() | number:'1.1-1' }}x</span>
+            <button
+              class="icon-btn"
+              (click)="increaseScrollSpeed()"
+              [disabled]="scrollSpeed() >= 3.0"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+            <div class="divider"></div>
+
             <button
               class="icon-btn"
               (click)="decreaseFont()"
@@ -577,6 +616,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
   showControls = signal(true);
   isDarkMode = signal(false);
   fontSize = signal(18); // Default font size in px
+  isAutoScrolling = signal(false);
+  scrollSpeed = signal(1.0);
+  private scrollAnimationId: number | null = null;
 
   storyId: string = '';
   chapterContent = signal<SafeHtml>('');
@@ -667,6 +709,15 @@ export class ReaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const savedTheme = localStorage.getItem('readerDarkMode');
+    if (savedTheme) {
+      this.isDarkMode.set(savedTheme === 'true');
+    }
+    const savedFontSize = localStorage.getItem('readerFontSize');
+    if (savedFontSize) {
+      this.fontSize.set(parseInt(savedFontSize, 10));
+    }
+
     this.route.paramMap.subscribe((params) => {
       this.storyId = params.get('storyId') || '';
       if (this.storyId) {
@@ -696,6 +747,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
     if (this.scrollSub) {
       this.scrollSub.unsubscribe();
     }
+    this.stopAutoScroll();
   }
 
   @HostListener('window:scroll', [])
@@ -733,23 +785,128 @@ export class ReaderComponent implements OnInit, OnDestroy {
     }
   }
 
+  // --- Auto-Scroll Logic ---
+  toggleAutoScroll(): void {
+    const isScrolling = this.isAutoScrolling();
+    if (isScrolling) {
+      this.isAutoScrolling.set(false);
+      this.stopAutoScroll();
+    } else {
+      this.isAutoScrolling.set(true);
+      this.startAutoScroll();
+    }
+  }
+
+  increaseScrollSpeed(): void {
+    const current = this.scrollSpeed();
+    if (current < 3.0) {
+      this.scrollSpeed.set(Math.round((current + 0.5) * 10) / 10);
+    }
+  }
+
+  decreaseScrollSpeed(): void {
+    const current = this.scrollSpeed();
+    if (current > 0.5) {
+      this.scrollSpeed.set(Math.round((current - 0.5) * 10) / 10);
+    }
+  }
+
+  private startAutoScroll(): void {
+    if (this.scrollAnimationId) {
+      cancelAnimationFrame(this.scrollAnimationId);
+    }
+    let lastTime = performance.now();
+    const loop = (time: number) => {
+      if (!this.isAutoScrolling()) return;
+
+      const deltaTime = time - lastTime;
+      // Target ~60fps, scale pixels scrolled based on delta time to be frame-rate independent
+      // Speed of 1.0 = ~1px per 16ms (roughly 60px per sec)
+      const pixelsToScroll = (this.scrollSpeed() * 60 * deltaTime) / 1000;
+      
+      // We temporarily disconnect the scroll listener so it doesn't pause itself
+      if (pixelsToScroll > 0.1) {
+        window.scrollBy(0, pixelsToScroll);
+      }
+      
+      // Check if we reached the bottom of the page
+      const scrollHeight = this.document.documentElement.scrollHeight || this.document.body.scrollHeight;
+      const scrollOffset = window.scrollY || this.document.documentElement.scrollTop || this.document.body.scrollTop;
+      const clientHeight = this.document.documentElement.clientHeight || window.innerHeight;
+      
+      // If we are within 2 pixels of the bottom, pause
+      if (scrollOffset + clientHeight >= scrollHeight - 2) {
+        this.isAutoScrolling.set(false);
+        this.stopAutoScroll();
+        return;
+      }
+      
+      lastTime = time;
+      this.scrollAnimationId = requestAnimationFrame(loop);
+    };
+    
+    // We need to slightly delay the loop start so the button click event doesn't immediately 
+    // trigger the window scroll listener and pause it
+    setTimeout(() => {
+      lastTime = performance.now();
+      this.scrollAnimationId = requestAnimationFrame(loop);
+    }, 50);
+  }
+
+  private stopAutoScroll(): void {
+    if (this.scrollAnimationId) {
+      cancelAnimationFrame(this.scrollAnimationId);
+      this.scrollAnimationId = null;
+    }
+  }
+
+  @HostListener('wheel', ['$event'])
+  onWheelScroll(event: Event) {
+    this.pauseIfUserScrolling();
+  }
+
+  @HostListener('touchmove', ['$event'])
+  onTouchMove(event: Event) {
+    this.pauseIfUserScrolling();
+  }
+
+  private pauseIfUserScrolling() {
+    if (this.isAutoScrolling()) {
+      this.isAutoScrolling.set(false);
+      this.stopAutoScroll();
+    }
+  }
+  // -----------------------
+
   toggleControls(): void {
     this.showControls.update((v) => !v);
   }
 
   toggleTheme(): void {
-    this.isDarkMode.update((v) => !v);
+    this.isDarkMode.update((v) => {
+      const newVal = !v;
+      localStorage.setItem('readerDarkMode', String(newVal));
+      return newVal;
+    });
   }
 
   increaseFont(): void {
     if (this.fontSize() < 28) {
-      this.fontSize.update((v) => v + 2);
+      this.fontSize.update((v) => {
+        const newVal = v + 2;
+        localStorage.setItem('readerFontSize', String(newVal));
+        return newVal;
+      });
     }
   }
 
   decreaseFont(): void {
     if (this.fontSize() > 14) {
-      this.fontSize.update((v) => v - 2);
+      this.fontSize.update((v) => {
+        const newVal = v - 2;
+        localStorage.setItem('readerFontSize', String(newVal));
+        return newVal;
+      });
     }
   }
 

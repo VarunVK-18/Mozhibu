@@ -10,7 +10,11 @@ const ReadingProgress = require("../models/ReadingProgress");
 const { translateBooks } = require("../services/translationService");
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey123";
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is not set.");
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Configure Multer for Avatar Uploads (Memory Storage)
 const storage = multer.memoryStorage();
@@ -305,10 +309,19 @@ router.get("/me/progress", protect, async (req, res) => {
     const booksToTranslate = progress.map((p) => p.book).filter((b) => b);
     await translateBooks(booksToTranslate, targetLang);
 
-    // Convert to plain objects if they aren't, to ensure modified subdocs are serialized correctly
-    // or rely on the previous object manipulation
+    const Chapter = require("../models/Chapter");
+    const progressWithCounts = await Promise.all(
+      progress.map(async (p) => {
+        const plainP = p.toObject();
+        if (plainP.book) {
+          const count = await Chapter.countDocuments({ book: plainP.book._id, status: "published" });
+          plainP.book.chaptersCount = count;
+        }
+        return plainP;
+      })
+    );
 
-    res.json(progress);
+    res.json(progressWithCounts);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server Error" });

@@ -76,10 +76,15 @@ import { AdminPlansComponent } from '../plans/admin-plans.component';
                   <input type="number" [(ngModel)]="importData.year" />
                 </div>
                 <div class="input-group">
+                  <label>Gross Revenue (INR)</label>
+                  <input type="number" [(ngModel)]="importData.grossRevenue" />
+                </div>
+                <div class="input-group">
                   <label>Net Revenue (INR)</label>
                   <input type="number" [(ngModel)]="importData.netRevenue" />
                 </div>
                 <div class="input-group align-bottom">
+                  <label>&nbsp;</label>
                   <button
                     class="btn-primary"
                     (click)="importRevenue()"
@@ -197,7 +202,7 @@ import { AdminPlansComponent } from '../plans/admin-plans.component';
         margin-bottom: 24px;
       }
       .stat-card {
-        background: white;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         padding: 24px;
@@ -215,7 +220,7 @@ import { AdminPlansComponent } from '../plans/admin-plans.component';
       }
 
       .section-card {
-        background: white;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         padding: 24px;
@@ -379,11 +384,7 @@ export class AdminRevenueComponent implements OnInit {
   plans = signal<any[]>([]);
   config = signal<any>(null);
 
-  importData = {
-    month: new Date().getMonth(), // prev month default
-    year: new Date().getFullYear(),
-    netRevenue: 0,
-  };
+  importData = { month: new Date().getMonth(), year: new Date().getFullYear(), grossRevenue: 0, netRevenue: 0 };
 
   // Editing states
   editingPlanId: string | null = null;
@@ -420,12 +421,17 @@ export class AdminRevenueComponent implements OnInit {
 
   importRevenue() {
     if (!this.importData.netRevenue || this.importData.netRevenue <= 0) return;
+    if (!this.importData.grossRevenue || this.importData.grossRevenue < this.importData.netRevenue) {
+      alert('Gross revenue must be greater than or equal to net revenue.');
+      return;
+    }
 
     this.isImporting.set(true);
     // Convert ₹ to paise
     const body = {
       month: this.importData.month,
       year: this.importData.year,
+      grossRevenueInPaise: this.importData.grossRevenue * 100,
       netRevenueInPaise: this.importData.netRevenue * 100,
       source: 'manual',
     };
@@ -508,3 +514,4 @@ export class AdminRevenueComponent implements OnInit {
     });
   }
 }
+

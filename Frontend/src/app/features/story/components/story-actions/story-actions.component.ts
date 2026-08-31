@@ -272,7 +272,7 @@ import { CommonModule } from '@angular/common';
         z-index: 1000;
       }
       .modal-content {
-        background: white;
+        background: var(--card);
         border-radius: var(--radius-l);
         padding: 32px;
         width: 100%;
@@ -412,3 +412,4 @@ export class StoryActionsComponent {
     }, 1500);
   }
 }
+

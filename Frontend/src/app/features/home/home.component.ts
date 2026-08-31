@@ -113,6 +113,21 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
             (loadMore)="loadMoreBooks('popular', 'popular')"
           ></app-story-section>
 
+          <!-- Announcements -->
+          <section class="announcement-section">
+            <div class="section-header">
+              <h2 class="section-title">Announcements</h2>
+            </div>
+            <div class="scroll-container">
+              <div class="announcements-track">
+                <app-announcement-card
+                  *ngFor="let ann of announcements"
+                  [announcement]="ann"
+                ></app-announcement-card>
+              </div>
+            </div>
+          </section>
+
           <div class="ad-banner-wrapper">
             <app-google-ad></app-google-ad>
           </div>
@@ -167,20 +182,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
 
           <app-competition-banner></app-competition-banner>
 
-          <!-- Announcements -->
-          <section class="announcement-section">
-            <div class="section-header">
-              <h2 class="section-title">Announcements</h2>
-            </div>
-            <div class="scroll-container">
-              <div class="announcements-track">
-                <app-announcement-card
-                  *ngFor="let ann of announcements"
-                  [announcement]="ann"
-                ></app-announcement-card>
-              </div>
-            </div>
-          </section>
+
         </div>
       }
     </div>

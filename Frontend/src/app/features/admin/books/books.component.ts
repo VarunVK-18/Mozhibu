@@ -162,7 +162,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         font-family: var(--body);
         font-size: 14px;
         outline: none;
-        background: #fff;
+        background: var(--card);
         cursor: pointer;
       }
 
@@ -171,13 +171,13 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         padding: 48px;
         text-align: center;
         color: var(--ink-soft);
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
       }
 
       .table-container {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         overflow: hidden;
@@ -276,7 +276,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         background: var(--forest-deep);
       }
       .btn-reject {
-        background: #fff;
+        background: var(--card);
         border-color: var(--border-soft);
         color: var(--rose);
       }
@@ -348,3 +348,4 @@ export class BooksComponent implements OnInit {
     }
   }
 }
+

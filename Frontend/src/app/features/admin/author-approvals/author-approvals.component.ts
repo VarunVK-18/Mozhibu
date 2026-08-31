@@ -144,7 +144,7 @@ import {
         padding: 64px;
         text-align: center;
         color: var(--ink-soft);
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
       }
@@ -166,7 +166,7 @@ import {
       }
 
       .table-container {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         overflow: hidden;
@@ -301,3 +301,4 @@ export class AuthorApprovalsComponent implements OnInit {
     }
   }
 }
+

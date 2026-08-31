@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from './api.service';
-import { tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
 
 export interface User {
   id: string;
@@ -40,7 +40,7 @@ export class AuthService {
         },
         error: () => {
           // If cookie is invalid or expired
-          this.logout();
+          this.logout().subscribe();
         },
       });
     }
@@ -80,17 +80,14 @@ export class AuthService {
       .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
-  logout() {
-    this.api.post('/auth/logout', {}).subscribe({
-      next: () => {
+  logout(): Observable<any> {
+    return this.api.post('/auth/logout', {}).pipe(
+      catchError(() => of(null)),
+      tap(() => {
         this.user.set(null);
         localStorage.removeItem('user');
-      },
-      error: () => {
-        this.user.set(null);
-        localStorage.removeItem('user');
-      }
-    });
+      })
+    );
   }
 
   changePassword(data: any): Observable<any> {

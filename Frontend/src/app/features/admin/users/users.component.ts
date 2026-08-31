@@ -132,13 +132,13 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
         padding: 48px;
         text-align: center;
         color: var(--ink-soft);
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
       }
 
       .table-container {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         overflow: hidden;
@@ -233,7 +233,7 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
         background: var(--forest-deep);
       }
       .btn-reject {
-        background: #fff;
+        background: var(--card);
         border-color: var(--border-soft);
         color: var(--rose);
       }
@@ -306,3 +306,4 @@ export class UsersComponent implements OnInit {
     }
   }
 }
+

@@ -108,32 +108,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
             </a>
           </div>
 
-          <div class="nav-section">
-            <h4 class="nav-section-title">Revenue & Subscriptions</h4>
-            <a
-              routerLink="/admin/revenue"
-              routerLinkActive="active"
-              class="nav-item"
-            >
-              <span class="icon">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M18 5h-11h3a4 4 0 0 1 0 8h-3l6 6" />
-                  <path d="M7 9l11 0" />
-                </svg>
-              </span>
-              <span class="label">Revenue</span>
-            </a>
-          </div>
+
 
           <div class="nav-section">
             <h4 class="nav-section-title">User Management</h4>
@@ -237,6 +212,32 @@ import { ConfirmService } from '../../core/services/confirm.service';
               <span class="label">Competition Banner</span>
             </a>
           </div>
+
+          <div class="nav-section">
+            <h4 class="nav-section-title">Settings</h4>
+            <a
+              routerLink="/admin/settings"
+              routerLinkActive="active"
+              class="nav-item"
+            >
+              <span class="icon">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </span>
+              <span class="label">Settings & Coupons</span>
+            </a>
+          </div>
         </nav>
 
         <div class="sidebar-footer">
@@ -332,7 +333,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
       /* Sidebar */
       .admin-sidebar {
         width: 260px;
-        background: #ffffff;
+        background: var(--card);
         border-right: 1px solid var(--border-soft);
         display: flex;
         flex-direction: column;
@@ -510,7 +511,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
       /* Topbar */
       .admin-topbar {
         height: 72px;
-        background: #ffffff;
+        background: var(--card);
         border-bottom: 1px solid var(--border-soft);
         padding: 0 40px;
         display: flex;
@@ -577,7 +578,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
         top: 100%;
         right: 0;
         margin-top: 8px;
-        background: #ffffff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
@@ -673,9 +674,11 @@ export class AdminLayoutComponent {
       .confirm('Log Out', 'Are you sure you want to log out?')
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.authService.logout();
-          this.router.navigate(['/login']);
+          this.authService.logout().subscribe(() => {
+            this.router.navigate(['/login']);
+          });
         }
       });
   }
 }
+

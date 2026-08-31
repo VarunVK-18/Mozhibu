@@ -48,7 +48,9 @@ export class AppComponent {
       .subscribe((event: any) => {
         this.isStandaloneRoute =
           event.urlAfterRedirects.startsWith('/admin') ||
-          event.urlAfterRedirects.startsWith('/read');
+          event.urlAfterRedirects.startsWith('/read') ||
+          event.urlAfterRedirects.startsWith('/login') ||
+          event.urlAfterRedirects.startsWith('/signup');
       });
   }
 }

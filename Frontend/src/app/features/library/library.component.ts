@@ -109,36 +109,6 @@ type LibraryTab =
             >
               Reading History
             </button>
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'completed'"
-              (click)="activeTab.set('completed')"
-            >
-              Completed
-            </button>
-
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'favorites'"
-              (click)="activeTab.set('favorites')"
-            >
-              Favorites
-            </button>
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'collections'"
-              (click)="activeTab.set('collections')"
-            >
-              Collections
-            </button>
-            <button
-              class="tab-btn"
-              *ngIf="authService.user()?.role === 'writer' || authService.user()?.role === 'superadmin'"
-              [class.active]="activeTab() === 'competitions'"
-              (click)="activeTab.set('competitions')"
-            >
-              Competitions
-            </button>
           </div>
         </div>
 
@@ -209,75 +179,7 @@ type LibraryTab =
             ></ng-container>
           </div>
 
-          <!-- COMPLETED -->
-          <div *ngSwitchCase="'completed'">
-            <ng-container
-              *ngTemplateOutlet="
-                storyGrid;
-                context: { list: filteredCompleted }
-              "
-            ></ng-container>
-          </div>
 
-          <!-- COMPETITIONS -->
-          <div *ngSwitchCase="'competitions'">
-            @if (filteredCompetitions.length > 0) {
-              <ng-container
-                *ngTemplateOutlet="
-                  storyGrid;
-                  context: { list: filteredCompetitions }
-                "
-              ></ng-container>
-            } @else {
-              <div class="empty-state">
-                <p>You haven't submitted any stories to a competition yet.</p>
-                <button class="btn-primary" routerLink="/competitions">
-                  View Active Competitions
-                </button>
-              </div>
-            }
-          </div>
-
-
-
-          <!-- FAVORITES -->
-          <div *ngSwitchCase="'favorites'">
-            <ng-container
-              *ngTemplateOutlet="storyGrid; context: { list: [] }"
-            ></ng-container>
-          </div>
-
-          <!-- COLLECTIONS -->
-          <div *ngSwitchCase="'collections'">
-            <div class="empty-state">
-              <div class="empty-icon">
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-              </div>
-              <h2>No Collections Yet</h2>
-              <p>
-                Create playlists of your favorite stories to organize your
-                library.
-              </p>
-              <button
-                class="btn-primary"
-                (click)="alert('Collections coming soon!')"
-              >
-                Create Collection
-              </button>
-            </div>
-          </div>
           </div>
         }
       </div>

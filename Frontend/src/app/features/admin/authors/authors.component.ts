@@ -131,13 +131,13 @@ import {
         padding: 48px;
         text-align: center;
         color: var(--ink-soft);
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
       }
 
       .table-container {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         overflow: hidden;
@@ -231,7 +231,7 @@ import {
         cursor: pointer;
         transition: all 0.2s;
         border: 1px solid var(--border-soft);
-        background: #fff;
+        background: var(--card);
         color: var(--ink);
         text-decoration: none;
       }
@@ -305,3 +305,4 @@ export class AuthorsComponent implements OnInit {
     }
   }
 }
+

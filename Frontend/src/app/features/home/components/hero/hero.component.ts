@@ -82,7 +82,7 @@ import { forkJoin } from 'rxjs';
             >
               <div
                 class="section-loading-progress"
-                style="background: #fff"
+                style="background: var(--card)"
               ></div>
             </div>
           </div>
@@ -210,7 +210,7 @@ import { forkJoin } from 'rxjs';
       .indicator.active {
         width: 24px;
         border-radius: 100px;
-        background: #fff;
+        background: var(--card);
       }
 
       .featured-content {
@@ -295,7 +295,7 @@ import { forkJoin } from 'rxjs';
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: #fff;
+        background: var(--card);
         color: #0f172a;
         font-family: var(--display);
         font-weight: 700;
@@ -551,7 +551,7 @@ import { forkJoin } from 'rxjs';
         .read-btn {
           width: 100%;
           justify-content: center;
-          background: #fff;
+          background: var(--card);
           color: #0f172a;
           border: none;
         }
@@ -732,3 +732,4 @@ export class HeroComponent implements OnInit, OnDestroy {
     }
   }
 }
+

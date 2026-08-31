@@ -52,7 +52,7 @@ textarea {
   border-radius: var(--radius-m);
   font-size: 15px;
   color: var(--ink);
-  background: #fff;
+  background: var(--card);
   transition: all 0.2s ease;
 }
 
@@ -110,7 +110,7 @@ textarea {
   width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: var(--card);
   transition: 0.4s;
   border-radius: 50%;
 }
@@ -326,3 +326,4 @@ input:checked + .slider:before {
 .entry-actions button {
   width: 100%;
 }
+

@@ -34,433 +34,379 @@ export function passwordMatchValidator(
     GoogleSigninButtonModule,
   ],
   template: `
-    <div class="signup-wrap">
-      <div class="signup-card">
-        <h2>Create an Account</h2>
-        <p>Join Mozhibu today.</p>
-
-        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
-          <div class="role-selector">
-            <p class="role-label">What brings you to Mozhibu?</p>
-            <div class="role-options">
-              <label
-                class="role-option"
-                [class.selected]="signupForm.get('role')?.value === 'reader'"
-              >
-                <input type="radio" formControlName="role" value="reader" />
-                <span class="role-icon">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M22 16.7402V4.67019C22 3.47019 21.02 2.58019 19.83 2.68019H19.77C17.67 2.86019 14.48 3.93019 12.7 5.05019L12.53 5.16019C12.24 5.34019 11.76 5.34019 11.47 5.16019L11.22 5.01019C9.44 3.90019 6.26 2.84019 4.16 2.67019C2.97 2.57019 2 3.47019 2 4.66019V16.7402C2 17.7002 2.78 18.6002 3.74 18.7202L4.03 18.7602C6.2 19.0502 9.55 20.1502 11.47 21.2002L11.51 21.2202C11.78 21.3702 12.21 21.3702 12.47 21.2202C14.39 20.1602 17.75 19.0502 19.93 18.7602L20.26 18.7202C21.22 18.6002 22 17.7002 22 16.7402Z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      opacity="0.4"
-                      d="M12 5.49023V20.4902"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      opacity="0.4"
-                      d="M7.75 8.49023H5.5"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      opacity="0.4"
-                      d="M8.5 11.4902H5.5"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span class="role-title">I want to read</span>
-                <span class="role-desc">Discover and read amazing stories</span>
-              </label>
-              <label
-                class="role-option"
-                [class.selected]="signupForm.get('role')?.value === 'writer'"
-              >
-                <input type="radio" formControlName="role" value="writer" />
-                <span class="role-icon">
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M10.5502 3C6.69782 3.00694 4.6805 3.10152 3.39128 4.39073C2 5.78202 2 8.02125 2 12.4997C2 16.9782 2 19.2174 3.39128 20.6087C4.78257 22 7.0218 22 11.5003 22C15.9787 22 18.218 22 19.6093 20.6087C20.8985 19.3195 20.9931 17.3022 21 13.4498"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M11.0556 13C10.3322 3.86635 16.8023 1.27554 21.9805 2.16439C22.1896 5.19136 20.7085 6.32482 17.8879 6.84825C18.4326 7.41736 19.395 8.13354 19.2912 9.02879C19.2173 9.66586 18.7846 9.97843 17.9194 10.6036C16.0231 11.9736 13.8264 12.8375 11.0556 13Z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M9 17C11 11.5 12.9604 9.63636 15 8"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span class="role-title">I want to publish</span>
-                <span class="role-desc">Write and share my own books</span>
-              </label>
-            </div>
+    <div class="split-layout">
+      <!-- Left Panel -->
+      <div class="left-panel">
+        <a routerLink="/" class="logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+          <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 36px; object-fit: contain;" />
+          <div style="display: flex; flex-direction: column; align-items: center;">
+            <span style="font-family: 'Times New Roman', Times, serif; font-size: 20px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 8.5px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; white-space: nowrap;">
+              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
+              IT'S A NOVEL IDEA
+              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
+            </span>
           </div>
+        </a>
+        <div class="tagline-container">
+          <h1 class="tagline">Every reader<br>remembers the story<br>that <i>read them back.</i></h1>
+        </div>
+        <div class="footer">
+          <div class="footer-line"></div>
+          <div class="footer-content">
+            <span>Stories in your language</span>
+            <span>Est. 2023</span>
+          </div>
+        </div>
+      </div>
 
-          <div class="form-row">
+      <!-- Right Panel -->
+      <div class="right-panel">
+        <div style="max-width: 440px; width: 100%;">
+          <a routerLink="/" style="display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='#1e342c'" onmouseout="this.style.color='#666'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Home
+          </a>
+          <div class="signup-card" style="max-width: 100%;">
+          <h2 style="text-align: center;">Create an account</h2>
+          <p style="text-align: center;">Join Mozhibu today.</p>
+
+          <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <input
+                  type="text"
+                  formControlName="username"
+                  class="form-control"
+                  placeholder="Username"
+                  (input)="onUsernameInput($event)"
+                  (blur)="trimField('username')"
+                />
+                <div *ngIf="getErrorMessage('username')" class="field-error">
+                  {{ getErrorMessage('username') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <input
+                  type="text"
+                  formControlName="mobile"
+                  class="form-control"
+                  placeholder="Mobile Number"
+                  maxlength="10"
+                  (input)="onMobileInput($event)"
+                />
+                <div *ngIf="getErrorMessage('mobile')" class="field-error">
+                  {{ getErrorMessage('mobile') }}
+                </div>
+              </div>
+            </div>
+
             <div class="form-group">
               <input
-                type="text"
-                formControlName="username"
+                type="email"
+                formControlName="email"
                 class="form-control"
-                placeholder="Username"
-                (input)="onUsernameInput($event)"
-                (blur)="trimField('username')"
+                placeholder="Email Address"
+                (blur)="trimField('email')"
               />
-              <div *ngIf="getErrorMessage('username')" class="field-error">
-                {{ getErrorMessage('username') }}
+              <div *ngIf="getErrorMessage('email')" class="field-error">
+                {{ getErrorMessage('email') }}
               </div>
             </div>
-            <div class="form-group">
-              <input
-                type="text"
-                formControlName="mobile"
-                class="form-control"
-                placeholder="Mobile Number"
-                (input)="onMobileInput($event)"
-              />
-              <div *ngIf="getErrorMessage('mobile')" class="field-error">
-                {{ getErrorMessage('mobile') }}
+
+            <div class="form-row">
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    formControlName="password"
+                    class="form-control"
+                    placeholder="Password"
+                    maxlength="16"
+                    (input)="onPasswordInput($event)"
+                  />
+                  <button
+                    type="button"
+                    class="eye-btn"
+                    (click)="togglePassword()"
+                  >
+                    <svg *ngIf="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg *ngIf="showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </button>
+                </div>
+                <div *ngIf="getErrorMessage('password')" class="field-error">
+                  {{ getErrorMessage('password') }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <div class="input-wrapper">
+                  <input
+                    [type]="showConfirmPassword ? 'text' : 'password'"
+                    formControlName="confirmPassword"
+                    class="form-control"
+                    placeholder="Confirm Password"
+                    maxlength="16"
+                  />
+                  <button
+                    type="button"
+                    class="eye-btn"
+                    (click)="toggleConfirmPassword()"
+                  >
+                    <svg *ngIf="!showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg *ngIf="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                  </button>
+                </div>
+                <div *ngIf="getErrorMessage('confirmPassword')" class="field-error">
+                  {{ getErrorMessage('confirmPassword') }}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <input
-              type="email"
-              formControlName="email"
-              class="form-control"
-              placeholder="Email Address"
-              (blur)="trimField('email')"
-            />
-            <div *ngIf="getErrorMessage('email')" class="field-error">
-              {{ getErrorMessage('email') }}
+            <div class="form-row">
+              <div class="form-group">
+                <select formControlName="preferredLanguage" class="form-control">
+                  <option value="" disabled>Preferred Language</option>
+                  <option value="en">English</option>
+                  <option value="ta">Tamil</option>
+                  <option value="hi">Hindi</option>
+                  <option value="te">Telugu</option>
+                  <option value="bn">Bengali</option>
+                </select>
+                <div *ngIf="getErrorMessage('preferredLanguage')" class="field-error">
+                  {{ getErrorMessage('preferredLanguage') }}
+                </div>
+              </div>
+              <div class="form-group">
+                <select formControlName="favoriteGenres" class="form-control">
+                  <option value="" disabled>Favorite Genre</option>
+                  <option value="Action">Action</option>
+                  <option value="Romance">Romance</option>
+                  <option value="Sci-Fi">Sci-Fi</option>
+                  <option value="Fantasy">Fantasy</option>
+                  <option value="Mystery">Mystery</option>
+                  <option value="Horror">Horror</option>
+                  <option value="Thriller">Thriller</option>
+                  <option value="Comedy">Comedy</option>
+                  <option value="Drama">Drama</option>
+                </select>
+                <div *ngIf="getErrorMessage('favoriteGenres')" class="field-error">
+                  {{ getErrorMessage('favoriteGenres') }}
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <div class="input-wrapper">
-                <input
-                  [type]="showPassword ? 'text' : 'password'"
-                  formControlName="password"
-                  class="form-control"
-                  placeholder="Password"
-                  maxlength="16"
-                  (input)="onPasswordInput($event)"
-                />
+            <div *ngIf="errorMessage && errorMessage !== 'Please fill out all mandatory details correctly.'" class="error-msg">
+              {{ errorMessage }}
+            </div>
+
+            <div class="form-group" style="margin-top: 16px; margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" formControlName="isAgeChecked" style="width: 16px; height: 16px; cursor: pointer;">
+                I am above 18+
+              </label>
+            </div>
+
+            <div class="form-group" *ngIf="signupForm.get('isAgeChecked')?.value" style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px;">Date of Birth</label>
+              <input type="date" formControlName="dob" class="form-control" style="width: 100%;">
+              <div *ngIf="ageError" class="field-error" style="margin-top: 4px; color: #e53935; font-size: 12px;">
+                {{ ageError }}
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isAgeVerified">
+              {{ isLoading ? 'Creating account...' : 'Create account' }}
+            </button>
+
+            <div class="divider">
+              <span>OR</span>
+            </div>
+
+            <div class="social-login-wrapper" style="position: relative; width: 100%;">
+              <!-- Overlay to block clicks when age not verified -->
+              <div 
+                *ngIf="!isAgeVerified" 
+                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; cursor: not-allowed;"
+                (click)="onSocialLoginOverlayClick()"
+                title="Please check the 18+ box and enter your date of birth first"
+              ></div>
+
+              <div class="social-login" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+                <div style="width: 200px; height: 32px; overflow: hidden; border-radius: 4px; background-color: white; position: relative;">
+                  <div style="position: absolute; top: -4px; left: -4px; width: 208px; height: 40px;">
+                    <asl-google-signin-button
+                      type="standard"
+                      size="large"
+                      text="signup_with"
+                      shape="rectangular"
+                      theme="outline"
+                      [width]="208"
+                    ></asl-google-signin-button>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  class="eye-btn"
-                  (click)="togglePassword()"
+                  class="btn-social fb-btn"
+                  style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 200px; height: 32px; box-sizing: border-box; background-color: white; color: #333; border: none; outline: none; border-radius: 4px; padding: 0 10px; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: none;"
+                  (click)="onFacebookLoginClick()"
+                  [disabled]="!isAgeVerified"
+                  [style.opacity]="!isAgeVerified ? '0.5' : '1'"
                 >
-                  <svg
-                    *ngIf="!showPassword"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="12" r="3"></circle>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877f2">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm3.2 12h-1.8v8h-3.2v-8H8.5V9.5h1.7V7.6c0-2.3 1.4-3.6 3.5-3.6 1 0 1.8.1 2.1.1v2.4h-1.4c-1.1 0-1.3.5-1.3 1.3v1.7h2.7l-.4 2.5z"/>
                   </svg>
-                  <svg
-                    *ngIf="showPassword"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                    ></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
+                  <span>Facebook</span>
                 </button>
               </div>
-              <div *ngIf="getErrorMessage('password')" class="field-error">
-                {{ getErrorMessage('password') }}
-              </div>
             </div>
+          </form>
 
-            <div class="form-group">
-              <div class="input-wrapper">
-                <input
-                  [type]="showConfirmPassword ? 'text' : 'password'"
-                  formControlName="confirmPassword"
-                  class="form-control"
-                  placeholder="Confirm Password"
-                  maxlength="16"
-                />
-                <button
-                  type="button"
-                  class="eye-btn"
-                  (click)="toggleConfirmPassword()"
-                >
-                  <svg
-                    *ngIf="!showConfirmPassword"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                  <svg
-                    *ngIf="showConfirmPassword"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
-                    ></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                </button>
-              </div>
-              <div *ngIf="getErrorMessage('confirmPassword')" class="field-error">
-                {{ getErrorMessage('confirmPassword') }}
-              </div>
-            </div>
+          <div class="login-link">
+            Already have an account?
+            <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }"
+              >Log in</a
+            >
           </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <select formControlName="preferredLanguage" class="form-control">
-                <option value="" disabled>Select language</option>
-                <option value="en">English</option>
-                <option value="ta">Tamil</option>
-                <option value="hi">Hindi</option>
-                <option value="te">Telugu</option>
-                <option value="bn">Bengali</option>
-              </select>
-              <div *ngIf="getErrorMessage('preferredLanguage')" class="field-error">
-                {{ getErrorMessage('preferredLanguage') }}
-              </div>
-            </div>
-            <div class="form-group">
-              <select formControlName="favoriteGenres" class="form-control">
-                <option value="" disabled>Select a genre</option>
-                <option value="Action">Action</option>
-                <option value="Romance">Romance</option>
-                <option value="Sci-Fi">Sci-Fi</option>
-                <option value="Fantasy">Fantasy</option>
-                <option value="Mystery">Mystery</option>
-                <option value="Horror">Horror</option>
-                <option value="Thriller">Thriller</option>
-                <option value="Comedy">Comedy</option>
-                <option value="Drama">Drama</option>
-              </select>
-              <div *ngIf="getErrorMessage('favoriteGenres')" class="field-error">
-                {{ getErrorMessage('favoriteGenres') }}
-              </div>
-            </div>
           </div>
-
-          <div *ngIf="errorMessage && errorMessage !== 'Please fill out all mandatory details correctly.'" class="error-msg">
-            {{ errorMessage }}
-          </div>
-
-          <button type="submit" class="btn btn-primary" [disabled]="isLoading">
-            {{ isLoading ? 'Creating account...' : 'Sign Up' }}
-          </button>
-
-          <div class="divider">
-            <span>OR</span>
-          </div>
-
-          <div class="social-login">
-            <asl-google-signin-button
-              type="standard"
-              size="large"
-              text="signup_with"
-              shape="rectangular"
-              theme="outline"
-            ></asl-google-signin-button>
-          </div>
-        </form>
-
-        <div class="login-link">
-          Already have an account?
-          <a [routerLink]="['/login']" [queryParams]="{ returnUrl: returnUrl }"
-            >Log in</a
-          >
         </div>
       </div>
     </div>
   `,
   styles: [
     `
-      .signup-wrap {
+      :host {
+        display: block;
+        min-height: 100vh;
+        background: #faf9f5;
+        font-family: 'Inter', Roboto, sans-serif;
+      }
+      .split-layout {
         display: flex;
-        justify-content: center;
+        min-height: 100vh;
+      }
+      .left-panel {
+        flex: 1;
+        background-color: #1e342c;
+        color: #f5f5f5;
+        padding: 40px 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .logo {
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+      .logo b {
+        font-weight: 700;
+        margin-right: 4px;
+      }
+      .tagline-container {
+        display: flex;
         align-items: center;
-        min-height: calc(100vh - 150px);
-        background: var(--paper);
-        padding: 40px 20px;
+        flex: 1;
+      }
+      .tagline {
+        font-family: 'Merriweather', Georgia, serif;
+        font-size: 42px;
+        line-height: 1.3;
+        font-weight: 400;
+        margin: 0;
+      }
+      .tagline i {
+        font-style: italic;
+      }
+      .footer {
+        width: 100%;
+      }
+      .footer-line {
+        height: 1px;
+        background-color: rgba(255, 255, 255, 0.2);
+        margin-bottom: 16px;
+      }
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      .right-panel {
+        flex: 1.2;
+        background-color: var(--paper, #faf9f5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
       }
       .signup-card {
-        background: var(--card);
+        background: var(--card, #fff);
         padding: 40px 48px;
-        border-radius: var(--radius-l);
-        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-l, 12px);
+        border: 1px solid var(--border-soft, #ebebeb);
         box-shadow: 0 10px 30px -10px rgba(43, 38, 32, 0.1);
-        max-width: 600px;
+        max-width: 460px;
         width: 100%;
       }
       .signup-card h2 {
         margin-bottom: 8px;
-        font-family: var(--display);
+        font-family: var(--display, 'Merriweather', serif);
         font-size: 24px;
         text-align: center;
       }
       .signup-card p {
-        color: var(--ink-soft);
+        color: var(--ink-soft, #666);
         margin-bottom: 24px;
         font-size: 14px;
         text-align: center;
       }
-
-      .role-selector {
-        margin-bottom: 24px;
-      }
-      .role-label {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--ink);
-        margin-bottom: 12px !important;
-        text-align: left !important;
-      }
-      .role-options {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-      .role-option {
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius-m);
-        padding: 16px;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        transition: all 0.2s;
-        background: #fff;
-      }
-      .role-option:hover {
-        border-color: var(--border);
-      }
-      .role-option.selected {
-        border-color: var(--forest);
-        background: var(--forest-tint);
-      }
-      .role-option input {
-        display: none;
-      }
-      .role-icon {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 8px;
-        color: var(--ink-soft);
-      }
-      .role-option.selected .role-icon {
-        color: var(--forest-deep);
-      }
-      .role-title {
-        font-family: var(--display);
-        font-weight: 600;
-        font-size: 15px;
-        color: var(--ink);
-        margin-bottom: 4px;
-      }
-      .role-desc {
-        font-size: 11px;
-        color: var(--ink-soft);
-        line-height: 1.3;
-      }
-
       .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: 12px;
       }
       .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 12px;
+        position: relative;
       }
       .form-control {
         width: 100%;
-        padding: 12px 14px;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius-s);
-        font-family: var(--body);
-        font-size: 14px;
+        padding: 10px 14px;
+        border: 1px solid var(--border-soft, #dcdcdc);
+        border-radius: var(--radius-s, 6px);
+        font-family: var(--body, inherit);
+        font-size: 13px;
+        color: #111;
         transition: all 0.2s;
+        box-sizing: border-box;
+      }
+      .form-control::placeholder {
+        color: #bbb;
       }
       .form-control:focus {
         outline: none;
-        border-color: var(--gold);
+        border-color: var(--gold, #d4af37);
+      }
+      select.form-control {
+        padding: 8px 0;
+        color: #111;
       }
       .input-wrapper {
         position: relative;
@@ -468,98 +414,136 @@ export function passwordMatchValidator(
         align-items: center;
       }
       .input-wrapper .form-control {
-        padding-right: 40px;
+        padding-right: 60px;
       }
       .eye-btn {
         position: absolute;
-        right: 12px;
+        right: 8px;
         background: none;
         border: none;
-        color: var(--ink-faint);
+        color: #999;
         cursor: pointer;
         display: flex;
         align-items: center;
-        padding: 0;
+        padding: 4px;
         transition: color 0.2s;
       }
       .eye-btn:hover {
-        color: var(--ink);
+        color: #111;
       }
-      .field-error {
-        color: var(--rose);
+      .field-error, .validation-error {
+        color: #d32f2f;
         font-size: 11px;
-        margin-top: 6px;
-        line-height: 1.3;
-        display: block;
+        margin-top: 2px;
       }
       .error-msg {
-        color: var(--rose);
-        font-size: 13px;
-        margin-bottom: 16px;
-        text-align: center;
-        background: var(--rose-tint);
+        color: #d32f2f;
+        font-size: 12px;
+        margin-bottom: 12px;
         padding: 8px;
+        background: #fde8e8;
         border-radius: 4px;
       }
       .btn {
         width: 100%;
-        margin-top: 8px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
       }
-      .btn:disabled {
-        opacity: 0.6;
+      .btn-primary {
+        background-color: #1e342c;
+        color: white;
+        margin-top: 4px;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background-color: #15251f;
+      }
+      .btn-primary:disabled {
+        opacity: 0.7;
         cursor: not-allowed;
-      }
-      .login-link {
-        margin-top: 24px;
-        text-align: center;
-        font-size: 14px;
-        color: var(--ink-soft);
-      }
-      .login-link a {
-        color: var(--forest);
-        font-weight: 600;
-        text-decoration: none;
-      }
-      .login-link a:hover {
-        text-decoration: underline;
       }
       .divider {
         display: flex;
         align-items: center;
-        text-align: center;
-        margin: 24px 0;
-        color: var(--ink-faint);
+        margin: 16px 0;
+        color: #999;
       }
       .divider::before,
       .divider::after {
         content: '';
         flex: 1;
-        border-bottom: 1px solid var(--border-soft);
+        border-bottom: 1px solid #e0e0e0;
       }
       .divider span {
-        padding: 0 10px;
-        font-size: 12px;
-        font-weight: 500;
+        padding: 0 12px;
+        font-size: 11px;
       }
       .social-login {
         display: flex;
-        justify-content: center;
-        margin-bottom: 16px;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
       }
-      @media (max-width: 600px) {
-        .signup-wrap {
+      .google-btn-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+      .btn-social {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        background-color: white;
+        color: #333;
+        border: none;
+        border-radius: 4px;
+        padding: 8px;
+        font-family: Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .btn-social:hover {
+        background-color: #f8f9fa;
+      }
+      .login-link {
+        margin-top: 16px;
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+      }
+      .login-link a {
+        color: #111;
+        font-weight: 600;
+        text-decoration: none;
+        margin-left: 4px;
+        border-bottom: 1px solid #111;
+      }
+      .login-link a:hover {
+        color: #1e342c;
+        border-bottom-color: #1e342c;
+      }
+      
+      @media (max-width: 768px) {
+        .split-layout {
+          flex-direction: column;
+        }
+        .left-panel {
+          display: none;
+        }
+        .right-panel {
           padding: 24px 16px;
         }
         .signup-card {
           padding: 32px 24px;
-        }
-        .form-row {
-          grid-template-columns: 1fr;
-          gap: 0;
-        }
-        .role-options {
-          grid-template-columns: 1fr;
-          gap: 12px;
         }
       }
     `,
@@ -650,6 +634,8 @@ export class SignupComponent implements OnInit {
       preferredLanguage: ['', Validators.required],
       favoriteGenres: ['', Validators.required],
       role: ['reader', Validators.required],
+      isAgeChecked: [false, Validators.requiredTrue],
+      dob: ['', Validators.required],
     },
     { validators: passwordMatchValidator }
   );
@@ -658,6 +644,42 @@ export class SignupComponent implements OnInit {
   isLoading = false;
   showPassword = false;
   showConfirmPassword = false;
+
+  get isAgeVerified(): boolean {
+    const isChecked = this.signupForm.get('isAgeChecked')?.value;
+    const dobValue = this.signupForm.get('dob')?.value;
+    if (!isChecked || !dobValue) return false;
+
+    const dob = new Date(dobValue);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    
+    return age >= 18;
+  }
+
+  get ageError(): string {
+    const isChecked = this.signupForm.get('isAgeChecked')?.value;
+    const dobValue = this.signupForm.get('dob')?.value;
+    if (isChecked && dobValue && !this.isAgeVerified) {
+      return 'You must be at least 18 years old to sign up.';
+    }
+    return '';
+  }
+
+  onSocialLoginOverlayClick() {
+    if (!this.signupForm.get('isAgeChecked')?.value) {
+      this.errorMessage = 'Please check the "I am above 18+" box and enter your date of birth.';
+    } else if (!this.signupForm.get('dob')?.value) {
+      this.errorMessage = 'Please enter your date of birth to verify your age.';
+    } else if (!this.isAgeVerified) {
+      this.errorMessage = 'You must be at least 18 years old to sign up.';
+    }
+  }
 
   onUsernameInput(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -792,5 +814,9 @@ export class SignupComponent implements OnInit {
         }
       },
     });
+  }
+
+  onFacebookLoginClick() {
+    alert('Facebook Login UI added! Waiting for App ID to finish integration.');
   }
 }

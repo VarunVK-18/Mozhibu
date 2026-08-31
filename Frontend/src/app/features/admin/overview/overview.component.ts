@@ -386,7 +386,7 @@ import { Router } from '@angular/router';
       }
 
       .card-panel {
-        background: #ffffff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-l);
         padding: 32px;
@@ -409,7 +409,7 @@ import { Router } from '@angular/router';
       }
 
       .stat-card {
-        background: #ffffff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-l);
         padding: 24px;
@@ -576,7 +576,7 @@ import { Router } from '@angular/router';
         position: absolute;
         top: 100%;
         right: 0;
-        background: white;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -793,8 +793,9 @@ export class OverviewComponent implements OnInit {
   }
 
   forceLogout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe(() => {
+      window.location.href = '/login';
+    });
   }
 
   // Calculate simple trend percentage vs previous month
@@ -881,3 +882,4 @@ export class OverviewComponent implements OnInit {
     return path;
   }
 }
+

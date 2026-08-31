@@ -151,7 +151,7 @@ import { SubscriptionService } from '../../core/services/subscription.service';
     `
       .sub-page {
         min-height: 100vh;
-        background: #ffffff;
+        background: var(--card);
         color: #111827;
         padding-bottom: 80px;
       }
@@ -340,7 +340,7 @@ import { SubscriptionService } from '../../core/services/subscription.service';
         border-top: 1px solid #e5e7eb;
         font-size: 14px;
         align-items: center;
-        background: #ffffff;
+        background: var(--card);
       }
       .table-row:hover {
         background: #f3f4f6;
@@ -439,3 +439,4 @@ export class SubscriptionMeComponent implements OnInit {
     }
   }
 }
+

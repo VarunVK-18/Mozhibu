@@ -195,7 +195,7 @@ declare var Razorpay: any;
 
       .plans-page {
         min-height: 100vh;
-        background: #ffffff;
+        background: var(--card);
         color: #111827;
         font-family: 'Inter', system-ui, sans-serif;
         padding: 80px 0;
@@ -261,7 +261,7 @@ declare var Razorpay: any;
       }
 
       .plan-card {
-        background: #ffffff;
+        background: var(--card);
         border: 1px solid #f3f4f6;
         border-radius: 24px;
         padding: 40px 32px;
@@ -695,3 +695,4 @@ export class SubscriptionPlansComponent implements OnInit {
       });
   }
 }
+

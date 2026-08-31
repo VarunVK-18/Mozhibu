@@ -175,7 +175,7 @@ import {
         padding: 48px;
         text-align: center;
         color: var(--ink-soft);
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
       }
@@ -189,7 +189,7 @@ import {
 
       /* Sidebar */
       .profile-card {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         padding: 32px 24px;
@@ -261,7 +261,7 @@ import {
         text-align: center;
       }
       .btn-suspend {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft) !important;
         color: var(--rose) !important;
       }
@@ -335,7 +335,7 @@ import {
 
       /* Content */
       .profile-content {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         padding: 32px;
@@ -520,3 +520,4 @@ export class AuthorDetailComponent implements OnInit {
     }
   }
 }
+

@@ -270,10 +270,10 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'revenue',
+        path: 'settings',
         loadComponent: () =>
-          import('./features/admin/revenue/admin-revenue.component').then(
-            (m) => m.AdminRevenueComponent,
+          import('./features/admin/settings/settings.component').then(
+            (m) => m.AdminSettingsComponent,
           ),
       },
     ],

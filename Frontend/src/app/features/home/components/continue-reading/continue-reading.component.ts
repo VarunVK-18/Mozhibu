@@ -47,7 +47,7 @@ export class ContinueReadingComponent implements OnInit {
                 initials: p.book.title.substring(0, 2).toUpperCase(),
                 colorClass: `cv-${(index % 8) + 1}`,
                 title: p.book.title,
-                meta: `Chapter ${p.currentChapter?.order || 1} of ${p.book.chapters?.length || 20} · ${p.book.genre || 'Story'}`,
+                meta: `Chapter ${p.currentChapter?.order || 1} of ${p.book.chaptersCount || 1} · ${p.book.genre || 'Story'}`,
                 progress: p.progressPercentage || 0,
                 cover: p.book.cover,
               }));

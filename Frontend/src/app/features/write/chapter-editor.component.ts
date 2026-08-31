@@ -123,8 +123,11 @@ import { environment } from '../../../environments/environment';
             >
               <option value="inherit">Follow Book Settings</option>
               <option value="free">Free for Everyone</option>
-              <option value="premium">Premium (Subscribers Only)</option>
+              <option value="premium" [disabled]="!isPremiumAllowed">Premium (Subscribers Only)</option>
             </select>
+            <div *ngIf="!isPremiumAllowed" style="font-size: 12px; color: #666; margin-top: 4px;">
+              Premium access is only available for Chapter 6 and beyond.
+            </div>
           </div>
 
           <div class="form-group">
@@ -730,13 +733,18 @@ export class ChapterEditorComponent implements OnInit {
 
   @ViewChild('editor') editorRef!: ElementRef<HTMLDivElement>;
 
-  bookId: string | null = null;
+bookId: string | null = null;
   bookTitle = '';
   chapterId: string | null = null;
 
   chapterTitle = '';
   editorContent = '';
   accessType = 'inherit';
+  chapterOrder = 0;
+
+  get isPremiumAllowed(): boolean {
+    return this.chapterOrder > 5;
+  }
   season = 1;
   scheduledAt: string = '';
 
@@ -976,6 +984,18 @@ export class ChapterEditorComponent implements OnInit {
       next: (book) => (this.bookTitle = book.title),
       error: () => (this.bookTitle = 'Unknown Book'),
     });
+    
+    if (!this.chapterId) {
+      this.bookService.getChapters(id).subscribe({
+        next: (chapters) => {
+          this.chapterOrder = (chapters?.length || 0) + 1;
+          if (!this.isPremiumAllowed && this.accessType === 'premium') {
+            this.accessType = 'inherit';
+          }
+        },
+        error: () => {}
+      });
+    }
   }
 
   fetchChapterDetails(bookId: string, chapterId: string) {
@@ -986,6 +1006,11 @@ export class ChapterEditorComponent implements OnInit {
         this.accessType = chapter.accessType || 'inherit';
         this.season = chapter.season || 1;
         this.scheduledAt = chapter.scheduledAt || '';
+        this.chapterOrder = chapter.order || 0;
+        
+        if (!this.isPremiumAllowed && this.accessType === 'premium') {
+          this.accessType = 'inherit';
+        }
 
         if (chapter.cover) {
           const baseUrl = environment.apiUrl.replace('/api', '');
@@ -1104,7 +1129,7 @@ export class ChapterEditorComponent implements OnInit {
     this.isTamilTypingEnabled = !this.isTamilTypingEnabled;
   }
 
-  onEditorKeyDown(event: KeyboardEvent) {
+  async onEditorKeyDown(event: KeyboardEvent) {
     if (!this.isTamilTypingEnabled) return;
 
     if (event.key === ' ' || event.key === 'Enter') {
@@ -1123,7 +1148,14 @@ export class ChapterEditorComponent implements OnInit {
           event.preventDefault(); // prevent the space/enter from being added before we replace
 
           const englishWord = match[0];
-          const tamilWord = this.transliterateToTamil(englishWord);
+          let tamilWord = '';
+          
+          try {
+            tamilWord = await this.transliterateWord(englishWord);
+          } catch (e) {
+            console.error('Google Input API failed, falling back to local transliteration', e);
+            tamilWord = this.transliterateToTamil(englishWord);
+          }
 
           const fullText = textNode.textContent || '';
           const beforeWord = fullText.substring(
@@ -1153,6 +1185,18 @@ export class ChapterEditorComponent implements OnInit {
         }
       }
     }
+  }
+
+  async transliterateWord(word: string): Promise<string> {
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const url = `${baseUrl}/api/tools/transliterate?text=${encodeURIComponent(word)}&itc=ta-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    if (data && data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1] && data[1][0][1].length > 0) {
+      return data[1][0][1][0]; // Return the first suggestion
+    }
+    throw new Error('No transliteration found');
   }
 
   // --- Inline Image Compression & Upload ---

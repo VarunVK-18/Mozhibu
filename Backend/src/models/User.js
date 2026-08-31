@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema(
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     mobile: { type: String, required: true },
-    password: { type: String }, // Optional for oauth, but required for 'normal'
+    password: { type: String, select: false }, // Optional for oauth, but required for 'normal'
     preferredLanguage: { type: String, required: true },
     favoriteGenres: { type: [String], required: true },
     authProvider: {
@@ -33,8 +33,8 @@ const UserSchema = new mongoose.Schema(
     bio: { type: String, default: "" },
     savedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    resetPasswordToken: { type: String },
-    resetPasswordExpire: { type: Date },
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpire: { type: Date, select: false },
   },
   {
     timestamps: true,

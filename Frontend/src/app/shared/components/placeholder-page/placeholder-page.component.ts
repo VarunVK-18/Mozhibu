@@ -78,7 +78,7 @@ import { FormsModule } from '@angular/forms';
       .placeholder-content {
         max-width: 500px;
         text-align: center;
-        background: white;
+        background: var(--card);
         padding: 48px;
         border-radius: var(--radius-l);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
@@ -191,3 +191,4 @@ export class PlaceholderPageComponent implements OnInit {
     }
   }
 }
+

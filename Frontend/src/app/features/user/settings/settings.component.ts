@@ -8,6 +8,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-settings',
@@ -135,6 +136,10 @@ import { ConfirmService } from '../../../core/services/confirm.service';
               <div class="value">{{ auth.user()?.email }}</div>
             </div>
             <div class="info-group">
+              <label>Phone Number</label>
+              <div class="value">{{ auth.user()?.mobile || 'Not provided' }}</div>
+            </div>
+            <div class="info-group">
               <label>Current Role</label>
               <div class="value role-badge" [ngClass]="auth.user()?.role">
                 {{ auth.user()?.role }}
@@ -171,150 +176,92 @@ import { ConfirmService } from '../../../core/services/confirm.service';
 
           <!-- Account Controls & Upgrade -->
           <div class="settings-group" *ngIf="activeTab() === 'account'">
-            <!-- Become an Author Section -->
-            @if (
-              auth.user()?.role === 'reader' &&
-              auth.user()?.authorStatus !== 'pending'
-            ) {
-              <div class="settings-card author-upgrade">
-                <div class="upgrade-icon">
-                  <svg
-                    width="40"
-                    height="40"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M10.5502 3C6.69782 3.00694 4.6805 3.10152 3.39128 4.39073C2 5.78202 2 8.02125 2 12.4997C2 16.9782 2 19.2174 3.39128 20.6087C4.78257 22 7.0218 22 11.5003 22C15.9787 22 18.218 22 19.6093 20.6087C20.8985 19.3195 20.9931 17.3022 21 13.4498"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M11.0556 13C10.3322 3.86635 16.8023 1.27554 21.9805 2.16439C22.1896 5.19136 20.7085 6.32482 17.8879 6.84825C18.4326 7.41736 19.395 8.13354 19.2912 9.02879C19.2173 9.66586 18.7846 9.97843 17.9194 10.6036C16.0231 11.9736 13.8264 12.8375 11.0556 13Z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M9 17C11 11.5 12.9604 9.63636 15 8"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </div>
-                <h3>Become an Author</h3>
-                <p>
-                  Want to publish your own stories on Mozhibu? Upgrade your
-                  account to an Author for free and get access to the Author
-                  Studio.
-                </p>
+            <!-- Theme Preferences -->
+            <div class="settings-card">
+              <h3>Theme Preferences</h3>
+              <p>Customize the appearance of the application.</p>
+              
+              <div class="theme-toggle-container" style="display: flex; align-items: center; gap: 16px; margin-top: 16px;">
+                <span>Dark Mode</span>
+                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                  <input type="checkbox" [checked]="themeService.isDarkMode()" (change)="themeService.toggleTheme()" style="opacity: 0; width: 0; height: 0;">
+                  <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
+                    <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: var(--card); transition: .4s; border-radius: 50%;"
+                          [style.transform]="themeService.isDarkMode() ? 'translateX(26px)' : 'translateX(0)'"
+                          [style.backgroundColor]="themeService.isDarkMode() ? 'var(--forest)' : 'white'"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
 
+            <!-- Author Status -->
+            <div class="settings-card">
+              <h3>Author Status</h3>
+              
+              @if (auth.user()?.role === 'writer' || auth.user()?.role === 'superadmin') {
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--forest); font-weight: 500;">Author Studio Active</span>
+                    <div class="info-icon custom-tooltip" style="color: var(--forest); cursor: help; position: relative;" data-tooltip="You already have author privileges! Head over to the Author Studio to publish and manage your books.">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2 4-4"></path></svg>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline" routerLink="/write" style="padding: 6px 12px; font-size: 13px;">
+                    Go to Studio
+                  </button>
+                </div>
+              } @else {
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>{{ auth.user()?.authorStatus === 'pending' ? 'Request Pending' : 'Become an Author' }}</span>
+                    <div class="info-icon custom-tooltip" style="color: var(--ink-soft); cursor: help; position: relative;" data-tooltip="Want to publish your own stories on Mozhibu? Upgrade your account to an Author for free and get access to the Author Studio.">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                  </div>
+                  
+                  <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;" [style.opacity]="auth.user()?.authorStatus === 'pending' || loading() ? '0.6' : '1'">
+                    <input type="checkbox" 
+                           [checked]="auth.user()?.authorStatus === 'pending'" 
+                           [disabled]="auth.user()?.authorStatus === 'pending' || loading()"
+                           (change)="upgradeToAuthor()" 
+                           style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider round" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;" [style.cursor]="auth.user()?.authorStatus === 'pending' || loading() ? 'not-allowed' : 'pointer'">
+                      <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"
+                            [style.transform]="(auth.user()?.authorStatus === 'pending') ? 'translateX(26px)' : 'translateX(0)'"
+                            [style.backgroundColor]="(auth.user()?.authorStatus === 'pending') ? 'var(--forest)' : 'white'"></span>
+                    </span>
+                  </label>
+                </div>
                 @if (errorMsg()) {
-                  <div class="error-msg">{{ errorMsg() }}</div>
+                  <div class="error-msg" style="margin-top: 12px; font-size: 12px; color: var(--rose);">{{ errorMsg() }}</div>
                 }
-
-                <button
-                  (click)="upgradeToAuthor()"
-                  class="btn btn-primary upgrade-btn"
-                  [disabled]="loading()"
-                >
-                  {{ loading() ? 'Requesting...' : 'Request Author Status' }}
-                </button>
-              </div>
-            } @else if (
-              auth.user()?.role === 'reader' &&
-              auth.user()?.authorStatus === 'pending'
-            ) {
-              <div class="settings-card author-pending">
-                <div class="upgrade-icon">
-                  <svg
-                    width="40"
-                    height="40"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </div>
-                <h3>Request Pending</h3>
-                <p>
-                  Your request to become an author is currently pending admin
-                  approval. You will gain access to the Author Studio once
-                  approved.
-                </p>
-                <button class="btn btn-outline upgrade-btn" disabled>
-                  Request Pending Admin Approval
-                </button>
-              </div>
-            } @else if (
-              auth.user()?.role === 'writer' ||
-              auth.user()?.role === 'superadmin'
-            ) {
-              <div class="settings-card author-active">
-                <div class="upgrade-icon">
-                  <svg
-                    width="40"
-                    height="40"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
-                </div>
-                <h3>Author Studio Active</h3>
-                <p>
-                  You already have author privileges! Head over to the Author
-                  Studio to publish and manage your books.
-                </p>
-                <button class="btn-outline" routerLink="/write">
-                  Go to Author Studio
-                </button>
-              </div>
-            }
+              }
+            </div>
 
             <!-- Security Settings -->
             <div class="settings-card security-settings">
               <h3>Security Settings</h3>
               <p class="section-desc">Update your password to keep your account secure.</p>
               
-              <div class="form-group" style="margin-bottom: 16px; position: relative;">
-                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Old Password</label>
-                <input [type]="showOldPassword() ? 'text' : 'password'" class="form-control" [ngModel]="oldPassword()" (ngModelChange)="oldPassword.set($event)" style="padding-right: 40px;">
-                <button (click)="showOldPassword.set(!showOldPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
-                  <svg *ngIf="!showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  <svg *ngIf="showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              <div class="form-group" style="margin-bottom: 12px; position: relative; max-width: 360px;">
+                <input [type]="showOldPassword() ? 'text' : 'password'" placeholder="Old Password" class="form-control" [ngModel]="oldPassword()" (ngModelChange)="oldPassword.set($event)" style="padding-right: 40px; padding-top: 8px; padding-bottom: 8px;">
+                <button (click)="showOldPassword.set(!showOldPassword())" style="position: absolute; right: 8px; top: 8px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showOldPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 </button>
               </div>
-              <div class="form-group" style="margin-bottom: 16px; position: relative;">
-                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">New Password</label>
-                <input [type]="showNewPassword() ? 'text' : 'password'" class="form-control" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" style="padding-right: 40px;">
-                <button (click)="showNewPassword.set(!showNewPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
-                  <svg *ngIf="!showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  <svg *ngIf="showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              <div class="form-group" style="margin-bottom: 12px; position: relative; max-width: 360px;">
+                <input [type]="showNewPassword() ? 'text' : 'password'" placeholder="New Password" class="form-control" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" style="padding-right: 40px; padding-top: 8px; padding-bottom: 8px;">
+                <button (click)="showNewPassword.set(!showNewPassword())" style="position: absolute; right: 8px; top: 8px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showNewPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 </button>
               </div>
-              <div class="form-group" style="margin-bottom: 16px; position: relative;">
-                <label style="display: block; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Confirm New Password</label>
-                <input [type]="showConfirmPassword() ? 'text' : 'password'" class="form-control" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" style="padding-right: 40px;">
-                <button (click)="showConfirmPassword.set(!showConfirmPassword())" style="position: absolute; right: 10px; top: 28px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
-                  <svg *ngIf="!showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                  <svg *ngIf="showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              <div class="form-group" style="margin-bottom: 16px; position: relative; max-width: 360px;">
+                <input [type]="showConfirmPassword() ? 'text' : 'password'" placeholder="Confirm New Password" class="form-control" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" style="padding-right: 40px; padding-top: 8px; padding-bottom: 8px;">
+                <button (click)="showConfirmPassword.set(!showConfirmPassword())" style="position: absolute; right: 8px; top: 8px; background: none; border: none; cursor: pointer; color: var(--ink-soft);">
+                  <svg *ngIf="!showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  <svg *ngIf="showConfirmPassword()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 </button>
               </div>
               
@@ -335,49 +282,34 @@ import { ConfirmService } from '../../../core/services/confirm.service';
               </div>
             </div>
 
-            <!-- Account Controls (Danger Zone) -->
-            <div class="settings-card danger-zone">
-              <h3>Danger Zone</h3>
-              <p class="section-desc">
-                Temporary deactivation or permanent deletion of your account.
-                These actions cannot be easily undone.
-              </p>
-
-              <div class="control-row">
-                <div class="control-text">
-                  <h4>Deactivate Account</h4>
-                  <p>
-                    Temporarily disable your account. Your profile and published
-                    stories will be hidden. You can reactivate anytime by
-                    logging back in.
-                  </p>
+            <!-- Account Status -->
+            <div class="settings-card">
+              <h3>Account Status</h3>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span>Deactivate Account</span>
+                  <div class="info-icon custom-tooltip" style="color: var(--ink-soft); cursor: help; position: relative;" data-tooltip="Temporarily disable your account. Your profile and published stories will be hidden. You can reactivate anytime by logging back in.">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
                 </div>
-                <button
-                  class="btn btn-warning"
-                  (click)="deactivateAccount()"
-                  [disabled]="deactivating() || deleting()"
-                >
-                  {{
-                    deactivating() ? 'Deactivating...' : 'Deactivate Account'
-                  }}
-                </button>
+                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
+                  <input type="checkbox" [checked]="false" (click)="deactivateAccount($event)" style="opacity: 0; width: 0; height: 0;">
+                  <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
+                    <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; transform: translateX(0);"></span>
+                  </span>
+                </label>
               </div>
 
-              <div class="control-row border-top">
-                <div class="control-text">
-                  <h4>Delete Account</h4>
-                  <p>
-                    Permanently delete your account. All books, chapters,
-                    progress, bookmarks, and reviews will be permanently
-                    removed. This is irreversible.
-                  </p>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #ef4444; font-weight: 500;">Delete Account</span>
+                  <div class="info-icon custom-tooltip" style="color: #ef4444; cursor: help; position: relative;" data-tooltip="Permanently delete your account. All books, progress, bookmarks, and reviews will be permanently removed. This is irreversible.">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </div>
                 </div>
-                <button
-                  class="btn btn-danger"
-                  (click)="deleteAccount()"
-                  [disabled]="deactivating() || deleting()"
-                >
-                  {{ deleting() ? 'Deleting...' : 'Delete Account' }}
+                <button class="btn btn-danger" (click)="deleteAccount()" [disabled]="deleting()" style="padding: 6px 12px; font-size: 13px;">
+                  {{ deleting() ? 'Deleting...' : 'Delete' }}
                 </button>
               </div>
             </div>
@@ -409,6 +341,36 @@ import { ConfirmService } from '../../../core/services/confirm.service';
       .page-header p {
         color: var(--ink-soft);
         font-size: 15px;
+      }
+      
+      .custom-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-8px);
+        background: var(--ink);
+        color: var(--paper);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: normal;
+        width: 250px;
+        text-align: center;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        pointer-events: none;
+      }
+      .custom-tooltip:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--ink);
+        z-index: 100;
       }
 
       .settings-tabs {
@@ -463,7 +425,7 @@ import { ConfirmService } from '../../../core/services/confirm.service';
       }
 
       .settings-card {
-        background: #fff;
+        background: var(--card);
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-l);
         padding: 32px;
@@ -857,6 +819,7 @@ export class SettingsComponent implements OnInit {
   private api = inject(ApiService);
   private sanitizer = inject(DomSanitizer);
   private confirmService = inject(ConfirmService);
+  public themeService = inject(ThemeService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -1073,7 +1036,11 @@ export class SettingsComponent implements OnInit {
       });
   }
 
-  deactivateAccount() {
+  deactivateAccount(event?: Event) {
+    if (event) {
+      event.preventDefault(); // Prevents the toggle switch from changing state until confirmed
+    }
+    
     this.confirmService
       .confirm(
         'Deactivate Account',
@@ -1087,8 +1054,9 @@ export class SettingsComponent implements OnInit {
             next: () => {
               this.deactivating.set(false);
               alert('Account deactivated successfully.');
-              this.auth.logout();
-              this.router.navigate(['/']);
+              this.auth.logout().subscribe(() => {
+                this.router.navigate(['/']);
+              });
             },
             error: (err) => {
               this.deactivating.set(false);
@@ -1123,8 +1091,9 @@ export class SettingsComponent implements OnInit {
                   next: () => {
                     this.deleting.set(false);
                     alert('Account permanently deleted.');
-                    this.auth.logout();
-                    this.router.navigate(['/']);
+                    this.auth.logout().subscribe(() => {
+                      this.router.navigate(['/']);
+                    });
                   },
                   error: (err) => {
                     this.deleting.set(false);
@@ -1137,3 +1106,4 @@ export class SettingsComponent implements OnInit {
       });
   }
 }
+

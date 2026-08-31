@@ -670,6 +670,11 @@ router.post("/:id/chapters", protect, author, async (req, res) => {
     );
     const nextOrder = lastChapter ? lastChapter.order + 1 : 1;
     
+    // Enforce first 5 chapters to be free
+    if (nextOrder <= 5 && req.body.accessType === "premium") {
+      return res.status(400).json({ msg: "The first 5 chapters must be free." });
+    }
+
     // Sanitize HTML content
     const sanitizedContent = req.body.content ? xss(req.body.content) : "";
 
@@ -740,6 +745,14 @@ router.put("/:id/chapters/:chapterId", protect, author, async (req, res) => {
       req.user.role !== "superadmin"
     ) {
       return res.status(403).json({ msg: "Not authorized" });
+    }
+
+    const existingChapter = await Chapter.findOne({ _id: req.params.chapterId, book: req.params.id });
+    if (!existingChapter) return res.status(404).json({ msg: "Chapter not found" });
+
+    // Enforce first 5 chapters to be free
+    if (existingChapter.order <= 5 && req.body.accessType === "premium") {
+      return res.status(400).json({ msg: "The first 5 chapters must be free." });
     }
 
     if (req.body.content) {

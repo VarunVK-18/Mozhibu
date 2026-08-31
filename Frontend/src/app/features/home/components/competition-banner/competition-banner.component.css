@@ -83,7 +83,7 @@
 }
 
 .btn-light {
-  background: #fff;
+  background: var(--card);
   color: var(--forest-deep);
 }
 .btn-light:hover {
@@ -151,3 +151,4 @@
   cursor: pointer;
   color: var(--ink-soft);
 }
+

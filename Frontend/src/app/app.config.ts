@@ -7,6 +7,7 @@ import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { csrfInterceptor } from './core/interceptors/csrf.interceptor';
 import { loadingInterceptor } from './core/services/loading.interceptor';
 import {
   SocialAuthServiceConfig,
@@ -21,7 +22,7 @@ export const appConfig: ApplicationConfig = {
       routes,
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
     ),
-    provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, csrfInterceptor, loadingInterceptor])),
     importProvidersFrom(SocialLoginModule),
     {
       provide: 'SocialAuthServiceConfig',

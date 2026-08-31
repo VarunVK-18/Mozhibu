@@ -17,11 +17,22 @@ const { computeMonthlyRevenue } = require("./src/services/revenueEngine");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+const corsOptions = {
+  origin: function (origin, callback) {
+    const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
+    const allowedOrigins = [frontendUrl, "http://localhost:4200"];
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origin '${frontendUrl}'`);
+    return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
   },
+  credentials: true,
+};
+
+const io = socketIo(server, {
+  cors: corsOptions,
 });
 
 // Map sockets to users
@@ -54,28 +65,11 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Security headers
 app.use(compression()); // Compress responses
 app.use(cookieParser());
-app.use(cors({
-  origin: function (origin, callback) {
-    // Safely remove trailing slashes from FRONTEND_URL if user accidentally added one
-    const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
-    const allowedOrigins = [frontendUrl];
-    
-    // Only allow localhost if we are NOT in production
-    if (process.env.NODE_ENV !== "production") {
-      allowedOrigins.push("http://localhost:4200");
-    }
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origin '${frontendUrl}'`);
-    return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
-  },
-  credentials: true,
-})); // CORS must be before rate limiters so they include correct headers
+app.use(cors(corsOptions)); // CORS must be before rate limiters so they include correct headers
+
+// CSRF Protection
+const csrfProtection = require("./src/middleware/csrf");
+app.use(csrfProtection);
 
 // Global Rate Limiting
 const globalLimiter = rateLimit({
@@ -97,8 +91,8 @@ const authLimiter = rateLimit({
 });
 app.use("/api/auth", authLimiter);
 
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
 // Serve static uploads
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -144,6 +138,30 @@ app.use("/api", earningsRoutes);
 // Basic route
 app.get("/api", (req, res) => {
   res.json({ message: "Mozhibu API is running fine" });
+});
+
+// Proxy for Google Input Tools Transliteration API
+app.get("/api/tools/transliterate", async (req, res) => {
+  try {
+    const { text, itc, num, cp, cs, ie, oe, app: appName } = req.query;
+    const url = `https://inputtools.google.com/request?text=${encodeURIComponent(text)}&itc=${itc}&num=${num}&cp=${cp}&cs=${cs}&ie=${ie}&oe=${oe}&app=${appName}`;
+    
+    // Use dynamic import for node-fetch if native fetch isn't available, or just native fetch
+    let response;
+    if (typeof fetch === 'function') {
+      response = await fetch(url);
+    } else {
+      const fetchMod = await import('node-fetch');
+      const fetchFn = fetchMod.default;
+      response = await fetchFn(url);
+    }
+    
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Transliteration proxy error:", error);
+    res.status(500).json({ error: "Failed to fetch transliteration" });
+  }
 });
 
 // Start server

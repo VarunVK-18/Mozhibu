@@ -297,6 +297,16 @@ import { environment } from '../../../environments/environment';
               </svg>
               Redo
             </button>
+            <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
+            <label class="tamil-typing-toggle custom-tooltip" data-tooltip="Type in English (e.g. 'amma') and press Space to convert to Tamil." style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-left: auto; position: relative;">
+              <span [style.color]="isTamilTyping ? 'var(--forest)' : 'inherit'">Tamil Typing (T)</span>
+              <div class="switch-sm" style="position: relative; display: inline-block; width: 32px; height: 18px;">
+                <input type="checkbox" [(ngModel)]="isTamilTyping" style="opacity: 0; width: 0; height: 0;">
+                <span class="slider round" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; border-radius: 18px;" [style.backgroundColor]="isTamilTyping ? 'var(--forest)' : 'var(--border-soft)'">
+                  <span style="position: absolute; content: ''; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;" [style.transform]="isTamilTyping ? 'translateX(14px)' : 'translateX(0)'"></span>
+                </span>
+              </div>
+            </label>
           </div>
 
           <input
@@ -313,6 +323,7 @@ import { environment } from '../../../environments/environment';
             placeholder="Start writing your story here..."
             [(ngModel)]="chapter.content"
             (ngModelChange)="onContentChange()"
+            (keydown)="onTextareaKeydown($event, contentInput)"
           ></textarea>
         </div>
       </main>
@@ -588,6 +599,8 @@ export class StoryEditorComponent implements OnInit {
 
   isDarkMode = localStorage.getItem('writerDarkMode') === 'true';
   coverPreviewUrl = signal<string | null>(null);
+  
+  isTamilTyping = false;
 
   isSaving = false;
   lastSaved: Date | null = null;
@@ -741,6 +754,63 @@ export class StoryEditorComponent implements OnInit {
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode;
     localStorage.setItem('writerDarkMode', this.isDarkMode ? 'true' : 'false');
+  }
+
+  async onTextareaKeydown(event: KeyboardEvent, textarea: HTMLTextAreaElement) {
+    if (!this.isTamilTyping) return;
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      const cursorPosition = textarea.selectionStart;
+      const textBeforeCursor = this.chapter.content.substring(0, cursorPosition);
+      
+      // Find the last word before the cursor (only alphabetic characters)
+      const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
+      
+      if (match) {
+        const word = match[1];
+        const wordStart = cursorPosition - word.length;
+        
+        // Prevent default space/enter to avoid async cursor jumps, we will insert it manually
+        event.preventDefault();
+        
+        try {
+          const tamilWord = await this.transliterateWord(word);
+          
+          // Replace the English word with Tamil word
+          const content = this.chapter.content;
+          const newContent = content.substring(0, wordStart) + tamilWord + (event.key === 'Enter' ? '\n' : ' ') + content.substring(cursorPosition);
+          
+          this.chapter.content = newContent;
+          this.onContentChange();
+          
+          // Restore cursor position asynchronously after Angular updates the ngModel
+          setTimeout(() => {
+            const newCursorPosition = wordStart + tamilWord.length + 1;
+            textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+          }, 0);
+        } catch (error) {
+          console.error("Transliteration failed", error);
+          // Fallback if API fails: just insert the space/enter normally
+          const content = this.chapter.content;
+          this.chapter.content = content.substring(0, cursorPosition) + (event.key === 'Enter' ? '\n' : ' ') + content.substring(cursorPosition);
+          this.onContentChange();
+          setTimeout(() => {
+            textarea.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+          }, 0);
+        }
+      }
+    }
+  }
+
+  async transliterateWord(word: string): Promise<string> {
+    const url = `https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=ta-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+    const data = await response.json();
+    if (data && data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1] && data[1][0][1].length > 0) {
+      return data[1][0][1][0]; // Return the first suggestion
+    }
+    throw new Error('No transliteration found');
   }
 
   undo(textarea: HTMLTextAreaElement) {

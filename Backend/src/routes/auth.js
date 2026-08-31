@@ -9,13 +9,14 @@ const { protect } = require("../middleware/auth");
 
 const router = express.Router();
 
-const googleClient = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID ||
-    "1039454132466-7eo28db3tli7r28ckhhj822pmpi1k8sn.apps.googleusercontent.com",
-);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Fallback secret for development, use env in prod
-const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey123";
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET environment variable is not set.");
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // @route POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -103,7 +104,7 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     // Check if user exists
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email }).select("+password");
     if (!user) {
       console.log("User not found:", email);
       return res.status(400).json({ msg: "Email not registered" });
@@ -186,9 +187,7 @@ router.post("/google", async (req, res) => {
     // Verify Google token
     const ticket = await googleClient.verifyIdToken({
       idToken: token,
-      audience:
-        process.env.GOOGLE_CLIENT_ID ||
-        "1039454132466-7eo28db3tli7r28ckhhj822pmpi1k8sn.apps.googleusercontent.com",
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payloadData = ticket.getPayload();
     const email = payloadData.email;
@@ -457,7 +456,7 @@ router.put("/change-password", protect, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     
     // Find the user with password field
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).select("+password");
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }

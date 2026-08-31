@@ -140,7 +140,7 @@ import { AuthService } from '../../../core/services/auth.service';
         align-items: center;
         text-align: center;
         transition: all 0.2s;
-        background: #fff;
+        background: var(--card);
       }
       .role-option.selected {
         border-color: var(--forest);
@@ -267,3 +267,4 @@ export class CompleteProfileComponent implements OnInit {
     });
   }
 }
+
