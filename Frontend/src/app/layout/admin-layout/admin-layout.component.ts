@@ -14,7 +14,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
       <aside class="admin-sidebar" [class.collapsed]="sidebarCollapsed()">
         <div class="sidebar-header">
           <a routerLink="/admin" class="logo">
-            <img src="assets/logo.png" alt="Mozhibu logo" class="logo-img" />
+            <img loading="lazy" src="assets/logo.png" alt="Mozhibu logo" class="logo-img" />
             <span class="logo-text">Mozhibu</span>
           </a>
           <button class="collapse-btn" (click)="toggleSidebar()">

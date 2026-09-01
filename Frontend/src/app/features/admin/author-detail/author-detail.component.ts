@@ -120,7 +120,7 @@ import {
                   >
                     <div class="book-cover">
                       @if (book.cover) {
-                        <img [src]="book.cover" [alt]="book.title" />
+                        <img loading="lazy" [src]="book.cover" [alt]="book.title" />
                       } @else {
                         <div class="placeholder-cover">
                           {{ book.title.charAt(0) }}

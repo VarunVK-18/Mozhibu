@@ -76,7 +76,7 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
 
       <!-- Write Review/Comment Input -->
       <div class="comment-input-area write-review-box">
-        <img [src]="currentUserAvatar" alt="You" class="avatar" />
+        <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
         <div class="input-wrapper">
           @if (isFocused || newCommentText.trim().length > 0) {
             <div class="rating-selector">

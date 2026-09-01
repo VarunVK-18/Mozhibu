@@ -42,7 +42,7 @@ export function passwordMatchValidator(
 
         <div class="tagline-container">
           <a routerLink="/" class="logo" style="display: flex; flex-direction: row; align-items: center; gap: 12px; text-decoration: none; margin-bottom: 24px;">
-            <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
+            <img loading="lazy" src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
             <div style="display: flex; flex-direction: column; align-items: flex-start;">
               <span style="font-family: 'Times New Roman', Times, serif; font-size: 26px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
               <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap;">
@@ -228,6 +228,9 @@ export function passwordMatchValidator(
                 <input type="checkbox" formControlName="isAgeChecked" style="width: 16px; height: 16px; cursor: pointer;">
                 I confirm that I have provided true and valid information
               </label>
+              <div *ngIf="signupForm.get('isAgeChecked')?.touched && !signupForm.get('isAgeChecked')?.value" class="field-error" style="margin-top: 4px;">
+                Please confirm to proceed.
+              </div>
             </div>
 
             <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isDobCompleted">
@@ -242,7 +245,7 @@ export function passwordMatchValidator(
               <!-- Overlay to block clicks when age not verified -->
               <div 
                 *ngIf="!isDobCompleted" 
-                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; cursor: not-allowed;"
+                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; cursor: pointer;"
                 (click)="onSocialLoginOverlayClick()"
                 title="Please confirm your information and enter your date of birth first"
               ></div>
@@ -266,8 +269,6 @@ export function passwordMatchValidator(
                   class="btn-social fb-btn"
                   style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 200px; height: 32px; box-sizing: border-box; background-color: white; color: #333; border: none; outline: none; border-radius: 4px; padding: 0 10px; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: none;"
                   (click)="onFacebookLoginClick()"
-                  [disabled]="!isDobCompleted"
-                  [style.opacity]="!isDobCompleted ? '0.5' : '1'"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877f2">
                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm3.2 12h-1.8v8h-3.2v-8H8.5V9.5h1.7V7.6c0-2.3 1.4-3.6 3.5-3.6 1 0 1.8.1 2.1.1v2.4h-1.4c-1.1 0-1.3.5-1.3 1.3v1.7h2.7l-.4 2.5z"/>
@@ -674,11 +675,9 @@ export class SignupComponent implements OnInit {
   }
 
   onSocialLoginOverlayClick() {
-    if (!this.signupForm.get('isAgeChecked')?.value) {
-      this.errorMessage = 'Please confirm your information and enter your date of birth.';
-    } else if (!this.signupForm.get('dob')?.value) {
-      this.errorMessage = 'Please enter your date of birth to continue.';
-    }
+    this.signupForm.get('dob')?.markAsTouched();
+    this.signupForm.get('isAgeChecked')?.markAsTouched();
+    this.errorMessage = '';
   }
 
   onUsernameInput(event: Event) {

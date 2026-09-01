@@ -56,7 +56,7 @@ import { forkJoin } from 'rxjs';
               </button>
             </div>
             <div class="featured-cover">
-              <img [src]="book.coverImage" [alt]="book.title" />
+              <img loading="lazy" [src]="book.coverImage" [alt]="book.title" />
               <div class="cover-shine"></div>
             </div>
           </div>

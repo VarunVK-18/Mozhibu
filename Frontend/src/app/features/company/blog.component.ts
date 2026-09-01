@@ -53,7 +53,7 @@ import { CommonModule } from '@angular/common';
       <!-- Article Grid -->
       <div class="article-grid wrap">
         <div class="article-card" *ngFor="let post of posts">
-          <img [src]="post.image" [alt]="post.title" class="card-image" />
+          <img loading="lazy" [src]="post.image" [alt]="post.title" class="card-image" />
           <div class="card-content">
             <span class="tag">{{ post.category }}</span>
             <h3>{{ post.title }}</h3>
