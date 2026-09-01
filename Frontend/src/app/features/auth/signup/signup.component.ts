@@ -58,7 +58,7 @@ export function passwordMatchValidator(
           <div class="footer-line"></div>
           <div class="footer-content">
             <span>Stories in your language</span>
-            <span>Est. 2023</span>
+            <span>Est. 2026</span>
           </div>
         </div>
       </div>
@@ -66,13 +66,7 @@ export function passwordMatchValidator(
       <!-- Right Panel -->
       <div class="right-panel">
         <div style="max-width: 440px; width: 100%; margin: auto;">
-          <a routerLink="/" style="display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='#1e342c'" onmouseout="this.style.color='#666'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back to Home
-          </a>
+
           <div class="signup-card" style="max-width: 100%;">
           <h2 style="text-align: center;">Create an account</h2>
           <p style="text-align: center;">Join Mozhibu today.</p>
@@ -184,7 +178,7 @@ export function passwordMatchValidator(
 
             <div class="form-row">
               <div class="form-group">
-                <select formControlName="preferredLanguage" class="form-control">
+                <select formControlName="preferredLanguage" class="form-control" required>
                   <option value="" disabled>Preferred Language</option>
                   <option value="en">English</option>
                   <option value="ta">Tamil</option>
@@ -197,7 +191,7 @@ export function passwordMatchValidator(
                 </div>
               </div>
               <div class="form-group">
-                <select formControlName="favoriteGenres" class="form-control">
+                <select formControlName="favoriteGenres" class="form-control" required>
                   <option value="" disabled>Favorite Genre</option>
                   <option value="Action">Action</option>
                   <option value="Romance">Romance</option>
@@ -220,8 +214,7 @@ export function passwordMatchValidator(
             </div>
 
             <div class="form-group" style="margin-bottom: 16px;">
-              <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px;">Date of Birth *</label>
-              <input type="date" formControlName="dob" class="form-control" style="width: 100%;">
+              <input type="text" placeholder="Date of Birth *" onfocus="(this.type='date')" onblur="(this.value == '' ? this.type='text' : this.type='date')" formControlName="dob" class="form-control" style="width: 100%;" min="1900-01-01" required>
               <div *ngIf="getErrorMessage('dob')" class="field-error">
                 {{ getErrorMessage('dob') }}
               </div>
@@ -263,6 +256,7 @@ export function passwordMatchValidator(
                       text="signup_with"
                       shape="rectangular"
                       theme="outline"
+                      logo_alignment="center"
                       [width]="208"
                     ></asl-google-signin-button>
                   </div>
@@ -362,12 +356,14 @@ export function passwordMatchValidator(
         background-color: var(--paper, #faf9f5);
         display: flex;
         flex-direction: column;
-        padding: 40px;
+        justify-content: center;
+        align-items: center;
+        padding: 24px;
         overflow-y: auto;
       }
       .signup-card {
         background: var(--card, #fff);
-        padding: 40px 48px;
+        padding: 28px 36px;
         border-radius: var(--radius-l, 12px);
         border: 1px solid var(--border-soft, #ebebeb);
         box-shadow: 0 10px 30px -10px rgba(43, 38, 32, 0.1);
@@ -375,15 +371,15 @@ export function passwordMatchValidator(
         width: 100%;
       }
       .signup-card h2 {
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         font-family: var(--display, 'Merriweather', serif);
-        font-size: 24px;
+        font-size: 22px;
         text-align: center;
       }
       .signup-card p {
         color: var(--ink-soft, #666);
-        margin-bottom: 24px;
-        font-size: 14px;
+        margin-bottom: 16px;
+        font-size: 13px;
         text-align: center;
       }
       .form-row {
@@ -392,12 +388,12 @@ export function passwordMatchValidator(
         gap: 12px;
       }
       .form-group {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         position: relative;
       }
       .form-control {
         width: 100%;
-        padding: 10px 14px;
+        padding: 8px 12px;
         border: 1px solid var(--border-soft, #dcdcdc);
         border-radius: var(--radius-s, 6px);
         font-family: var(--body, inherit);
@@ -414,7 +410,14 @@ export function passwordMatchValidator(
         border-color: var(--gold, #d4af37);
       }
       select.form-control {
-        padding: 8px 0;
+        padding: 8px 12px;
+        color: #111;
+      }
+      select.form-control:invalid,
+      input[type="date"].form-control:invalid {
+        color: #bbb;
+      }
+      select.form-control option {
         color: #111;
       }
       .input-wrapper {
@@ -530,15 +533,13 @@ export function passwordMatchValidator(
         color: #666;
       }
       .login-link a {
-        color: #111;
+        color: #1e342c;
         font-weight: 600;
         text-decoration: none;
         margin-left: 4px;
-        border-bottom: 1px solid #111;
       }
       .login-link a:hover {
         color: #1e342c;
-        border-bottom-color: #1e342c;
       }
       
       @media (max-width: 768px) {

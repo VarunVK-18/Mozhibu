@@ -48,7 +48,7 @@ import {
           <div class="footer-line"></div>
           <div class="footer-content">
             <span>Stories in your language</span>
-            <span>Est. 2023</span>
+            <span>Est. 2026</span>
           </div>
         </div>
       </div>
@@ -56,13 +56,7 @@ import {
       <!-- Right Panel -->
       <div class="right-panel">
         <div style="max-width: 400px; width: 100%; margin: auto;">
-          <a routerLink="/" style="display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='#1e342c'" onmouseout="this.style.color='#666'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            Back to Home
-          </a>
+
           <div class="login-card" style="max-width: 100%;">
           <h2 style="text-align: center;">Sign In</h2>
           <p style="text-align: center;">Welcome back! Please enter your details.</p>
@@ -163,6 +157,7 @@ import {
                       text="signin_with"
                       shape="rectangular"
                       theme="outline"
+                      logo_alignment="center"
                       [width]="208"
                     ></asl-google-signin-button>
                   </div>
