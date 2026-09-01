@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
+// Provide dummy environment variables for tests so backend doesn't crash
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret';
+
 let mongoServer;
 
 // Start the memory server before all tests
