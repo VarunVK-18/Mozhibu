@@ -255,8 +255,8 @@ router.post("/follow/:authorId", protect, async (req, res) => {
         0,
         authorToFollow.followersCount - 1,
       );
-      await user.save();
-      await authorToFollow.save();
+      await user.save({ validateModifiedOnly: true });
+      await authorToFollow.save({ validateModifiedOnly: true });
       res.json({ msg: "Unfollowed successfully", following: false });
     } else {
       // Follow
@@ -264,8 +264,8 @@ router.post("/follow/:authorId", protect, async (req, res) => {
         user.following.push(req.params.authorId);
       }
       authorToFollow.followersCount += 1;
-      await user.save();
-      await authorToFollow.save();
+      await user.save({ validateModifiedOnly: true });
+      await authorToFollow.save({ validateModifiedOnly: true });
 
       const Notification = require("../models/Notification");
       await Notification.create({

@@ -41,9 +41,9 @@ export function passwordMatchValidator(
         <div style="flex: 0.5;"></div>
 
         <div class="tagline-container">
-          <a routerLink="/" class="logo" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-decoration: none; margin-bottom: 24px;">
+          <a routerLink="/" class="logo" style="display: flex; flex-direction: row; align-items: center; gap: 12px; text-decoration: none; margin-bottom: 24px;">
             <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
-            <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="display: flex; flex-direction: column; align-items: flex-start;">
               <span style="font-family: 'Times New Roman', Times, serif; font-size: 26px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
               <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap;">
                 <span style="width: 20px; height: 1px; background: #8b7355;"></span>
@@ -219,19 +219,22 @@ export function passwordMatchValidator(
               {{ errorMessage }}
             </div>
 
-            <div class="form-group" style="margin-top: 16px; margin-bottom: 8px;">
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
-                <input type="checkbox" formControlName="isAgeChecked" style="width: 16px; height: 16px; cursor: pointer;">
-                I am above 18+
-              </label>
-            </div>
-
-            <div class="form-group" *ngIf="signupForm.get('isAgeChecked')?.value" style="margin-bottom: 16px;">
-              <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px;">Date of Birth</label>
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 13px; color: #666; margin-bottom: 4px;">Date of Birth *</label>
               <input type="date" formControlName="dob" class="form-control" style="width: 100%;">
+              <div *ngIf="getErrorMessage('dob')" class="field-error">
+                {{ getErrorMessage('dob') }}
+              </div>
               <div *ngIf="ageError" class="field-error" style="margin-top: 4px; color: #e53935; font-size: 12px;">
                 {{ ageError }}
               </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 16px; margin-bottom: 16px;">
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" formControlName="isAgeChecked" style="width: 16px; height: 16px; cursor: pointer;">
+                I confirm that I have provided true and valid information
+              </label>
             </div>
 
             <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isDobCompleted">
@@ -248,7 +251,7 @@ export function passwordMatchValidator(
                 *ngIf="!isDobCompleted" 
                 style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; cursor: not-allowed;"
                 (click)="onSocialLoginOverlayClick()"
-                title="Please check the 18+ box and enter your date of birth first"
+                title="Please confirm your information and enter your date of birth first"
               ></div>
 
               <div class="social-login" style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
@@ -671,7 +674,7 @@ export class SignupComponent implements OnInit {
 
   onSocialLoginOverlayClick() {
     if (!this.signupForm.get('isAgeChecked')?.value) {
-      this.errorMessage = 'Please check the "I am above 18+" box (if applicable) and enter your date of birth.';
+      this.errorMessage = 'Please confirm your information and enter your date of birth.';
     } else if (!this.signupForm.get('dob')?.value) {
       this.errorMessage = 'Please enter your date of birth to continue.';
     }
@@ -725,6 +728,7 @@ export class SignupComponent implements OnInit {
         case 'confirmPassword': return 'Please confirm your password.';
         case 'preferredLanguage': return 'Please select a language.';
         case 'favoriteGenres': return 'Please select a genre.';
+        case 'dob': return 'Date of Birth is required.';
       }
     }
 

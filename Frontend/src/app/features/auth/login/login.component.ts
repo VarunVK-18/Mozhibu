@@ -31,9 +31,9 @@ import {
         <div style="flex: 0.5;"></div>
 
         <div class="tagline-container">
-          <a routerLink="/" class="logo" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-decoration: none; margin-bottom: 24px;">
+          <a routerLink="/" class="logo" style="display: flex; flex-direction: row; align-items: center; gap: 12px; text-decoration: none; margin-bottom: 24px;">
             <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
-            <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="display: flex; flex-direction: column; align-items: flex-start;">
               <span style="font-family: 'Times New Roman', Times, serif; font-size: 26px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
               <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap;">
                 <span style="width: 20px; height: 1px; background: #8b7355;"></span>
