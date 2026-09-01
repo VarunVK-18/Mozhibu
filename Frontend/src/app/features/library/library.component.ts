@@ -275,6 +275,7 @@ type LibraryTab =
         border: 1px solid var(--border);
         border-radius: 100px;
         background: var(--card);
+        color: var(--ink);
         font-size: 14px;
         font-family: var(--sans);
         outline: none;
@@ -298,11 +299,17 @@ type LibraryTab =
         background: var(--card)
           url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>')
           no-repeat right 12px center;
+        color: var(--ink);
         appearance: none;
         font-size: 14px;
         font-family: var(--sans);
         cursor: pointer;
         outline: none;
+      }
+
+      :host-context(.dark-mode) .filter-group select,
+      body.dark-mode .filter-group select {
+        background-image: url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>');
       }
 
       /* Horizontal Tabs */
@@ -635,6 +642,9 @@ export class LibraryComponent implements OnInit {
           : b.author || 'Unknown Author',
       cover: b.cover || this.api.getFallbackCover(),
       genre: b.genre || '',
+      isMature: !!b.isMature,
+      accessType: b.accessType,
+      isAudio: !!b.isAudio,
     };
   }
 

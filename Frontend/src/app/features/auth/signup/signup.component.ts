@@ -37,18 +37,21 @@ export function passwordMatchValidator(
     <div class="split-layout">
       <!-- Left Panel -->
       <div class="left-panel">
-        <a routerLink="/" class="logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-          <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 36px; object-fit: contain;" />
-          <div style="display: flex; flex-direction: column; align-items: center;">
-            <span style="font-family: 'Times New Roman', Times, serif; font-size: 20px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
-            <span style="display: flex; align-items: center; gap: 6px; font-size: 8.5px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; white-space: nowrap;">
-              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
-              IT'S A NOVEL IDEA
-              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
-            </span>
-          </div>
-        </a>
+        <!-- Spacer to push content down so it centers -->
+        <div style="flex: 0.5;"></div>
+
         <div class="tagline-container">
+          <a routerLink="/" class="logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 24px;">
+            <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <span style="font-family: 'Times New Roman', Times, serif; font-size: 26px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap;">
+                <span style="width: 20px; height: 1px; background: #8b7355;"></span>
+                IT'S A NOVEL IDEA
+                <span style="width: 20px; height: 1px; background: #8b7355;"></span>
+              </span>
+            </div>
+          </a>
           <h1 class="tagline">Every reader<br>remembers the story<br>that <i>read them back.</i></h1>
         </div>
         <div class="footer">
@@ -62,7 +65,7 @@ export function passwordMatchValidator(
 
       <!-- Right Panel -->
       <div class="right-panel">
-        <div style="max-width: 440px; width: 100%;">
+        <div style="max-width: 440px; width: 100%; margin: auto;">
           <a routerLink="/" style="display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='#1e342c'" onmouseout="this.style.color='#666'">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -231,7 +234,7 @@ export function passwordMatchValidator(
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isAgeVerified">
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isDobCompleted">
               {{ isLoading ? 'Creating account...' : 'Create account' }}
             </button>
 
@@ -242,7 +245,7 @@ export function passwordMatchValidator(
             <div class="social-login-wrapper" style="position: relative; width: 100%;">
               <!-- Overlay to block clicks when age not verified -->
               <div 
-                *ngIf="!isAgeVerified" 
+                *ngIf="!isDobCompleted" 
                 style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; cursor: not-allowed;"
                 (click)="onSocialLoginOverlayClick()"
                 title="Please check the 18+ box and enter your date of birth first"
@@ -266,8 +269,8 @@ export function passwordMatchValidator(
                   class="btn-social fb-btn"
                   style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 200px; height: 32px; box-sizing: border-box; background-color: white; color: #333; border: none; outline: none; border-radius: 4px; padding: 0 10px; font-family: Roboto, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: none;"
                   (click)="onFacebookLoginClick()"
-                  [disabled]="!isAgeVerified"
-                  [style.opacity]="!isAgeVerified ? '0.5' : '1'"
+                  [disabled]="!isDobCompleted"
+                  [style.opacity]="!isDobCompleted ? '0.5' : '1'"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#1877f2">
                     <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm3.2 12h-1.8v8h-3.2v-8H8.5V9.5h1.7V7.6c0-2.3 1.4-3.6 3.5-3.6 1 0 1.8.1 2.1.1v2.4h-1.4c-1.1 0-1.3.5-1.3 1.3v1.7h2.7l-.4 2.5z"/>
@@ -293,13 +296,15 @@ export function passwordMatchValidator(
     `
       :host {
         display: block;
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
         background: #faf9f5;
         font-family: 'Inter', Roboto, sans-serif;
       }
       .split-layout {
         display: flex;
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
       }
       .left-panel {
         flex: 1;
@@ -321,7 +326,8 @@ export function passwordMatchValidator(
       }
       .tagline-container {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        justify-content: center;
         flex: 1;
       }
       .tagline {
@@ -352,9 +358,9 @@ export function passwordMatchValidator(
         flex: 1.2;
         background-color: var(--paper, #faf9f5);
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
         padding: 40px;
+        overflow-y: auto;
       }
       .signup-card {
         background: var(--card, #fff);
@@ -565,7 +571,7 @@ export class SignupComponent implements OnInit {
       console.log('Google Auth State Emitted:', user);
       if (user && user.idToken) {
         this.isLoading = true;
-        this.auth.loginWithGoogle(user.idToken).subscribe({
+        this.auth.loginWithGoogle(user.idToken, this.signupForm.get('dob')?.value).subscribe({
           next: (res) => {
             console.log('Backend response:', res);
             this.isLoading = false;
@@ -645,39 +651,29 @@ export class SignupComponent implements OnInit {
   showPassword = false;
   showConfirmPassword = false;
 
-  get isAgeVerified(): boolean {
+  get isDobCompleted(): boolean {
     const isChecked = this.signupForm.get('isAgeChecked')?.value;
     const dobValue = this.signupForm.get('dob')?.value;
-    if (!isChecked || !dobValue) return false;
-
-    const dob = new Date(dobValue);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-    
-    return age >= 18;
+    return !!(isChecked && dobValue);
   }
 
   get ageError(): string {
-    const isChecked = this.signupForm.get('isAgeChecked')?.value;
     const dobValue = this.signupForm.get('dob')?.value;
-    if (isChecked && dobValue && !this.isAgeVerified) {
-      return 'You must be at least 18 years old to sign up.';
+    if (dobValue) {
+      const dob = new Date(dobValue);
+      const today = new Date();
+      if (dob > today) {
+        return 'Date of birth cannot be in the future.';
+      }
     }
     return '';
   }
 
   onSocialLoginOverlayClick() {
     if (!this.signupForm.get('isAgeChecked')?.value) {
-      this.errorMessage = 'Please check the "I am above 18+" box and enter your date of birth.';
+      this.errorMessage = 'Please check the "I am above 18+" box (if applicable) and enter your date of birth.';
     } else if (!this.signupForm.get('dob')?.value) {
-      this.errorMessage = 'Please enter your date of birth to verify your age.';
-    } else if (!this.isAgeVerified) {
-      this.errorMessage = 'You must be at least 18 years old to sign up.';
+      this.errorMessage = 'Please enter your date of birth to continue.';
     }
   }
 

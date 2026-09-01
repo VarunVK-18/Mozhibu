@@ -143,6 +143,23 @@ import { environment } from '../../../environments/environment';
             </select>
           </div>
 
+          <div class="form-group" style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 6px;">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <label style="margin: 0; color: var(--ink); font-size: 13px; font-weight: 600; text-transform: none; display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: 700;">18+</span>
+                  Mature Content
+                </label>
+              </div>
+              <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px; margin: 0; flex-shrink: 0;">
+                <input type="checkbox" [(ngModel)]="story.isMature" (ngModelChange)="onContentChange()" style="opacity: 0; width: 0; height: 0;">
+                <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; border-radius: 34px;" [style.backgroundColor]="story.isMature ? '#DC2626' : 'var(--border-soft)'">
+                  <span style="position: absolute; content: ''; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" [style.transform]="story.isMature ? 'translateX(18px)' : 'translateX(0)'"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>Tags (Comma separated)</label>
             <input
@@ -298,15 +315,17 @@ import { environment } from '../../../environments/environment';
               Redo
             </button>
             <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
-            <label class="tamil-typing-toggle custom-tooltip" data-tooltip="Type in English (e.g. 'amma') and press Space to convert to Tamil." style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-left: auto; position: relative;">
-              <span [style.color]="isTamilTyping ? 'var(--forest)' : 'inherit'">Tamil Typing (T)</span>
-              <div class="switch-sm" style="position: relative; display: inline-block; width: 32px; height: 18px;">
-                <input type="checkbox" [(ngModel)]="isTamilTyping" style="opacity: 0; width: 0; height: 0;">
-                <span class="slider round" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; border-radius: 18px;" [style.backgroundColor]="isTamilTyping ? 'var(--forest)' : 'var(--border-soft)'">
-                  <span style="position: absolute; content: ''; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;" [style.transform]="isTamilTyping ? 'translateX(14px)' : 'translateX(0)'"></span>
-                </span>
-              </div>
-            </label>
+            <select
+              class="lang-select"
+              [(ngModel)]="typingLanguage"
+              (ngModelChange)="setTypingLanguage($event)"
+              title="Select Typing Language"
+              style="margin-left: auto; font-weight: bold; cursor: pointer; outline: none; padding: 4px 8px; border-radius: 6px; background: var(--paper); color: var(--ink); border: 1px solid var(--border-soft);"
+            >
+              <option *ngFor="let lang of supportedLanguages" [value]="lang.code">
+                {{ lang.char }} - {{ lang.label }}
+              </option>
+            </select>
           </div>
 
           <input
@@ -600,7 +619,18 @@ export class StoryEditorComponent implements OnInit {
   isDarkMode = localStorage.getItem('writerDarkMode') === 'true';
   coverPreviewUrl = signal<string | null>(null);
   
-  isTamilTyping = false;
+  supportedLanguages = [
+    { code: 'en', label: 'English', char: 'A' },
+    { code: 'ta-t-i0-und', label: 'Tamil', char: 'அ' },
+    { code: 'hi-t-i0-und', label: 'Hindi', char: 'अ' },
+    { code: 'te-t-i0-und', label: 'Telugu', char: 'అ' },
+    { code: 'ml-t-i0-und', label: 'Malayalam', char: 'അ' },
+    { code: 'kn-t-i0-und', label: 'Kannada', char: 'ಅ' },
+    { code: 'mr-t-i0-und', label: 'Marathi', char: 'अ' },
+    { code: 'bn-t-i0-und', label: 'Bengali', char: 'অ' },
+    { code: 'gu-t-i0-und', label: 'Gujarati', char: 'અ' },
+  ];
+  typingLanguage = 'en';
 
   isSaving = false;
   lastSaved: Date | null = null;
@@ -618,6 +648,7 @@ export class StoryEditorComponent implements OnInit {
     description: '',
     tags: '',
     series: '',
+    isMature: false,
   };
 
   chapter = {
@@ -626,12 +657,17 @@ export class StoryEditorComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
-      if (params['competition']) {
-        this.competitionTag = params['competition'];
+    const savedLang = localStorage.getItem('typingLanguage');
+    if (savedLang) {
+      this.typingLanguage = savedLang;
+    }
+
+    this.route.paramMap.subscribe((params) => {
+      if (params.get('competition')) {
+        this.competitionTag = params.get('competition');
       }
 
-      if (params['clear'] === 'true') {
+      if (params.get('clear') === 'true') {
         localStorage.removeItem('storyDraft');
         this.router.navigate([], {
           relativeTo: this.route,
@@ -640,7 +676,9 @@ export class StoryEditorComponent implements OnInit {
         });
         return;
       }
+    });
 
+    this.route.queryParams.subscribe((params) => {
       const draft = localStorage.getItem('storyDraft');
       if (draft) {
         try {
@@ -756,59 +794,89 @@ export class StoryEditorComponent implements OnInit {
     localStorage.setItem('writerDarkMode', this.isDarkMode ? 'true' : 'false');
   }
 
-  async onTextareaKeydown(event: KeyboardEvent, textarea: HTMLTextAreaElement) {
-    if (!this.isTamilTyping) return;
+  setTypingLanguage(langCode: string) {
+    this.typingLanguage = langCode;
+    localStorage.setItem('typingLanguage', langCode);
+  }
+
+  async onSynopsisKeydown(event: KeyboardEvent, textarea: HTMLTextAreaElement) {
+    if (this.typingLanguage === 'en') return;
 
     if (event.key === ' ' || event.key === 'Enter') {
       const cursorPosition = textarea.selectionStart;
-      const textBeforeCursor = this.chapter.content.substring(0, cursorPosition);
+      const textBeforeCursor = this.story.description.substring(0, cursorPosition);
       
-      // Find the last word before the cursor (only alphabetic characters)
       const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
       
       if (match) {
         const word = match[1];
         const wordStart = cursorPosition - word.length;
         
-        // Prevent default space/enter to avoid async cursor jumps, we will insert it manually
+        event.preventDefault();
+        
+        try {
+          const translatedWord = await this.transliterateWord(word);
+          
+          const description = this.story.description;
+          const newDescription = description.substring(0, wordStart) + translatedWord + (event.key === 'Enter' ? '\n' : ' ') + description.substring(cursorPosition);
+          
+          this.story.description = newDescription;
+          this.onContentChange();
+          
+          setTimeout(() => {
+            const newCursorPosition = wordStart + translatedWord.length + 1;
+            textarea.setSelectionRange(newCursorPosition, newCursorPosition);
+          }, 0);
+        } catch (error) {
+          console.error("Transliteration failed", error);
+        }
+      }
+    }
+  }
+
+  async onTextareaKeydown(event: KeyboardEvent, textarea: HTMLTextAreaElement) {
+    if (this.typingLanguage === 'en') return;
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      const cursorPosition = textarea.selectionStart;
+      const textBeforeCursor = this.chapter.content.substring(0, cursorPosition);
+      
+      const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
+      
+      if (match) {
+        const word = match[1];
+        const wordStart = cursorPosition - word.length;
+        
         event.preventDefault();
         
         try {
           const tamilWord = await this.transliterateWord(word);
           
-          // Replace the English word with Tamil word
           const content = this.chapter.content;
           const newContent = content.substring(0, wordStart) + tamilWord + (event.key === 'Enter' ? '\n' : ' ') + content.substring(cursorPosition);
           
           this.chapter.content = newContent;
           this.onContentChange();
           
-          // Restore cursor position asynchronously after Angular updates the ngModel
           setTimeout(() => {
             const newCursorPosition = wordStart + tamilWord.length + 1;
             textarea.setSelectionRange(newCursorPosition, newCursorPosition);
           }, 0);
         } catch (error) {
           console.error("Transliteration failed", error);
-          // Fallback if API fails: just insert the space/enter normally
-          const content = this.chapter.content;
-          this.chapter.content = content.substring(0, cursorPosition) + (event.key === 'Enter' ? '\n' : ' ') + content.substring(cursorPosition);
-          this.onContentChange();
-          setTimeout(() => {
-            textarea.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
-          }, 0);
         }
       }
     }
   }
 
   async transliterateWord(word: string): Promise<string> {
-    const url = `https://inputtools.google.com/request?text=${encodeURIComponent(word)}&itc=ta-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    const url = `${baseUrl}/api/tools/transliterate?text=${encodeURIComponent(word)}&itc=${this.typingLanguage}&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Network response was not ok');
     const data = await response.json();
     if (data && data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1] && data[1][0][1].length > 0) {
-      return data[1][0][1][0]; // Return the first suggestion
+      return data[1][0][1][0];
     }
     throw new Error('No transliteration found');
   }
@@ -854,6 +922,7 @@ export class StoryEditorComponent implements OnInit {
       genre: this.story.genre,
       description: this.story.description,
       tags: tagsArray,
+      isMature: this.story.isMature,
     };
     
     if (!isAutoSave) {

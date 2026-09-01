@@ -381,6 +381,7 @@ export class HomeComponent implements OnInit {
       rating: b.rating ? Number(b.rating).toFixed(1) : 0,
       isAudio: !!b.isAudio,
       accessType: b.accessType,
+      isMature: !!b.isMature,
     }));
   }
 

@@ -44,6 +44,26 @@ import { OfflineService } from '../../../core/services/offline.service';
           {{ offlineService.downloadProgress().status }}
         </div>
       }
+
+      @if (showAgeWarning()) {
+        <div class="modal-overlay" (click)="showAgeWarning.set(false)">
+          <div class="modal-container warning-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header warning-header">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3>Access Denied</h3>
+            </div>
+            <div class="modal-body">
+              <p>{{ ageWarningMessage() }}</p>
+            </div>
+            <div class="modal-actions">
+              <button class="btn-confirm warning-btn" (click)="showAgeWarning.set(false)">Understood</button>
+            </div>
+          </div>
+        </div>
+      }
+
       @if (story()) {
         <app-story-hero
           [title]="story()!.title"
@@ -98,6 +118,7 @@ import { OfflineService } from '../../../core/services/offline.service';
           <app-chapter-list
             [episodes]="episodes()"
             [storyId]="story()?.id || ''"
+            (chapterClick)="onReadClicked($event)"
           ></app-chapter-list>
 
           <app-comment-list
@@ -140,6 +161,98 @@ import { OfflineService } from '../../../core/services/offline.service';
         max-width: 1200px;
         margin: 0 auto;
         padding: 0 40px 80px;
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.2s ease-out;
+      }
+
+      .modal-container {
+        background: var(--card, #fff);
+        width: 90%;
+        max-width: 400px;
+        border-radius: var(--radius-l, 16px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        animation: slideUp 0.2s ease-out;
+      }
+
+      .modal-header {
+        padding: 24px 24px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .warning-header {
+        color: #dc2626;
+      }
+      
+      .warning-header h3 {
+        margin: 0;
+        font-size: 20px;
+        font-family: var(--display, 'Inter', sans-serif);
+      }
+
+      .warning-icon {
+        color: #dc2626;
+      }
+
+      .modal-body {
+        padding: 0 24px 24px;
+        text-align: center;
+      }
+
+      .modal-body p {
+        margin: 0;
+        font-size: 15px;
+        color: var(--ink-soft, #5a554c);
+        line-height: 1.5;
+      }
+
+      .modal-actions {
+        padding: 16px 24px;
+        background: var(--surface-soft, #f7f6f4);
+        display: flex;
+        justify-content: center;
+      }
+
+      .btn-confirm.warning-btn {
+        background: #dc2626;
+        color: white;
+        border: none;
+        padding: 12px 32px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .btn-confirm.warning-btn:hover {
+        background: #b91c1c;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .synopsis-section {
@@ -242,6 +355,8 @@ export class StoryDetailComponent implements OnInit {
   isPremiumSubscriber = signal(false);
   relatedStories = signal<any[]>([]);
   showDownloadModal = signal(false);
+  showAgeWarning = signal(false);
+  ageWarningMessage = signal('');
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
@@ -314,7 +429,7 @@ export class StoryDetailComponent implements OnInit {
     return true;
   }
 
-  onReadClicked() {
+  onReadClicked(chapter?: number) {
     if (this.story()?.accessType === 'premium' && !this.isPremiumSubscriber()) {
       this.router.navigate(['/subscription/plans']);
       return;
@@ -322,8 +437,34 @@ export class StoryDetailComponent implements OnInit {
 
     const readUrl = `/read/${this.story()?.id || '1'}`;
     if (this.requireAuth(readUrl)) {
+      if (this.story()?.isMature) {
+        const user = this.currentUser();
+        if (user && user.dob) {
+          const dob = new Date(user.dob);
+          const today = new Date();
+          let age = today.getFullYear() - dob.getFullYear();
+          const monthDiff = today.getMonth() - dob.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+          }
+          if (age < 18) {
+            this.ageWarningMessage.set('You must be at least 18 years old to access this mature content.');
+            this.showAgeWarning.set(true);
+            return;
+          }
+        } else {
+            this.ageWarningMessage.set('Please update your Date of Birth in your profile to verify your age before accessing mature content.');
+            this.showAgeWarning.set(true);
+            return;
+        }
+      }
+      
       this.storyService.startReading();
-      this.router.navigate([readUrl]);
+      if (chapter !== undefined) {
+        this.router.navigate([readUrl], { queryParams: { chapter: chapter } });
+      } else {
+        this.router.navigate([readUrl]);
+      }
     }
   }
 

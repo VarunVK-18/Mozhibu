@@ -30,6 +30,7 @@ router.post("/register", async (req, res) => {
       favoriteGenres,
       authProvider,
       role,
+      dob,
     } = req.body;
 
     // Check if email or username exists
@@ -60,6 +61,7 @@ router.post("/register", async (req, res) => {
       authProvider: authProvider || "normal",
       role: role === "writer" ? "writer" : "reader",
       authorStatus: role === "writer" ? "approved" : "none",
+      dob,
     });
 
     if (user.authProvider === "normal") {
@@ -182,7 +184,7 @@ router.post("/logout", (req, res) => {
 // @access  Public
 router.post("/google", async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, dob } = req.body;
 
     // Verify Google token
     const ticket = await googleClient.verifyIdToken({
@@ -274,6 +276,7 @@ router.post("/google", async (req, res) => {
       authProvider: "google",
       role: "reader",
       authorStatus: "none",
+      dob: dob || new Date(2000, 0, 1), // Fallback if dob not provided properly
     });
 
     await user.save();

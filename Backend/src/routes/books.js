@@ -253,6 +253,7 @@ router.put("/:id", protect, author, async (req, res) => {
       "cover",
       "status",
       "accessType",
+      "isMature",
     ];
     const updateData = {};
     for (const field of updatableFields) {

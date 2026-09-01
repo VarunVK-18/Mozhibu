@@ -142,6 +142,24 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
                   </select>
                 </div>
 
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <label style="margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; text-transform: none; display: flex; align-items: center; gap: 8px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700;">18+</span>
+                        Mature Content
+                      </label>
+                      <span style="font-size: 12px; color: var(--ink-soft); font-weight: 400;">Enable if your story contains explicit themes, violence, or profanity.</span>
+                    </div>
+                    <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0; flex-shrink: 0;">
+                      <input type="checkbox" [(ngModel)]="story.isMature" style="opacity: 0; width: 0; height: 0;">
+                      <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-soft); transition: .4s; border-radius: 34px;" [style.backgroundColor]="story.isMature ? '#DC2626' : 'var(--border-soft)'">
+                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3);" [style.transform]="story.isMature ? 'translateX(20px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 <div class="form-group">
                   <label>Synopsis / Description</label>
                   <textarea
@@ -564,6 +582,7 @@ export class StorySettingsComponent implements OnInit {
     tags: '',
     series: '',
     cover: null as string | null,
+    isMature: false,
   };
 
   ngOnInit() {
@@ -586,6 +605,7 @@ export class StorySettingsComponent implements OnInit {
         this.story.description = book.description || '';
         this.story.tags = (book.tags || []).join(', ');
         this.story.series = book.series || '';
+        this.story.isMature = book.isMature || false;
 
         if (book.cover) {
           const serverUrl = environment.apiUrl.replace('/api', '');
@@ -699,6 +719,7 @@ export class StorySettingsComponent implements OnInit {
       description: this.story.description,
       tags: tagsArray,
       series: this.story.series || undefined,
+      isMature: this.story.isMature,
     };
 
     if (this.hasRemovedCover) {

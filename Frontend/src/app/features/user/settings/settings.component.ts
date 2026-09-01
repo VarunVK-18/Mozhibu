@@ -705,7 +705,7 @@ import { ThemeService } from '../../../core/services/theme.service';
       }
       .section-desc {
         font-size: 14px;
-        color: #7f1d1d;
+        color: var(--ink-soft);
         margin-bottom: 24px;
         opacity: 0.8;
         text-align: left;

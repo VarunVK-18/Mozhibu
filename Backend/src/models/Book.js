@@ -38,6 +38,7 @@ const BookSchema = new mongoose.Schema(
     },
     originalLanguage: { type: String, default: "English" },
     accessType: { type: String, enum: ["free", "premium"], default: "free" },
+    isMature: { type: Boolean, default: false },
   },
   {
     timestamps: true,

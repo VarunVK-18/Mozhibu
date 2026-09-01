@@ -27,18 +27,21 @@ import {
       <!-- Left Panel -->
       <div class="left-panel">
 
-        <a routerLink="/" class="logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
-          <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 36px; object-fit: contain;" />
-          <div style="display: flex; flex-direction: column; align-items: center;">
-            <span style="font-family: 'Times New Roman', Times, serif; font-size: 20px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
-            <span style="display: flex; align-items: center; gap: 6px; font-size: 8.5px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; white-space: nowrap;">
-              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
-              IT'S A NOVEL IDEA
-              <span style="width: 16px; height: 1px; background: #8b7355;"></span>
-            </span>
-          </div>
-        </a>
+        <!-- Spacer to push content down so it centers -->
+        <div style="flex: 0.5;"></div>
+
         <div class="tagline-container">
+          <a routerLink="/" class="logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none; margin-bottom: 24px;">
+            <img src="assets/logo.png" alt="Mozhibu Logo" style="height: 48px; object-fit: contain;" />
+            <div style="display: flex; flex-direction: column; align-items: center;">
+              <span style="font-family: 'Times New Roman', Times, serif; font-size: 26px; font-weight: 700; color: #f5f5f5; line-height: 1.1; letter-spacing: 0.5px;">Mozhibu</span>
+              <span style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8b7355; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap;">
+                <span style="width: 20px; height: 1px; background: #8b7355;"></span>
+                IT'S A NOVEL IDEA
+                <span style="width: 20px; height: 1px; background: #8b7355;"></span>
+              </span>
+            </div>
+          </a>
           <h1 class="tagline">Every reader<br>remembers the story<br>that <i>read them back.</i></h1>
         </div>
         <div class="footer">
@@ -52,7 +55,7 @@ import {
 
       <!-- Right Panel -->
       <div class="right-panel">
-        <div style="max-width: 400px; width: 100%;">
+        <div style="max-width: 400px; width: 100%; margin: auto;">
           <a routerLink="/" style="display: inline-flex; align-items: center; gap: 6px; color: #666; text-decoration: none; font-size: 14px; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='#1e342c'" onmouseout="this.style.color='#666'">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -224,7 +227,8 @@ import {
       }
       .tagline-container {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        justify-content: center;
         flex: 1;
       }
       .tagline {
@@ -255,8 +259,7 @@ import {
         flex: 1.2;
         background-color: var(--paper, #faf9f5);
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
         padding: 40px;
         overflow-y: auto;
       }

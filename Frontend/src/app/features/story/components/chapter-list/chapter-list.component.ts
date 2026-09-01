@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -32,8 +32,8 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
       <div class="episodes-list">
         @for (ep of filteredEpisodes; track ep.id) {
           <a
-            [routerLink]="['/read', storyId]"
-            [queryParams]="{ chapter: ep.episode }"
+            (click)="onChapterClick($event, ep.episode)"
+            style="cursor: pointer;"
             class="episode-card"
             [class.locked]="!ep.isUnlocked"
           >
@@ -291,6 +291,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 export class ChapterListComponent implements OnChanges {
   @Input() episodes: StoryEpisode[] = [];
   @Input() storyId: string = '';
+  @Output() chapterClick = new EventEmitter<number>();
 
   activeSeason: number = 1;
   availableSeasons: number[] = [1];
@@ -298,19 +299,18 @@ export class ChapterListComponent implements OnChanges {
   constructor(private offlineService: OfflineService) {}
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['episodes']) {
-      const seasons = new Set<number>();
-      this.episodes.forEach((ep) => {
-        if (ep.season) seasons.add(ep.season);
-      });
-
-      if (seasons.size > 0) {
-        this.availableSeasons = Array.from(seasons).sort((a, b) => a - b);
-        if (!this.availableSeasons.includes(this.activeSeason)) {
-          this.activeSeason = this.availableSeasons[0];
-        }
+    if (changes['episodes'] && this.episodes.length > 0) {
+      const seasons = new Set(this.episodes.map((e) => e.season));
+      this.availableSeasons = Array.from(seasons).sort((a, b) => a - b);
+      if (!this.availableSeasons.includes(this.activeSeason)) {
+        this.activeSeason = this.availableSeasons[0];
       }
     }
+  }
+
+  onChapterClick(event: Event, chapter: number) {
+    event.preventDefault();
+    this.chapterClick.emit(chapter);
   }
 
   get filteredEpisodes() {

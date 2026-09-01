@@ -14,8 +14,9 @@ export interface Story {
   genre: string;
   views?: string;
   rating?: number;
-  isAudio?: boolean;
   accessType?: 'free' | 'premium';
+  isMature?: boolean;
+  isAudio?: boolean;
 }
 
 @Component({
@@ -53,6 +54,7 @@ export interface Story {
             <span class="premium-text">PREMIUM</span>
           </div>
           <div class="genre-tag" *ngIf="story.genre">{{ story.genre }}</div>
+          <div class="mature-badge" *ngIf="story.isMature" style="background: rgba(220,38,38,0.9); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">18+</div>
         </div>
         <div class="audio-badge" *ngIf="story.isAudio">
           <svg

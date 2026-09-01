@@ -14,6 +14,7 @@ export interface User {
   followersCount?: number;
   bio?: string;
   savedBooks?: string[];
+  dob?: string;
 }
 
 @Injectable({
@@ -58,8 +59,12 @@ export class AuthService {
       .pipe(tap((res: any) => this.handleAuthResponse(res)));
   }
 
-  loginWithGoogle(token: string): Observable<any> {
-    return this.api.post('/auth/google', { token }).pipe(
+  loginWithGoogle(token: string, dob?: string): Observable<any> {
+    const payload: any = { token };
+    if (dob) {
+      payload.dob = dob;
+    }
+    return this.api.post('/auth/google', payload).pipe(
       tap((res: any) => {
         if (!res.isNewUser) {
           this.handleAuthResponse(res);

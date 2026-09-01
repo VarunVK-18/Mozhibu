@@ -28,6 +28,7 @@ export interface AdminBook {
   series?: string;
   views: number;
   rating?: number;
+  isMature?: boolean;
   isAudio?: boolean;
   status: string;
   rejectionReason?: string;

@@ -204,17 +204,16 @@ import { environment } from '../../../environments/environment';
                 />
               </svg>
             </button>
-            <button
-              class="btn-secondary"
-              (click)="toggleTamilTyping()"
-              [class.active-btn]="isTamilTypingEnabled"
-              title="Toggle Tamil Keyboard"
-              style="display: flex; gap: 6px; align-items: center;"
+            <select
+              class="btn-secondary lang-select"
+              [(ngModel)]="typingLanguage"
+              (ngModelChange)="setTypingLanguage($event)"
+              title="Select Typing Language"
             >
-              <span style="font-weight: bold;">{{
-                isTamilTypingEnabled ? 'அ' : 'A'
-              }}</span>
-            </button>
+              <option *ngFor="let lang of supportedLanguages" [value]="lang.code">
+                {{ lang.char }} - {{ lang.label }}
+              </option>
+            </select>
             <button
               class="btn-secondary"
               (click)="togglePreview()"
@@ -525,9 +524,16 @@ import { environment } from '../../../environments/environment';
         justify-content: center;
       }
       .btn-secondary.active-btn {
-        background: var(--forest-tint);
+        background: var(--forest);
+        color: white;
         border-color: var(--forest);
-        color: var(--forest-deep);
+      }
+      .lang-select {
+        font-weight: bold;
+        cursor: pointer;
+        outline: none;
+        padding-right: 12px;
+        appearance: none;
       }
       .btn-primary {
         background: var(--forest);
@@ -753,7 +759,18 @@ bookId: string | null = null;
   errorMessage = '';
   saveTimeout: any;
 
-  isTamilTypingEnabled = false;
+  supportedLanguages = [
+    { code: 'en', label: 'English', char: 'A' },
+    { code: 'ta-t-i0-und', label: 'Tamil', char: 'அ' },
+    { code: 'hi-t-i0-und', label: 'Hindi', char: 'अ' },
+    { code: 'te-t-i0-und', label: 'Telugu', char: 'అ' },
+    { code: 'ml-t-i0-und', label: 'Malayalam', char: 'അ' },
+    { code: 'kn-t-i0-und', label: 'Kannada', char: 'ಅ' },
+    { code: 'mr-t-i0-und', label: 'Marathi', char: 'अ' },
+    { code: 'bn-t-i0-und', label: 'Bengali', char: 'অ' },
+    { code: 'gu-t-i0-und', label: 'Gujarati', char: 'અ' },
+  ];
+  typingLanguage = 'en';
   isPreviewMode = false;
 
   wordCount = 0;
@@ -903,11 +920,16 @@ bookId: string | null = null;
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
-      this.bookId = params.get('id');
-      const paramChapterId = params.get('chapterId');
+      this.bookId = params.get('id') || '';
+      this.chapterId = params.get('chapterId');
+      
+      const savedLang = localStorage.getItem('typingLanguage');
+      if (savedLang) {
+        this.typingLanguage = savedLang;
+      }
 
-      if (paramChapterId && paramChapterId !== 'new') {
-        this.chapterId = paramChapterId;
+      if (this.chapterId && this.chapterId !== 'new') {
+        this.fetchChapterDetails(this.bookId, this.chapterId);
       }
 
       if (this.bookId) {
@@ -1125,12 +1147,13 @@ bookId: string | null = null;
     this.wordCount = cleanText ? cleanText.split(/\s+/).length : 0;
   }
 
-  toggleTamilTyping() {
-    this.isTamilTypingEnabled = !this.isTamilTypingEnabled;
+  setTypingLanguage(langCode: string) {
+    this.typingLanguage = langCode;
+    localStorage.setItem('typingLanguage', langCode);
   }
 
   async onEditorKeyDown(event: KeyboardEvent) {
-    if (!this.isTamilTypingEnabled) return;
+    if (this.typingLanguage === 'en') return;
 
     if (event.key === ' ' || event.key === 'Enter') {
       const selection = window.getSelection();
@@ -1189,7 +1212,7 @@ bookId: string | null = null;
 
   async transliterateWord(word: string): Promise<string> {
     const baseUrl = environment.apiUrl.replace('/api', '');
-    const url = `${baseUrl}/api/tools/transliterate?text=${encodeURIComponent(word)}&itc=ta-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
+    const url = `${baseUrl}/api/tools/transliterate?text=${encodeURIComponent(word)}&itc=${this.typingLanguage}&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=test`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Network response was not ok');
     const data = await response.json();

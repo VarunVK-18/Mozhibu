@@ -7,6 +7,7 @@ import {
   inject,
   computed,
   effect,
+  afterNextRender
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -643,6 +644,16 @@ export class ReaderComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
   ) {
+    afterNextRender(() => {
+      const savedTheme = localStorage.getItem('readerDarkMode');
+      if (savedTheme) {
+        this.isDarkMode.set(savedTheme === 'true');
+      }
+      const savedFontSize = localStorage.getItem('readerFontSize');
+      if (savedFontSize) {
+        this.fontSize.set(parseInt(savedFontSize, 10));
+      }
+    });
     effect(
       () => {
         const episodes = this.storyEpisodes();
@@ -709,15 +720,6 @@ export class ReaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const savedTheme = localStorage.getItem('readerDarkMode');
-    if (savedTheme) {
-      this.isDarkMode.set(savedTheme === 'true');
-    }
-    const savedFontSize = localStorage.getItem('readerFontSize');
-    if (savedFontSize) {
-      this.fontSize.set(parseInt(savedFontSize, 10));
-    }
-
     this.route.paramMap.subscribe((params) => {
       this.storyId = params.get('storyId') || '';
       if (this.storyId) {
@@ -885,7 +887,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
   toggleTheme(): void {
     this.isDarkMode.update((v) => {
       const newVal = !v;
-      localStorage.setItem('readerDarkMode', String(newVal));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('readerDarkMode', String(newVal));
+      }
       return newVal;
     });
   }
@@ -894,7 +898,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
     if (this.fontSize() < 28) {
       this.fontSize.update((v) => {
         const newVal = v + 2;
-        localStorage.setItem('readerFontSize', String(newVal));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('readerFontSize', String(newVal));
+        }
         return newVal;
       });
     }
@@ -904,7 +910,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
     if (this.fontSize() > 14) {
       this.fontSize.update((v) => {
         const newVal = v - 2;
-        localStorage.setItem('readerFontSize', String(newVal));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('readerFontSize', String(newVal));
+        }
         return newVal;
       });
     }

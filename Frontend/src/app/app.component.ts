@@ -5,6 +5,7 @@ import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { LoadingService } from './core/services/loading.service';
+import { ThemeService } from './core/services/theme.service';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
@@ -40,6 +41,7 @@ import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm
 export class AppComponent {
   private router = inject(Router);
   public loadingService = inject(LoadingService);
+  private themeService = inject(ThemeService);
   isStandaloneRoute = false;
 
   constructor() {

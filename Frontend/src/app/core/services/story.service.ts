@@ -64,6 +64,7 @@ export interface StoryDetail {
     percentComplete?: number;
   };
   accessType?: 'free' | 'premium';
+  isMature?: boolean;
 }
 
 @Injectable({
@@ -150,6 +151,7 @@ export class StoryService {
             hasStarted: resume,
           },
           accessType: book.accessType || 'free',
+          isMature: book.isMature || false,
         };
 
         this.activeStory.set(detail);
