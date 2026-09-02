@@ -64,36 +64,41 @@
                 >{{ config.buttonText }}</a
               >
             }
-          } @else if (config.winnerBookId) {
-            <div
-              class="winner-info"
-              style="
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                background: rgba(0, 0, 0, 0.2);
-                padding: 16px;
-                border-radius: 8px;
-              "
-            >
-              <div style="color: white">
-                <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px">
-                  Winning Story
-                </div>
-                <strong
-                  style="font-size: 18px; display: block; margin-bottom: 4px"
-                  >{{ config.winnerBookId.title }}</strong
+          } @else if (config.winnerBookIds && config.winnerBookIds.length > 0) {
+            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+              @for (winner of config.winnerBookIds; track winner._id) {
+                <div
+                  class="winner-info"
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    background: rgba(0, 0, 0, 0.2);
+                    padding: 16px;
+                    border-radius: 8px;
+                    min-width: 250px;
+                  "
                 >
-                <div style="font-size: 14px; opacity: 0.9">
-                  By {{ config.winnerBookId.author.username }}
+                  <div style="color: white; flex-grow: 1;">
+                    <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px">
+                      Winning Story
+                    </div>
+                    <strong
+                      style="font-size: 18px; display: block; margin-bottom: 4px"
+                      >{{ winner.title }}</strong
+                    >
+                    <div style="font-size: 14px; opacity: 0.9">
+                      By {{ winner.author.username }}
+                    </div>
+                  </div>
+                  <a
+                    [routerLink]="['/story', winner._id]"
+                    class="btn btn-light"
+                    style="white-space: nowrap"
+                    >Read</a
+                  >
                 </div>
-              </div>
-              <a
-                [routerLink]="['/story', config.winnerBookId._id]"
-                class="btn btn-light"
-                style="white-space: nowrap"
-                >Read Winner</a
-              >
+              }
             </div>
           }
         </div>

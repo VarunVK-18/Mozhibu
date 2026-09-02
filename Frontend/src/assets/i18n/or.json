@@ -97,7 +97,9 @@
     "copyright": "© ୨୦୨୬ ମୋଝିବୁ। ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ।",
     "instagram": "ଇନଷ୍ଟାଗ୍ରାମ",
     "x": "X",
-    "youtube": "ୟୁଟ୍ୟୁବ୍"
+    "youtube": "ୟୁଟ୍ୟୁବ୍",
+    "resourceLinks": {},
+    "legalLinks": {}
   },
   "libraryPage": {
     "title": "ଆପଣଙ୍କ ପାଠାଗାର",
@@ -108,5 +110,9 @@
   "brand": {
     "name": "ମୋଝିବୁ",
     "tagline": "ଏହା ଏକ ନୂତନ ଧାରଣା"
-  }
+  },
+  "notifications": {},
+  "home": {},
+  "storyDetail": {},
+  "profile": {}
 }

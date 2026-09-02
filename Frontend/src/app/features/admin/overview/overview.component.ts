@@ -139,44 +139,50 @@ import { Router } from '@angular/router';
           <div class="charts-row">
             <!-- Unified Analytics Chart -->
             <div class="analytics-card card-panel">
-              <div class="analytics-header">
-                <h3>Platform Analytics</h3>
-                <div class="header-right" style="position: relative;">
-                  <span class="sort-by" (click)="toggleSortDropdown()">
-                    Sort By: <strong>{{ currentSort() }}</strong> ⌄
-                  </span>
-                  @if (sortDropdownOpen()) {
-                    <div class="sort-dropdown">
-                      @for (opt of sortOptions; track opt) {
-                        <div
-                          class="sort-option"
-                          (click)="selectSort(opt)"
-                          [class.active]="opt === currentSort()"
-                        >
-                          {{ opt }}
-                        </div>
-                      }
-                    </div>
+              <div class="analytics-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h3 style="font-size: 20px; font-weight: 700; color: #1e293b; font-family: var(--display);">Visitors</h3>
+                <div class="time-tabs" style="display: flex; gap: 8px;">
+                  @for (opt of ['ALL', '1M', '6M', '1Y']; track opt) {
+                    <button
+                      class="time-tab"
+                      (click)="selectSort(opt)"
+                      style="padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s;"
+                      [style.background]="opt === currentSort() ? '#94a3b8' : '#f1f5f9'"
+                      [style.color]="opt === currentSort() ? 'white' : '#475569'"
+                    >
+                      {{ opt }}
+                    </button>
                   }
                 </div>
               </div>
 
-              <div class="analytics-metrics">
-                <div class="metric-item primary">
-                  <span class="value">{{ stats()!.totalPublishedBooks }}</span>
-                  <span class="label">Books Published</span>
+              <div class="analytics-metrics" style="display: flex; justify-content: space-around; margin-bottom: 40px; text-align: center; border-bottom: 1px dashed #e2e8f0; padding-bottom: 24px;">
+                <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">Today</span>
+                  <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.readers }}</span>
                 </div>
-                <div class="metric-divider"></div>
-                <div class="metric-item">
-                  <span class="value">{{ stats()!.totalUsers }}</span>
-                  <span class="label">Total Users</span>
+                <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">This Month</span>
+                  <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.totalUsers }}</span>
+                    <span class="trend positive" style="font-size: 12px; font-weight: 600; color: #10b981; background: transparent; padding: 0;">{{ getTrend(stats()!.monthlyUsersData) }}% ↑</span>
+                  </div>
                 </div>
-                <div class="metric-divider"></div>
-                <div class="metric-item">
-                  <span class="value"
-                    >{{ getReadersRatio() | number: '1.0-1' }}%</span
-                  >
-                  <span class="label">Reader Ratio</span>
+                <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">This Year</span>
+                  <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.totalPublishedBooks }}</span>
+                    <span class="trend positive" style="font-size: 12px; font-weight: 600; color: #10b981; background: transparent; padding: 0;">{{ getTrend(stats()!.monthlyBooksData) }}% ↑</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-legend" style="display: flex; justify-content: flex-end; gap: 16px; margin-bottom: -16px; position: relative; z-index: 2;">
+                <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #64748b;">
+                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #6366f1;"></span> Current
+                </div>
+                <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #64748b;">
+                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b;"></span> Previous
                 </div>
               </div>
 
@@ -190,89 +196,143 @@ import { Router } from '@angular/router';
                 <div class="chart-container">
                   <svg
                     class="unified-chart"
-                    viewBox="0 0 1000 300"
+                    viewBox="0 0 1000 260"
                     preserveAspectRatio="none"
                   >
                     <defs>
-                      <!-- Area Gradient -->
-                      <linearGradient
-                        id="greyGradient"
-                        x1="0"
-                        x2="0"
-                        y1="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stop-color="#f1f5f9"
-                          stop-opacity="0.8"
-                        />
-                        <stop
-                          offset="100%"
-                          stop-color="#f1f5f9"
-                          stop-opacity="0.1"
-                        />
+                      <linearGradient id="blueGradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="orangeGradient" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.2" />
+                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0" />
                       </linearGradient>
                     </defs>
 
-                    <!-- Grey Area (Total Volume / Pending or User Growth) -->
+                    <!-- Horizontal Grid Lines -->
+                    <line x1="0" y1="50" x2="1000" y2="50" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="0" y1="150" x2="1000" y2="150" stroke="#f1f5f9" stroke-width="1" />
+                    <line x1="0" y1="250" x2="1000" y2="250" stroke="#f1f5f9" stroke-width="1" />
+
+                    <!-- Previous (Books) Smooth Area -->
                     <path
-                      [attr.d]="getAreaPath(stats()!.monthlyUsersData, true)"
-                      fill="url(#greyGradient)"
+                      [attr.d]="getAreaPath(stats()!.monthlyBooksData, true, true)"
+                      fill="url(#orangeGradient)"
                     />
                     <path
-                      [attr.d]="getAreaPath(stats()!.monthlyUsersData, false)"
+                      [attr.d]="getAreaPath(stats()!.monthlyBooksData, false, true)"
                       fill="none"
-                      stroke="#e2e8f0"
+                      stroke="#f59e0b"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
+                    <!-- Previous Points -->
+                    @for (val of stats()!.monthlyBooksData; track $index) {
+                      <circle
+                        [attr.cx]="getBarX($index, stats()!.monthlyBooksData.length)"
+                        [attr.cy]="getPointY(val, maxUsers())"
+                        r="4"
+                        fill="white"
+                        stroke="#f59e0b"
+                        stroke-width="2"
+                      />
+                    }
 
-                    <!-- Orange Line (Books Trend) -->
+                    <!-- Current (Users) Smooth Area -->
                     <path
-                      [attr.d]="
-                        getAreaPath(stats()!.monthlyBooksData, false, true)
-                      "
+                      [attr.d]="getAreaPath(stats()!.monthlyUsersData, true, true)"
+                      fill="url(#blueGradient)"
+                    />
+                    <path
+                      [attr.d]="getAreaPath(stats()!.monthlyUsersData, false, true)"
                       fill="none"
-                      stroke="#f59e0b"
-                      stroke-width="3"
+                      stroke="#6366f1"
+                      stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
-
-                    <!-- Blue Bars (Books Published) -->
-                    @for (val of stats()!.monthlyBooksData; track $index) {
+                    <!-- Current Points -->
+                    @for (val of stats()!.monthlyUsersData; track $index) {
+                      <circle
+                        [attr.cx]="getBarX($index, stats()!.monthlyUsersData.length)"
+                        [attr.cy]="getPointY(val, maxUsers())"
+                        r="4"
+                        fill="white"
+                        stroke="#6366f1"
+                        stroke-width="2"
+                      />
+                    }
+                    
+                    <!-- Hover Areas (Invisible Rectangles for tooltips) -->
+                    @for (label of stats()!.chartLabels; track $index) {
                       <rect
-                        [attr.x]="
-                          getBarX($index, stats()!.monthlyBooksData.length)
-                        "
-                        [attr.y]="300 - (val / maxBooks()) * 250"
-                        width="30"
-                        [attr.height]="(val / maxBooks()) * 250"
-                        fill="#6366f1"
-                        rx="2"
+                        [attr.x]="getBarX($index, stats()!.chartLabels.length) - (1000 / (stats()!.chartLabels.length > 1 ? stats()!.chartLabels.length - 1 : 1)) / 2"
+                        y="0"
+                        [attr.width]="1000 / (stats()!.chartLabels.length > 1 ? stats()!.chartLabels.length - 1 : 1)"
+                        height="250"
+                        fill="transparent"
+                        (mouseenter)="hoverIndex.set($index)"
+                        (mouseleave)="hoverIndex.set(null)"
+                        style="cursor: pointer;"
+                      />
+                    }
+
+                    <!-- Tooltip Line & Active Points -->
+                    @if (hoverIndex() !== null) {
+                      <line
+                        [attr.x1]="getBarX(hoverIndex()!, stats()!.chartLabels.length)"
+                        y1="50"
+                        [attr.x2]="getBarX(hoverIndex()!, stats()!.chartLabels.length)"
+                        y2="250"
+                        stroke="#94a3b8"
+                        stroke-width="1"
+                        stroke-dasharray="4 4"
+                        pointer-events="none"
+                      />
+                      <circle
+                        [attr.cx]="getBarX(hoverIndex()!, stats()!.monthlyBooksData.length)"
+                        [attr.cy]="getPointY(stats()!.monthlyBooksData[hoverIndex()!], maxUsers())"
+                        r="6"
+                        fill="white"
+                        stroke="#f59e0b"
+                        stroke-width="3"
+                        pointer-events="none"
+                      />
+                      <circle
+                        [attr.cx]="getBarX(hoverIndex()!, stats()!.monthlyUsersData.length)"
+                        [attr.cy]="getPointY(stats()!.monthlyUsersData[hoverIndex()!], maxUsers())"
+                        r="6"
+                        fill="white"
+                        stroke="#6366f1"
+                        stroke-width="3"
+                        pointer-events="none"
                       />
                     }
                   </svg>
 
                   <div class="x-axis">
                     @for (label of stats()!.chartLabels; track $index) {
-                      <span>{{ label }}</span>
+                      <span style="flex: 1; text-align: center;">{{ label }}</span>
                     }
                   </div>
-                </div>
-              </div>
-
-              <div class="chart-legend">
-                <div class="legend-item">
-                  <span class="dot" style="background: #6366f1;"></span> Books
-                </div>
-                <div class="legend-item">
-                  <span class="dot" style="background: #e2e8f0;"></span> Users
-                </div>
-                <div class="legend-item">
-                  <span class="dot" style="background: #f59e0b;"></span> Trend
+                  
+                  <!-- HTML Tooltip Box -->
+                  @if (hoverIndex() !== null) {
+                    <div
+                      class="chart-tooltip"
+                      [style.left]="(getBarX(hoverIndex()!, stats()!.chartLabels.length) / 1000) * 100 + '%'"
+                    >
+                      <div class="tooltip-header">{{ stats()!.chartLabels[hoverIndex()!] }}</div>
+                      <div class="tooltip-row">
+                        <span class="dot" style="background: #6366f1;"></span> Current: <strong>{{ stats()!.monthlyUsersData[hoverIndex()!] }}</strong>
+                      </div>
+                      <div class="tooltip-row">
+                        <span class="dot" style="background: #f59e0b;"></span> Previous: <strong>{{ stats()!.monthlyBooksData[hoverIndex()!] }}</strong>
+                      </div>
+                    </div>
+                  }
                 </div>
               </div>
             </div>
@@ -632,6 +692,48 @@ import { Router } from '@angular/router';
         background: #e2e8f0;
       }
 
+      .chart-tooltip {
+        position: absolute;
+        top: 20px;
+        transform: translateX(-50%);
+        background: white;
+        border: 1px solid var(--border-soft);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        min-width: 130px;
+        pointer-events: none;
+      }
+      .tooltip-header {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border-soft);
+      }
+      .tooltip-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+      .tooltip-row:last-child {
+        margin-bottom: 0;
+      }
+      .tooltip-row .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .tooltip-row strong {
+        color: #1e293b;
+        margin-left: auto;
+      }
+
       .analytics-chart-wrapper {
         display: flex;
         height: 300px;
@@ -645,6 +747,7 @@ import { Router } from '@angular/router';
         font-size: 12px;
         font-weight: 500;
         color: #94a3b8;
+        padding-top: 55px;
         padding-right: 24px;
         padding-bottom: 24px;
         text-align: right;
@@ -740,9 +843,10 @@ export class OverviewComponent implements OnInit {
 
   baseStats: AdminStats | null = null;
 
-  sortOptions = ['Yearly', 'Monthly', 'Weekly'];
-  currentSort = signal('Yearly');
+  sortOptions = ['1Y', '6M', '1M', 'ALL'];
+  currentSort = signal('1Y');
   sortDropdownOpen = signal(false);
+  hoverIndex = signal<number | null>(null);
 
   toggleSortDropdown() {
     this.sortDropdownOpen.update((v) => !v);
@@ -757,16 +861,20 @@ export class OverviewComponent implements OnInit {
     // Deep copy to mutate for visual effect
     const newData = JSON.parse(JSON.stringify(this.baseStats)) as AdminStats;
 
-    if (option === 'Yearly') {
+    if (option === '1Y') {
       // Keep default Yearly data
-    } else if (option === 'Monthly') {
+    } else if (option === '6M') {
+      newData.chartLabels = newData.chartLabels.slice(6);
+      newData.monthlyBooksData = newData.monthlyBooksData.slice(6);
+      newData.monthlyUsersData = newData.monthlyUsersData.slice(6);
+    } else if (option === '1M') {
       newData.chartLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       newData.monthlyBooksData = [5, 12, 8, 15];
       newData.monthlyUsersData = [30, 85, 45, 110];
-    } else if (option === 'Weekly') {
-      newData.chartLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      newData.monthlyBooksData = [2, 1, 4, 3, 7, 5, 2];
-      newData.monthlyUsersData = [10, 15, 25, 20, 45, 30, 15];
+    } else if (option === 'ALL') {
+      newData.chartLabels = ['2020', '2021', '2022', '2023', '2024'];
+      newData.monthlyBooksData = [20, 150, 400, 320, 700];
+      newData.monthlyUsersData = [100, 850, 2500, 4200, 9500];
     }
 
     this.stats.set(newData);
@@ -829,10 +937,15 @@ export class OverviewComponent implements OnInit {
     return max < 10 ? 10 : Math.ceil(max / 10) * 10;
   }
 
+  getPointY(val: number, max: number): number {
+    const h = 250;
+    return h - (val / max) * 200; // scaling to max height of 200 within 250 bounds
+  }
+
   getBarX(index: number, totalLen: number): number {
     const w = 1000;
     const stepX = w / (totalLen > 1 ? totalLen - 1 : 1);
-    return index * stepX - 15;
+    return index * stepX;
   }
 
   getAreaPath(
@@ -855,7 +968,7 @@ export class OverviewComponent implements OnInit {
     for (let i = 0; i < data.length; i++) {
       const x = i * stepX;
       // Invert Y axis
-      const y = h - (data[i] / max) * h;
+      const y = this.getPointY(data[i], max);
 
       if (i === 0) {
         path += `M ${x},${y}`;
@@ -863,10 +976,10 @@ export class OverviewComponent implements OnInit {
         if (smooth) {
           // Simple bezier curve approximation
           const prevX = (i - 1) * stepX;
-          const prevY = h - (data[i - 1] / max) * h;
-          const cX1 = prevX + stepX / 2;
+          const prevY = this.getPointY(data[i - 1], max);
+          const cX1 = prevX + stepX / 2.5;
           const cY1 = prevY;
-          const cX2 = prevX + stepX / 2;
+          const cX2 = x - stepX / 2.5;
           const cY2 = y;
           path += ` C ${cX1},${cY1} ${cX2},${cY2} ${x},${y}`;
         } else {
@@ -876,7 +989,7 @@ export class OverviewComponent implements OnInit {
     }
 
     if (closePath) {
-      path += ` L ${w},${h} L 0,${h} Z`;
+      path += ` L ${w},250 L 0,250 Z`;
     }
 
     return path;

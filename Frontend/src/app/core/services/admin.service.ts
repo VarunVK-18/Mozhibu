@@ -35,6 +35,12 @@ export interface AdminBook {
   submittedAt: string;
   createdAt: string;
   reportCount?: number;
+  reports?: {
+    user: { _id: string; username: string; email: string; avatar?: string };
+    reason: string;
+    comment?: string;
+    createdAt: string;
+  }[];
 }
 
 export interface AdminUser {
@@ -215,11 +221,28 @@ export class AdminService {
       .pipe(map((books) => books.map((b) => this.fixCoverUrl(b))));
   }
 
-  announceCompetitionWinner(bookId: string): Observable<any> {
-    return this.api.post('/admin/competition/announce-winner', { bookId });
+  announceCompetitionWinner(bookIds: string[]): Observable<any> {
+    return this.api.post('/admin/competition/announce-winner', { bookIds });
   }
 
   sendCompetitionNotification(message: string): Observable<any> {
     return this.api.post('/admin/competition/notify', { message });
+  }
+
+  getCompetitionHistory(): Observable<any[]> {
+    return this.api.get<any[]>('/admin/competitions/history');
+  }
+
+  getCompetitionDetails(id: string): Observable<{competition: any, entries: any[]}> {
+    return this.api.get<{competition: any, entries: any[]}>(`/admin/competitions/${id}`)
+      .pipe(
+        map(res => {
+          res.entries = res.entries.map((b: any) => this.fixCoverUrl(b));
+          if (res.competition && res.competition.winnerBookIds) {
+            res.competition.winnerBookIds = res.competition.winnerBookIds.map((b: any) => this.fixCoverUrl(b));
+          }
+          return res;
+        })
+      );
   }
 }

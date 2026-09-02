@@ -9,6 +9,7 @@ const ReportSchema = new mongoose.Schema(
       required: true,
     },
     reason: { type: String, required: true },
+    comment: { type: String },
     status: {
       type: String,
       enum: ["pending", "reviewed", "resolved", "dismissed"],

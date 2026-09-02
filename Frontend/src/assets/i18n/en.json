@@ -11,7 +11,26 @@
   },
   "header": {
     "startWriting": "Start writing",
-    "langLabel": "EN"
+    "langLabel": "EN",
+    "search": "Search",
+    "notifications": "Notifications",
+    "myProfile": "My Profile",
+    "settings": "Settings",
+    "logOut": "Log Out",
+    "adminPanel": "Admin Panel"
+  },
+  "notifications": {
+    "all": "All",
+    "follows": "Follows",
+    "likes": "Likes",
+    "comments": "Comments",
+    "announcements": "Announcements"
+  },
+  "home": {
+    "recommended": "Recommended",
+    "latest": "Latest",
+    "following": "Following",
+    "authors": "Authors"
   },
   "hero": {
     "eyebrow": "12 languages, one library",
@@ -69,44 +88,91 @@
     "cta": "Submit your story"
   },
   "footer": {
-    "tagline": "A digital publishing home for stories in twelve languages — read, write and discover in the words you think in.",
-    "emailPlaceholder": "Your email address",
-    "joinBtn": "Join",
-    "explore": "Explore",
-    "write": "Write",
+    "tagline": "Stories worth staying up for. Read and publish fiction in 12+ languages with your progress saved across every device.",
     "company": "Company",
-    "readIn": "Read in",
-    "exploreLinks": [
-      "Discover",
-      "Trending",
-      "New releases",
-      "Competitions"
-    ],
-    "writeLinks": [
-      "Start a story",
-      "Writer dashboard",
-      "Editor guide",
-      "Analytics"
-    ],
-    "companyLinks": [
-      "About Mozhibu",
-      "Community guidelines",
-      "Support",
-      "Careers"
-    ],
-    "copyright": "© 2026 Mozhibu. All rights reserved.",
-    "instagram": "Instagram",
-    "x": "X",
-    "youtube": "YouTube"
+    "companyLinks": {
+      "about": "About Us",
+      "careers": "Careers",
+      "press": "Press",
+      "blog": "Blog",
+      "contact": "Contact Us"
+    },
+    "resources": "Resources",
+    "resourceLinks": {
+      "help": "Help Center",
+      "guidelines": "Community Guidelines",
+      "writers": "Writer's Portal",
+      "competitions": "Competitions"
+    },
+    "legal": "Legal",
+    "legalLinks": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "cookies": "Cookie Policy",
+      "copyright": "Copyright"
+    },
+    "copyright": "© 2026 Mozhibu Inc. All rights reserved."
   },
   "libraryPage": {
     "title": "Your Library",
-    "subtitle": "Your personal collection of saved stories and favorite authors.",
+    "subtitle": "Manage your entire reading journey",
     "savedStories": "Saved Stories",
-    "followedAuthors": "Followed Authors"
+    "followedAuthors": "Followed Authors",
+    "searchPlaceholder": "Search library...",
+    "recentlyAdded": "Recently Added",
+    "titleAZ": "Title (A-Z)",
+    "author": "Author",
+    "allGenres": "All Genres",
+    "bookmarks": "Bookmarks",
+    "downloaded": "Downloaded",
+    "readingHistory": "Reading History",
+    "favorites": "Favourites",
+    "upgradeTitle": "Upgrade to Download",
+    "upgradeDesc": "Your current subscription plan doesn't include offline downloads.",
+    "choosePlan": "Choose a different plan",
+    "emptyTitle": "Nothing here yet",
+    "emptyDesc": "We couldn't find any items matching your criteria.",
+    "discover": "Discover Stories"
   },
   "brand": {
     "name": "Mozhibu",
     "tagline": "It's a novel idea"
+  },
+  "storyDetail": {
+    "accessDenied": "Access Denied",
+    "understood": "Understood",
+    "synopsis": "Synopsis",
+    "readLess": "Read Less",
+    "readMore": "Read More",
+    "moreLikeThis": "More like this"
+  },
+  "profile": {
+    "followers": "Followers",
+    "following": "Following",
+    "reader": "Reader",
+    "noBio": "This user hasn't written a bio yet.",
+    "editProfile": "Edit Profile",
+    "publishedContents": "Published Contents",
+    "noPublished": "You haven't published any stories yet.",
+    "startWriting": "Start Writing",
+    "promoTitle": "Want to publish your own stories?",
+    "promoDesc": "Join our growing community of authors and share your world.",
+    "requestPending": "Request Pending",
+    "becomeAuthor": "Become an Author",
+    "noFollowing": "You aren't following anyone yet. Follow authors you love to get notified when they publish new stories.",
+    "findAuthors": "Find Authors",
+    "noFollowers": "You don't have any followers yet. Keep writing and sharing your stories to grow your audience!"
+  },
+  "reportModal": {
+    "title": "Report Story",
+    "subtitle": "Please select a reason for reporting this story.",
+    "plagiarism": "Plagiarism",
+    "inappropriate": "Inappropriate Content",
+    "spam": "Spam",
+    "other": "Other",
+    "placeholder": "Additional details (optional)...",
+    "cancel": "Cancel",
+    "submit": "Submit Report",
+    "success": "Report submitted successfully."
   }
 }

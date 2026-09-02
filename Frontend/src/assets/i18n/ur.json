@@ -11,7 +11,13 @@
   },
   "header": {
     "startWriting": "لکھنا شروع کریں",
-    "langLabel": "انگریزی"
+    "langLabel": "انگریزی",
+    "search": "تلاش",
+    "notifications": "اطلاعات",
+    "myProfile": "میرا پروفائل",
+    "settings": "ترتیبات",
+    "logOut": "لاگ آؤٹ",
+    "adminPanel": "ایڈمن پینل"
   },
   "hero": {
     "eyebrow": "12 زبانیں، ایک لائبریری",
@@ -97,16 +103,83 @@
     "copyright": "© 2026 Mozhibu. تمام حقوق محفوظ ہیں۔",
     "instagram": "انسٹاگرام",
     "x": "ایکس",
-    "youtube": "یوٹیوب"
+    "youtube": "یوٹیوب",
+    "resourceLinks": {
+      "help": "امدادی مرکز",
+      "guidelines": "کمیونٹی کے رہنما اصول",
+      "writers": "مصنفین کا پورٹل",
+      "competitions": "مقابلے"
+    },
+    "legalLinks": {
+      "terms": "سروس کی شرائط",
+      "privacy": "رازداری کی پالیسی",
+      "cookies": "کوکی پالیسی",
+      "copyright": "حقوق اشاعت"
+    },
+    "resources": "وسائل",
+    "legal": "قانونی"
   },
   "libraryPage": {
     "title": "آپ کی لائبریری",
     "subtitle": "محفوظ شدہ کہانیوں اور پسندیدہ مصنفین کا آپ کا ذاتی مجموعہ۔",
     "savedStories": "محفوظ شدہ کہانیاں",
-    "followedAuthors": "فالو کیے گئے مصنفین"
+    "followedAuthors": "فالو کیے گئے مصنفین",
+    "searchPlaceholder": "لائبریری میں تلاش کریں...",
+    "recentlyAdded": "حالیہ شامل کردہ",
+    "titleAZ": "عنوان (الف سے ی)",
+    "author": "مصنف",
+    "allGenres": "تمام اصناف",
+    "bookmarks": "بک مارکس",
+    "downloaded": "ڈاؤن لوڈ شدہ",
+    "readingHistory": "مطالعہ کی تاریخ",
+    "favorites": "پسندیدہ",
+    "upgradeTitle": "ڈاؤن لوڈ کرنے کے لیے اپ گریڈ کریں",
+    "upgradeDesc": "آپ کے موجودہ سبسکرپشن پلان میں آف لائن ڈاؤن لوڈز شامل نہیں ہیں۔",
+    "choosePlan": "کوئی دوسرا پلان منتخب کریں",
+    "emptyTitle": "ابھی یہاں کچھ نہیں ہے",
+    "emptyDesc": "ہمیں آپ کے معیار کے مطابق کوئی چیز نہیں ملی۔",
+    "discover": "کہانیاں دریافت کریں"
   },
   "brand": {
     "name": "موزیبو",
     "tagline": "یہ ایک نیا خیال ہے"
+  },
+  "notifications": {
+    "all": "تمام",
+    "follows": "فالووز",
+    "likes": "لائکس",
+    "comments": "تبصرے",
+    "announcements": "اعلانات"
+  },
+  "home": {
+    "recommended": "تجویز کردہ",
+    "latest": "تازہ ترین",
+    "following": "پیروی کر رہے ہیں",
+    "authors": "مصنفین"
+  },
+  "storyDetail": {
+    "accessDenied": "رسائی مسترد کر دی گئی",
+    "understood": "سمجھ گیا",
+    "synopsis": "خلاصہ",
+    "readLess": "کم پڑھیں",
+    "readMore": "مزید پڑھیں",
+    "moreLikeThis": "اس طرح کی مزید"
+  },
+  "profile": {
+    "followers": "پیروکار",
+    "following": "پیروی کر رہے ہیں",
+    "reader": "قاری",
+    "noBio": "اس صارف نے ابھی تک اپنا تعارف نہیں لکھا ہے۔",
+    "editProfile": "پروفائل میں ترمیم کریں",
+    "publishedContents": "شائع شدہ مواد",
+    "noPublished": "آپ نے ابھی تک کوئی کہانی شائع نہیں کی ہے۔",
+    "startWriting": "لکھنا شروع کریں",
+    "promoTitle": "کیا آپ اپنی کہانیاں شائع کرنا چاہتے ہیں؟",
+    "promoDesc": "مصنفین کی ہماری بڑھتی ہوئی کمیونٹی میں شامل ہوں اور اپنی دنیا کا اشتراک کریں۔",
+    "requestPending": "درخواست زیر التواء ہے",
+    "becomeAuthor": "مصنف بنیں",
+    "noFollowing": "آپ ابھی تک کسی کی پیروی نہیں کر رہے ہیں۔ اپنے پسندیدہ مصنفین کی پیروی کریں تاکہ ان کی نئی کہانیاں شائع ہونے پر آپ کو اطلاع مل سکے۔",
+    "findAuthors": "مصنفین تلاش کریں",
+    "noFollowers": "ابھی تک آپ کا کوئی پیروکار نہیں ہے۔ اپنے قارئین کی تعداد بڑھانے کے لیے کہانیاں لکھتے اور شیئر کرتے رہیں!"
   }
 }

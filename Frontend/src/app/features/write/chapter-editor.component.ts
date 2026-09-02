@@ -258,10 +258,12 @@ import { environment } from '../../../environments/environment';
 
           <input
             type="text"
+            #chapterTitleInput
             class="chapter-title-input"
             placeholder="Chapter Title..."
             [(ngModel)]="chapterTitle"
             (ngModelChange)="onContentChange()"
+            (keydown)="onChapterTitleKeydown($event, chapterTitleInput)"
           />
 
           <!-- Formatting Toolbar -->
@@ -304,27 +306,6 @@ import { environment } from '../../../environments/environment';
             >
               —
             </button>
-            <button (click)="inlineImageInput.click()" title="Insert Image">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </button>
-            <input
-              type="file"
-              #inlineImageInput
-              hidden
-              accept="image/*"
-              (change)="uploadInlineImage($event)"
-            />
           </div>
 
           <!-- Rich Text Editor Area -->
@@ -1152,6 +1133,47 @@ bookId: string | null = null;
     localStorage.setItem('typingLanguage', langCode);
   }
 
+  async onChapterTitleKeydown(event: KeyboardEvent, input: HTMLInputElement) {
+    if (this.typingLanguage === 'en') return;
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      const cursorPosition = input.selectionStart || 0;
+      const textBeforeCursor = this.chapterTitle.substring(0, cursorPosition);
+      
+      const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
+      
+      if (match) {
+        const word = match[1];
+        const wordStart = cursorPosition - word.length;
+        
+        event.preventDefault();
+        
+        try {
+          let translatedWord = '';
+          try {
+            translatedWord = await this.transliterateWord(word);
+          } catch (e) {
+            console.error('Google Input API failed, falling back to local transliteration', e);
+            translatedWord = this.transliterateToTamil(word);
+          }
+          
+          const title = this.chapterTitle;
+          const newTitle = title.substring(0, wordStart) + translatedWord + ' ' + title.substring(cursorPosition);
+          
+          this.chapterTitle = newTitle;
+          this.onContentChange();
+          
+          setTimeout(() => {
+            const newCursorPosition = wordStart + translatedWord.length + 1;
+            input.setSelectionRange(newCursorPosition, newCursorPosition);
+          }, 0);
+        } catch (error) {
+          console.error("Transliteration failed", error);
+        }
+      }
+    }
+  }
+
   async onEditorKeyDown(event: KeyboardEvent) {
     if (this.typingLanguage === 'en') return;
 
@@ -1222,69 +1244,7 @@ bookId: string | null = null;
     throw new Error('No transliteration found');
   }
 
-  // --- Inline Image Compression & Upload ---
-  uploadInlineImage(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    // Compress using canvas before uploading
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e: any) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > MAX_WIDTH) {
-          height *= MAX_WIDTH / width;
-          width = MAX_WIDTH;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-
-              // Upload to backend using existing uploadCover endpoint
-              this.bookService.uploadCover(compressedFile).subscribe({
-                next: (res) => {
-                  const baseUrl = environment.apiUrl.replace('/api', '');
-                  const imageUrl =
-                    res.coverUrl.startsWith('data:') ||
-                    res.coverUrl.startsWith('http')
-                      ? res.coverUrl
-                      : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
-                  // Insert the returned image URL into the rich text editor
-                  this.editorRef.nativeElement.focus();
-                  document.execCommand('insertImage', false, imageUrl);
-                  this.onEditorInput();
-                },
-                error: (err) => {
-                  console.error('Failed to upload inline image', err);
-                  alert('Failed to upload image. Please try again.');
-                },
-              });
-            }
-          },
-          'image/jpeg',
-          0.8,
-        );
-      };
-    };
-    event.target.value = ''; // Reset input
-  }
 
   // --- Existing Meta Image Logic ---
   fileChangeEvent(event: any): void {

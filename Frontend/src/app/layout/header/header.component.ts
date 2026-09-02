@@ -42,27 +42,25 @@ export class HeaderComponent implements OnInit, OnDestroy {
   profileMenuOpen = signal(false);
   mobileMenuOpen = signal(false);
   notificationsOpen = signal(false);
-  engagementOpen = signal(false);
   showAuthorModal = signal(false);
   isHeaderHidden = signal(false);
   private lastScrollY = 0;
 
   notifications = signal<NotificationItem[]>([]);
 
-  activityNotifications = computed(() =>
-    this.notifications().filter((n) =>
-      ['like', 'comment', 'follower', 'following'].includes(n.type),
-    ),
-  );
-  generalNotifications = computed(() =>
-    this.notifications().filter((n) =>
-      ['new_chapter', 'competition', 'announcement', 'system'].includes(n.type),
-    ),
-  );
+  notificationFilter = signal<string>('all');
 
-  unreadActivityCount = computed(
-    () => this.activityNotifications().filter((n) => !n.isRead).length,
-  );
+  generalNotifications = computed(() => {
+    const filter = this.notificationFilter();
+    const all = this.notifications();
+    if (filter === 'all') return all;
+    if (filter === 'likes') return all.filter((n) => n.type === 'like');
+    if (filter === 'comments') return all.filter((n) => n.type === 'comment');
+    if (filter === 'followers') return all.filter((n) => n.type === 'follower' || n.type === 'following');
+    if (filter === 'announcements') return all.filter((n) => ['announcement', 'competition', 'system', 'new_chapter'].includes(n.type));
+    return all;
+  });
+
   unreadGeneralCount = computed(
     () => this.generalNotifications().filter((n) => !n.isRead).length,
   );
@@ -139,26 +137,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleNotifications(): void {
     this.notificationsOpen.update((v) => !v);
     if (this.notificationsOpen()) {
-      this.engagementOpen.set(false);
       this.profileMenuOpen.set(false);
       this.langMenuOpen.set(false);
     }
   }
 
-  toggleEngagement(): void {
-    this.engagementOpen.update((v) => !v);
-    if (this.engagementOpen()) {
-      this.notificationsOpen.set(false);
-      this.profileMenuOpen.set(false);
-      this.langMenuOpen.set(false);
-    }
+  navigateToFavorites(): void {
+    this.notificationsOpen.set(false);
+    this.profileMenuOpen.set(false);
+    this.langMenuOpen.set(false);
+    this.router.navigate(['/library'], { queryParams: { tab: 'favorites' } });
   }
 
   toggleProfileMenu(): void {
     this.profileMenuOpen.update((v) => !v);
     if (this.profileMenuOpen()) {
       this.notificationsOpen.set(false);
-      this.engagementOpen.set(false);
       this.langMenuOpen.set(false);
     }
   }
@@ -194,12 +188,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.notificationsOpen.set(false);
     }
     if (
-      !target.closest('.engagement-wrapper') &&
-      !target.closest('.icon-btn[aria-label="Engagement"]')
-    ) {
-      this.engagementOpen.set(false);
-    }
-    if (
       !target.closest('.mobile-menu-container') &&
       !target.closest('.hamburger-btn')
     ) {
@@ -220,7 +208,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.langMenuOpen.set(false);
         this.profileMenuOpen.set(false);
         this.notificationsOpen.set(false);
-        this.engagementOpen.set(false);
       }
     }
     // If scrolling up, show it
@@ -278,7 +265,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   goToProfile(event: Event, userId: string) {
     event.stopPropagation();
     this.router.navigate(['/author', userId]);
-    this.engagementOpen.set(false);
     this.notificationsOpen.set(false);
   }
 

@@ -144,8 +144,8 @@ export class BookService {
     return this.api.post(`/books/${bookId}/like`, {});
   }
 
-  reportBook(bookId: string, reason: string): Observable<any> {
-    return this.api.post(`/books/${bookId}/report`, { reason });
+  reportBook(bookId: string, reason: string, comment: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/report`, { reason, comment });
   }
 
   createBook(data: any): Observable<any> {

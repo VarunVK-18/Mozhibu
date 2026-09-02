@@ -330,10 +330,12 @@ import { environment } from '../../../environments/environment';
 
           <input
             type="text"
+            #chapterTitleInput
             class="chapter-title-input"
             placeholder="Chapter 1: Title..."
             [(ngModel)]="chapter.title"
             (ngModelChange)="onContentChange()"
+            (keydown)="onChapterTitleKeydown($event, chapterTitleInput)"
           />
 
           <textarea
@@ -830,6 +832,42 @@ export class StoryEditorComponent implements OnInit {
         } catch (error) {
           console.error("Transliteration failed", error);
         }
+
+      }
+    }
+  }
+  
+  async onChapterTitleKeydown(event: KeyboardEvent, input: HTMLInputElement) {
+    if (this.typingLanguage === 'en') return;
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      const cursorPosition = input.selectionStart || 0;
+      const textBeforeCursor = this.chapter.title.substring(0, cursorPosition);
+      
+      const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
+      
+      if (match) {
+        const word = match[1];
+        const wordStart = cursorPosition - word.length;
+        
+        event.preventDefault();
+        
+        try {
+          const translatedWord = await this.transliterateWord(word);
+          
+          const title = this.chapter.title;
+          const newTitle = title.substring(0, wordStart) + translatedWord + ' ' + title.substring(cursorPosition);
+          
+          this.chapter.title = newTitle;
+          this.onContentChange();
+          
+          setTimeout(() => {
+            const newCursorPosition = wordStart + translatedWord.length + 1;
+            input.setSelectionRange(newCursorPosition, newCursorPosition);
+          }, 0);
+        } catch (error) {
+          console.error("Transliteration failed", error);
+        }
       }
     }
   }
@@ -926,7 +964,14 @@ export class StoryEditorComponent implements OnInit {
     };
     
     if (!isAutoSave) {
-      bookData.status = isDraft ? 'draft' : 'published';
+      if (isDraft) {
+        bookData.status = 'draft';
+      } else if (this.story.isMature) {
+        // 18+ books require admin approval
+        bookData.status = 'pending';
+      } else {
+        bookData.status = 'published';
+      }
     } else if (!this.bookId) {
       bookData.status = 'draft';
     }

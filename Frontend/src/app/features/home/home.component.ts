@@ -19,7 +19,7 @@ import { ApiService } from '../../core/services/api.service';
 import { OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { GoogleAdComponent } from '../../shared/components/ad/google-ad.component';
-
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -33,6 +33,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
     ContinueReadingComponent,
     RouterModule,
     GoogleAdComponent,
+    TranslatePipe,
   ],
   template: `
     <div class="page-wrapper">
@@ -106,7 +107,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
           <app-continue-reading></app-continue-reading>
 
           <app-story-section
-            title="Recommended"
+            [title]="'home.recommended' | translate"
             [stories]="recommendedStories"
             [isLoading]="isStoriesLoading"
             viewAllLink="/categories"
@@ -133,7 +134,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
           </div>
 
           <app-story-section
-            title="Latest"
+            [title]="'home.latest' | translate"
             [stories]="newlyPublished"
             [isLoading]="isStoriesLoading"
             viewAllLink="/categories"
@@ -151,7 +152,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
           <!-- Following Users -->
           <section class="user-section">
             <div class="section-header">
-              <h2 class="section-title">Following</h2>
+              <h2 class="section-title">{{ "home.following" | translate }}</h2>
               <a routerLink="/community" class="view-all">View All</a>
             </div>
             <div class="scroll-container">
@@ -167,7 +168,7 @@ import { GoogleAdComponent } from '../../shared/components/ad/google-ad.componen
           <!-- Authors section -->
           <section class="user-section">
             <div class="section-header">
-              <h2 class="section-title">Authors</h2>
+              <h2 class="section-title">{{ "home.authors" | translate }}</h2>
               <a routerLink="/community" class="view-all">View All</a>
             </div>
             <div class="scroll-container">

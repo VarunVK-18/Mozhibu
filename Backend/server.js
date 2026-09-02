@@ -20,12 +20,19 @@ const server = http.createServer(app);
 const corsOptions = {
   origin: function (origin, callback) {
     const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
-    const allowedOrigins = [frontendUrl, "http://localhost:4200"];
-    if (!origin) return callback(null, true);
+    const localUrls = process.env.LOCAL_FRONTEND_URLS ? process.env.LOCAL_FRONTEND_URLS.split(',').map(url => url.trim().replace(/\/$/, '')) : [];
+    
+    const allowedOrigins = [frontendUrl, ...localUrls].filter(Boolean);
+    
+    if (!origin) {
+      console.warn(`CORS: No Origin header provided (allowed for server-to-server or local scripts)`);
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origin '${frontendUrl}'`);
+    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origins: ${allowedOrigins.join(', ')}`);
     return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
   },
   credentials: true,

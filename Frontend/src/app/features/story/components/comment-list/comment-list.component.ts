@@ -75,8 +75,9 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
       </div>
 
       <!-- Write Review/Comment Input -->
-      <div class="comment-input-area write-review-box">
-        <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
+      @if (!isStoryAuthor) {
+        <div class="comment-input-area write-review-box">
+          <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
         <div class="input-wrapper">
           @if (isFocused || newCommentText.trim().length > 0) {
             <div class="rating-selector">
@@ -136,6 +137,7 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
           }
         </div>
       </div>
+      }
 
       <!-- Comment Thread Template -->
       <ng-template #commentThread let-comment>
@@ -1214,8 +1216,8 @@ export class CommentListComponent {
   @Input() comments: any[] = [];
   @Input() currentUserAvatar = '';
   @Input() storyAuthorName = '';
-  @Input() hasMore = false;
   @Input() loadingMore = false;
+  @Input() hasMore = false;
 
   public api = inject(ApiService);
   public authService = inject(AuthService);

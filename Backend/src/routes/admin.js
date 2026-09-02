@@ -119,10 +119,11 @@ router.get("/books", async (req, res) => {
 router.get("/reported-books", async (req, res) => {
   try {
     const books = await Book.find({
-      reportCount: { $gt: 10 },
+      reportCount: { $gt: 0 },
       status: { $ne: "suspended" },
     })
       .populate("author", "username email")
+      .populate("reports.user", "username email avatar")
       .sort({ reportCount: -1 });
     res.json(books);
   } catch (err) {
@@ -500,7 +501,7 @@ const Competition = require("../models/Competition");
 // @desc Get competition config
 router.get("/competition", async (req, res) => {
   try {
-    let competition = await Competition.findOne();
+    let competition = await Competition.findOne().sort({ createdAt: -1 });
     if (!competition) {
       competition = new Competition();
       await competition.save();
@@ -535,9 +536,9 @@ router.put("/competition", async (req, res) => {
       buttonText,
       buttonLink,
     } = req.body;
-    let competition = await Competition.findOne();
+    let competition = await Competition.findOne().sort({ createdAt: -1 });
 
-    if (!competition) {
+    if (!competition || (competition.winnerBookIds && competition.winnerBookIds.length > 0)) {
       competition = new Competition();
     }
 
@@ -560,7 +561,7 @@ router.put("/competition", async (req, res) => {
 // @desc Get books submitted to the active competition
 router.get("/competition/entries", async (req, res) => {
   try {
-    const competition = await Competition.findOne();
+    const competition = await Competition.findOne().sort({ createdAt: -1 });
     if (!competition || !competition.tag) {
       return res.json([]);
     }
@@ -618,25 +619,32 @@ router.post("/competition/notify", async (req, res) => {
 // @desc Set the winner and announce it to everyone
 router.post("/competition/announce-winner", async (req, res) => {
   try {
-    const { bookId } = req.body;
-    const competition = await Competition.findOne();
+    const { bookIds } = req.body;
+    const competition = await Competition.findOne().sort({ createdAt: -1 });
     if (!competition)
       return res.status(404).json({ msg: "No competition found" });
 
-    const winningBook = await Book.findById(bookId).populate(
+    if (!bookIds || !Array.isArray(bookIds) || bookIds.length === 0) {
+      return res.status(400).json({ msg: "At least one winning book must be provided" });
+    }
+
+    const winningBooks = await Book.find({ _id: { $in: bookIds } }).populate(
       "author",
       "username",
     );
-    if (!winningBook) return res.status(404).json({ msg: "Book not found" });
+    if (winningBooks.length !== bookIds.length) {
+      return res.status(404).json({ msg: "One or more books not found" });
+    }
 
-    competition.winnerBookId = bookId;
+    competition.winnerBookIds = bookIds;
     competition.isActive = false; // Competition is over
     await competition.save();
 
     // Announce to EVERYONE
+    const winnerNames = winningBooks.map(b => `${b.author.username} for "${b.title}"`).join(", ");
     const broadcast = new Broadcast({
-      title: "Competition Winner Announced!",
-      message: `The competition "${competition.title}" has concluded. Congratulations to ${winningBook.author.username} for their winning book "${winningBook.title}"!`,
+      title: "Competition Winners Announced!",
+      message: `The competition "${competition.title}" has concluded. Congratulations to ${winnerNames}!`,
       audience: "all",
       sentBy: req.user.id,
     });
@@ -654,6 +662,41 @@ router.post("/competition/announce-winner", async (req, res) => {
     await Notification.insertMany(notifications);
 
     res.json({ msg: "Winner announced successfully!", competition });
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route GET /api/admin/competitions/history
+// @desc Get past competitions
+router.get("/competitions/history", async (req, res) => {
+  try {
+    const history = await Competition.find({
+      $or: [{ isActive: false }, { "winnerBookIds.0": { $exists: true } }]
+    }).sort({ createdAt: -1 });
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route GET /api/admin/competitions/:id
+// @desc Get a specific competition's details including submissions and winners
+router.get("/competitions/:id", async (req, res) => {
+  try {
+    const competition = await Competition.findById(req.params.id).populate({
+      path: "winnerBookIds",
+      populate: { path: "author", select: "username" },
+    });
+    if (!competition) {
+      return res.status(404).json({ msg: "Competition not found" });
+    }
+
+    const entries = await Book.find({ competitionTag: competition.tag })
+      .populate("author", "username")
+      .select("title author cover genre submittedAt rating status");
+
+    res.json({ competition, entries });
   } catch (err) {
     res.status(500).json({ msg: "Server Error" });
   }

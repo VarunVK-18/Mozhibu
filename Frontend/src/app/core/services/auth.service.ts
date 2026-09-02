@@ -14,6 +14,7 @@ export interface User {
   followersCount?: number;
   bio?: string;
   savedBooks?: string[];
+  favoriteBooks?: string[];
   dob?: string;
 }
 
@@ -138,6 +139,31 @@ export class AuthService {
         }
       })
     );
+  }
+
+  toggleFavorite(bookId: string): Observable<any> {
+    return this.api.post(`/users/me/favorites/${bookId}`, {}).pipe(
+      tap((res: any) => {
+        const currentUser = this.user();
+        if (currentUser) {
+          let updatedFavorites = currentUser.favoriteBooks || [];
+          if (res.isFavorited) {
+            if (!updatedFavorites.includes(bookId)) {
+               updatedFavorites.push(bookId);
+            }
+          } else {
+             updatedFavorites = updatedFavorites.filter((id: string) => id !== bookId);
+          }
+          const updatedUser = { ...currentUser, favoriteBooks: updatedFavorites };
+          this.user.set(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+      })
+    );
+  }
+
+  getFavorites(): Observable<any[]> {
+    return this.api.get('/users/me/favorites');
   }
 
   getReadingProgress(): Observable<any[]> {

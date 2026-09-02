@@ -143,6 +143,64 @@ router.post("/me/bookmarks/:bookId", protect, async (req, res) => {
   }
 });
 
+// @route GET /api/users/me/favorites
+// @desc Get current user's favorite books
+router.get("/me/favorites", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: "favoriteBooks",
+      populate: { path: "author", select: "username avatar" },
+    });
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const targetLang = req.headers["x-app-language"] || "en";
+    const translatedBooks = await translateBooks(user.favoriteBooks, targetLang);
+
+    res.json(translatedBooks);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route POST /api/users/me/favorites/:bookId
+// @desc Toggle favorite status for a book
+router.post("/me/favorites/:bookId", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const book = await Book.findById(req.params.bookId);
+
+    if (!user || !book) {
+      return res.status(404).json({ msg: "User or Book not found" });
+    }
+
+    const isFavorited = user.favoriteBooks.some(
+      (id) => id.toString() === req.params.bookId,
+    );
+
+    if (isFavorited) {
+      // Remove favorite
+      user.favoriteBooks = user.favoriteBooks.filter(
+        (id) => id.toString() !== req.params.bookId,
+      );
+      await user.save();
+      if (book.favoritesCount > 0) book.favoritesCount -= 1;
+      await book.save();
+      res.json({ msg: "Favorite removed", isFavorited: false });
+    } else {
+      // Add favorite
+      user.favoriteBooks.push(req.params.bookId);
+      await user.save();
+      book.favoritesCount = (book.favoritesCount || 0) + 1;
+      await book.save();
+      res.json({ msg: "Favorited successfully", isFavorited: true });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 // @route GET /api/users/me/following
 // @desc Get current user's followed authors
 router.get("/me/following", protect, async (req, res) => {

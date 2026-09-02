@@ -7,14 +7,18 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-story-actions',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="actions-container">
-      <button class="btn-primary" (click)="readClicked.emit()">
+      <button 
+        class="btn-primary" 
+        [disabled]="chapterCount === 0"
+        (click)="readClicked.emit()">
         <svg
           class="icon"
           viewBox="0 0 24 24"
@@ -25,11 +29,13 @@ import { CommonModule } from '@angular/common';
           <polygon points="5 3 19 12 5 21 5 3"></polygon>
         </svg>
         {{
-          accessType === 'premium' && !isPremiumSubscriber
-            ? 'Unlock Premium'
-            : userProgress.hasStarted
-              ? 'Resume Reading'
-              : 'Start Reading'
+          chapterCount === 0
+            ? 'No Chapters Yet'
+            : accessType === 'premium' && !isPremiumSubscriber
+              ? 'Unlock Premium'
+              : userProgress.hasStarted
+                ? 'Resume Reading'
+                : 'Start Reading'
         }}
       </button>
 
@@ -67,6 +73,25 @@ import { CommonModule } from '@angular/common';
           ></path>
         </svg>
         <span class="count">{{ likes }}</span>
+      </button>
+
+      <button
+        class="action-btn favorite-btn"
+        [class.active]="isFavorited"
+        (click)="favoriteClicked.emit()"
+      >
+        <svg
+          class="icon"
+          viewBox="0 0 24 24"
+          [attr.fill]="isFavorited ? 'currentColor' : 'none'"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span class="count">{{ favorites }}</span>
       </button>
 
       <div class="divider"></div>
@@ -154,28 +179,39 @@ import { CommonModule } from '@angular/common';
     @if (showReportModal) {
       <div class="modal-backdrop" (click)="showReportModal = false">
         <div class="modal-content" (click)="$event.stopPropagation()">
-          <h3>Report Story</h3>
-          <p>Please select a reason for reporting this story.</p>
+          <h3>{{ 'reportModal.title' | translate }}</h3>
+          <p>{{ 'reportModal.subtitle' | translate }}</p>
           <select class="report-select" #reportReason>
-            <option value="plagiarism">Plagiarism</option>
-            <option value="inappropriate">Inappropriate Content</option>
-            <option value="spam">Spam</option>
-            <option value="other">Other</option>
+            <option value="plagiarism">{{ 'reportModal.plagiarism' | translate }}</option>
+            <option value="inappropriate">{{ 'reportModal.inappropriate' | translate }}</option>
+            <option value="spam">{{ 'reportModal.spam' | translate }}</option>
+            <option value="other">{{ 'reportModal.other' | translate }}</option>
           </select>
+          <textarea
+            class="report-comment"
+            #reportComment
+            [placeholder]="'reportModal.placeholder' | translate"
+            rows="3"
+            (input)="onReportCommentInput($event)"
+          ></textarea>
+          <div class="word-count" [class.over-limit]="reportWordCount > 100">
+            {{ reportWordCount }}/100 words
+          </div>
           <div class="modal-actions">
             <button class="btn-outline" (click)="showReportModal = false">
-              Cancel
+              {{ 'reportModal.cancel' | translate }}
             </button>
             <button
               class="btn-primary btn-danger"
-              (click)="submitReport(reportReason.value)"
+              [disabled]="reportWordCount > 100"
+              (click)="submitReport(reportReason.value, reportComment.value)"
             >
-              Submit Report
+              {{ 'reportModal.submit' | translate }}
             </button>
           </div>
           @if (showReportToast) {
             <p class="toast-text text-success">
-              Report submitted successfully.
+              {{ 'reportModal.success' | translate }}
             </p>
           }
         </div>
@@ -312,8 +348,20 @@ import { CommonModule } from '@angular/common';
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-m);
         font-size: 14px;
+        margin-bottom: 12px;
+        outline: none;
+      }
+
+      .report-comment {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-m);
+        font-size: 14px;
         margin-bottom: 24px;
         outline: none;
+        font-family: inherit;
+        resize: vertical;
       }
 
       .modal-actions {
@@ -340,6 +388,17 @@ import { CommonModule } from '@angular/common';
       }
       .text-success {
         color: var(--forest);
+      }
+      .word-count {
+        font-size: 12px;
+        color: var(--ink-faint);
+        text-align: right;
+        margin-top: -20px;
+        margin-bottom: 16px;
+      }
+      .word-count.over-limit {
+        color: var(--rose);
+        font-weight: 600;
       }
 
       @media (max-width: 600px) {
@@ -374,22 +433,28 @@ import { CommonModule } from '@angular/common';
 })
 export class StoryActionsComponent {
   @Input() userProgress!: { hasStarted: boolean };
-  @Input() isBookmarked!: boolean;
-  @Input() isLiked!: boolean;
-  @Input() bookmarks!: number;
-  @Input() likes: number = 0;
+  @Input() chapterCount = 0;
+  @Input() isBookmarked = false;
+  @Input() isLiked = false;
+  @Input() isFavorited = false;
+  @Input() bookmarks = 0;
+  @Input() likes = 0;
+  @Input() favorites = 0;
   @Input() accessType?: string;
-  @Input() isPremiumSubscriber: boolean = false;
+  @Input() isPremiumSubscriber = false;
+
   @Output() readClicked = new EventEmitter<void>();
   @Output() bookmarkClicked = new EventEmitter<void>();
   @Output() likeClicked = new EventEmitter<void>();
+  @Output() favoriteClicked = new EventEmitter<void>();
   @Output() downloadClicked = new EventEmitter<void>();
-  @Output() reportSubmitted = new EventEmitter<string>();
+  @Output() reportSubmitted = new EventEmitter<{ reason: string; comment: string }>();
 
   showShareModal = false;
   showReportModal = false;
   showCopyToast = false;
   showReportToast = false;
+  reportWordCount = 0;
   get currentUrl(): string {
     return window.location.href;
   }
@@ -403,8 +468,13 @@ export class StoryActionsComponent {
     }, 1500);
   }
 
-  submitReport(reason: string) {
-    this.reportSubmitted.emit(reason);
+  onReportCommentInput(event: Event) {
+    const text = (event.target as HTMLTextAreaElement).value.trim();
+    this.reportWordCount = text ? text.split(/\s+/).length : 0;
+  }
+
+  submitReport(reason: string, comment: string) {
+    this.reportSubmitted.emit({ reason, comment });
     this.showReportToast = true;
     setTimeout(() => {
       this.showReportToast = false;

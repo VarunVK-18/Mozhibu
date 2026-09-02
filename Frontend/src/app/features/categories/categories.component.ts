@@ -289,7 +289,7 @@ export class CategoriesComponent implements OnInit {
     {
       name: 'Poetry',
       desc: 'Beautiful verses and rhythmic expressions.',
-      img: 'https://images.unsplash.com/photo-1505664173622-1816f58f7e1a?w=600&q=80',
+      img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&q=80',
     },
     {
       name: 'Short Stories',

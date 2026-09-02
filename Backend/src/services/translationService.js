@@ -26,7 +26,7 @@ async function translateBooks(books, targetLang) {
     : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const genAI = new GoogleGenerativeAI(randomKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   const targetLangName = langMap[targetLang] || targetLang;
 
   // Filter books that need translation
@@ -61,9 +61,23 @@ ${JSON.stringify(titlesObj)}`;
       for (let b of toTranslate) {
         const transTitle = translatedObj[b._id.toString()];
         if (transTitle) {
-          if (!b.titleTranslations) b.titleTranslations = new Map();
-          b.titleTranslations.set(targetLang, transTitle);
-          await b.save();
+          if (!b.titleTranslations) {
+            b.titleTranslations = new Map();
+          }
+          if (typeof b.titleTranslations.set === 'function') {
+            b.titleTranslations.set(targetLang, transTitle);
+          } else {
+            b.titleTranslations[targetLang] = transTitle;
+          }
+
+          if (typeof b.save === 'function') {
+            await b.save();
+          } else {
+            await Book.updateOne(
+              { _id: b._id },
+              { $set: { [`titleTranslations.${targetLang}`]: transTitle } }
+            );
+          }
         }
       }
     } catch (err) {
@@ -90,7 +104,7 @@ async function translateChapters(chapters, targetLang) {
     : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const genAI = new GoogleGenerativeAI(randomKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   const targetLangName = langMap[targetLang] || targetLang;
 
   // Filter chapters that need title translation
@@ -124,9 +138,23 @@ ${JSON.stringify(titlesObj)}`;
       for (let c of titlesToTranslate) {
         const transTitle = translatedObj[c._id.toString()];
         if (transTitle) {
-          if (!c.titleTranslations) c.titleTranslations = new Map();
-          c.titleTranslations.set(targetLang, transTitle);
-          await c.save();
+          if (!c.titleTranslations) {
+            c.titleTranslations = new Map();
+          }
+          if (typeof c.titleTranslations.set === 'function') {
+            c.titleTranslations.set(targetLang, transTitle);
+          } else {
+            c.titleTranslations[targetLang] = transTitle;
+          }
+
+          if (typeof c.save === 'function') {
+            await c.save();
+          } else {
+            await Chapter.updateOne(
+              { _id: c._id },
+              { $set: { [`titleTranslations.${targetLang}`]: transTitle } }
+            );
+          }
         }
       }
     } catch (err) {
@@ -161,9 +189,23 @@ ${c.content}`;
       }
       translatedContent = translatedContent.trim();
 
-      if (!c.translations) c.translations = new Map();
-      c.translations.set(targetLang, translatedContent);
-      await c.save();
+      if (!c.translations) {
+        c.translations = new Map();
+      }
+      if (typeof c.translations.set === 'function') {
+        c.translations.set(targetLang, translatedContent);
+      } else {
+        c.translations[targetLang] = translatedContent;
+      }
+
+      if (typeof c.save === 'function') {
+        await c.save();
+      } else {
+        await Chapter.updateOne(
+          { _id: c._id },
+          { $set: { [`translations.${targetLang}`]: translatedContent } }
+        );
+      }
     } catch (err) {
       console.error("Chapter Content Translation error:", err);
     }

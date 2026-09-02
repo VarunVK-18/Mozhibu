@@ -11,7 +11,13 @@
   },
   "header": {
     "startWriting": "लिखना शुरू करें",
-    "langLabel": "हिंदी"
+    "langLabel": "हिंदी",
+    "search": "खोजें",
+    "notifications": "सूचनाएं",
+    "myProfile": "मेरी प्रोफ़ाइल",
+    "settings": "सेटिंग्स",
+    "logOut": "लॉग आउट",
+    "adminPanel": "एडमिन पैनल"
   },
   "hero": {
     "eyebrow": "12 भाषाएं, एक पुस्तकालय",
@@ -97,16 +103,83 @@
     "copyright": "© 2026 Mozhibu. सर्वाधिकार सुरक्षित।",
     "instagram": "Instagram",
     "x": "X",
-    "youtube": "YouTube"
+    "youtube": "YouTube",
+    "resourceLinks": {
+      "help": "सहायता केंद्र",
+      "guidelines": "सामुदायिक दिशानिर्देश",
+      "writers": "लेखक पोर्टल",
+      "competitions": "प्रतियोगिताएं"
+    },
+    "legalLinks": {
+      "terms": "सेवा की शर्तें",
+      "privacy": "गोपनीयता नीति",
+      "cookies": "कुकी नीति",
+      "copyright": "कॉपीराइट"
+    },
+    "resources": "संसाधन",
+    "legal": "कानूनी"
   },
   "libraryPage": {
     "title": "आपका पुस्तकालय",
     "subtitle": "सहेजी गई कहानियों और पसंदीदा लेखकों का आपका व्यक्तिगत संग्रह।",
     "savedStories": "सहेजी गई कहानियां",
-    "followedAuthors": "अनुसरण किए गए लेखक"
+    "followedAuthors": "अनुसरण किए गए लेखक",
+    "searchPlaceholder": "लाइब्रेरी में खोजें...",
+    "recentlyAdded": "हाल ही में जोड़ा गया",
+    "titleAZ": "शीर्षक (A-Z)",
+    "author": "लेखक",
+    "allGenres": "सभी शैलियाँ",
+    "bookmarks": "बुकमार्क",
+    "downloaded": "डाउनलोड किया गया",
+    "readingHistory": "पठन इतिहास",
+    "favorites": "पसंदीदा",
+    "upgradeTitle": "डाउनलोड करने के लिए अपग्रेड करें",
+    "upgradeDesc": "आपके वर्तमान सदस्यता प्लान में ऑफ़लाइन डाउनलोड शामिल नहीं है।",
+    "choosePlan": "दूसरा प्लान चुनें",
+    "emptyTitle": "अभी यहाँ कुछ नहीं है",
+    "emptyDesc": "हमें आपके मानदंडों से मेल खाने वाला कोई आइटम नहीं मिला।",
+    "discover": "कहानियां खोजें"
   },
   "brand": {
     "name": "मोझिबु",
     "tagline": "यह एक अनोखा विचार है"
+  },
+  "notifications": {
+    "all": "सभी",
+    "follows": "फ़ॉलो",
+    "likes": "पसंद",
+    "comments": "टिप्पणियाँ",
+    "announcements": "घोषणाएँ"
+  },
+  "home": {
+    "recommended": "अनुशंसित",
+    "latest": "नवीनतम",
+    "following": "फ़ॉलो कर रहे हैं",
+    "authors": "लेखक"
+  },
+  "storyDetail": {
+    "accessDenied": "पहुंच अस्वीकृत",
+    "understood": "समझ गया",
+    "synopsis": "सारांश",
+    "readLess": "कम पढ़ें",
+    "readMore": "अधिक पढ़ें",
+    "moreLikeThis": "इस तरह के और"
+  },
+  "profile": {
+    "followers": "फ़ॉलोअर्स",
+    "following": "फ़ॉलो कर रहे हैं",
+    "reader": "पाठक",
+    "noBio": "इस उपयोगकर्ता ने अभी तक कोई परिचय नहीं लिखा है।",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "publishedContents": "प्रकाशित सामग्री",
+    "noPublished": "आपने अभी तक कोई कहानी प्रकाशित नहीं की है।",
+    "startWriting": "लिखना शुरू करें",
+    "promoTitle": "क्या आप अपनी खुद की कहानियां प्रकाशित करना चाहते हैं?",
+    "promoDesc": "हमारे बढ़ते लेखक समुदाय में शामिल हों और अपनी दुनिया साझा करें।",
+    "requestPending": "अनुरोध लंबित है",
+    "becomeAuthor": "लेखक बनें",
+    "noFollowing": "आप अभी तक किसी को फ़ॉलो नहीं कर रहे हैं। अपनी पसंद के लेखकों को फ़ॉलो करें ताकि जब वे नई कहानियाँ प्रकाशित करें तो आपको सूचना मिल सके।",
+    "findAuthors": "लेखक खोजें",
+    "noFollowers": "अभी आपका कोई फ़ॉलोअर नहीं है। अपने दर्शकों को बढ़ाने के लिए कहानियां लिखना और साझा करना जारी रखें!"
   }
 }

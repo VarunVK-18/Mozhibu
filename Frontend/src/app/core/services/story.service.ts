@@ -57,6 +57,8 @@ export interface StoryDetail {
   synopsis: string;
   isLiked: boolean;
   isBookmarked: boolean;
+  isFavorited: boolean;
+  favorites: number;
   userProgress: {
     hasStarted: boolean;
     lastChapterId?: string;
@@ -110,6 +112,12 @@ export class StoryService {
           currentUser && currentUser.savedBooks
             ? currentUser.savedBooks.includes(book._id)
             : false;
+        
+        // Check favorite accurately using user's favoriteBooks
+        const isFavorited =
+          currentUser && currentUser.favoriteBooks
+            ? currentUser.favoriteBooks.includes(book._id)
+            : false;
 
         const detail: StoryDetail = {
           id: book._id,
@@ -136,6 +144,7 @@ export class StoryService {
           views: book.views || 0,
           likes: book.likesCount || 0,
           bookmarks: book.bookmarksCount || 0,
+          favorites: book.favoritesCount || 0,
           rating: book.rating || 0,
           reviewCount: book.reviews?.length || 0,
           chapterCount: book.chapters?.length || 0,
@@ -147,6 +156,7 @@ export class StoryService {
           synopsis: book.description || 'No synopsis available.',
           isLiked,
           isBookmarked,
+          isFavorited,
           userProgress: {
             hasStarted: resume,
           },
@@ -377,11 +387,42 @@ export class StoryService {
     });
   }
 
-  reportBook(reason: string) {
+  toggleFavorite() {
     const story = this.activeStory();
     if (!story) return;
 
-    this.bookService.reportBook(story.id, reason).subscribe();
+    // Optimistic UI update
+    this.activeStory.update((s) => {
+      if (!s) return s;
+      const isFavorited = !s.isFavorited;
+      return {
+        ...s,
+        isFavorited,
+        favorites: Math.max(0, s.favorites + (isFavorited ? 1 : -1)),
+      };
+    });
+
+    this.authService.toggleFavorite(story.id).subscribe({
+      error: () => {
+        // Revert on failure
+        this.activeStory.update((s) => {
+          if (!s) return s;
+          const isFavorited = !s.isFavorited;
+          return {
+            ...s,
+            isFavorited,
+            favorites: Math.max(0, s.favorites + (isFavorited ? 1 : -1)),
+          };
+        });
+      },
+    });
+  }
+
+  reportBook(reason: string, comment: string) {
+    const story = this.activeStory();
+    if (!story) return;
+
+    this.bookService.reportBook(story.id, reason, comment).subscribe();
   }
 
   toggleFollow() {

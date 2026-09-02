@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
     <footer class="site-footer">
       <div class="footer-container">
@@ -18,8 +19,7 @@ import { RouterModule } from '@angular/router';
             />Mozhibu
           </div>
           <p class="brand-desc">
-            Stories worth staying up for. Read and publish fiction in 12+
-            languages with your progress saved across every device.
+            {{ "footer.tagline" | translate }}
           </p>
           <div class="social-links">
             <a href="#" aria-label="Twitter">
@@ -77,34 +77,34 @@ import { RouterModule } from '@angular/router';
 
         <div class="footer-links-group">
           <div class="footer-col">
-            <h3>Company</h3>
-            <a routerLink="/about">About Us</a>
-            <a routerLink="/careers">Careers</a>
-            <a routerLink="/press">Press</a>
-            <a routerLink="/blog">Blog</a>
-            <a routerLink="/contact">Contact Us</a>
+            <h3>{{ "footer.company" | translate }}</h3>
+            <a routerLink="/about">{{ "footer.companyLinks.about" | translate }}</a>
+            <a routerLink="/careers">{{ "footer.companyLinks.careers" | translate }}</a>
+            <a routerLink="/press">{{ "footer.companyLinks.press" | translate }}</a>
+            <a routerLink="/blog">{{ "footer.companyLinks.blog" | translate }}</a>
+            <a routerLink="/contact">{{ "footer.companyLinks.contact" | translate }}</a>
           </div>
 
           <div class="footer-col">
-            <h3>Resources</h3>
-            <a routerLink="/help">Help Center</a>
-            <a routerLink="/guidelines">Community Guidelines</a>
-            <a routerLink="/writers">Writer's Portal</a>
-            <a routerLink="/competitions">Competitions</a>
+            <h3>{{ "footer.resources" | translate }}</h3>
+            <a routerLink="/help">{{ "footer.resourceLinks.help" | translate }}</a>
+            <a routerLink="/guidelines">{{ "footer.resourceLinks.guidelines" | translate }}</a>
+            <a routerLink="/writers">{{ "footer.resourceLinks.writers" | translate }}</a>
+            <a routerLink="/competitions">{{ "footer.resourceLinks.competitions" | translate }}</a>
           </div>
 
           <div class="footer-col">
-            <h3>Legal</h3>
-            <a routerLink="/terms">Terms of Service</a>
-            <a routerLink="/privacy">Privacy Policy</a>
-            <a routerLink="/cookies">Cookie Policy</a>
-            <a routerLink="/copyright">Copyright</a>
+            <h3>{{ "footer.legal" | translate }}</h3>
+            <a routerLink="/terms">{{ "footer.legalLinks.terms" | translate }}</a>
+            <a routerLink="/privacy">{{ "footer.legalLinks.privacy" | translate }}</a>
+            <a routerLink="/cookies">{{ "footer.legalLinks.cookies" | translate }}</a>
+            <a routerLink="/copyright">{{ "footer.legalLinks.copyright" | translate }}</a>
           </div>
         </div>
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; 2026 Mozhibu Inc. All rights reserved.</p>
+        <p>{{ "footer.copyright" | translate }}</p>
       </div>
     </footer>
   `,

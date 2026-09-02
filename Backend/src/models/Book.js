@@ -27,7 +27,16 @@ const BookSchema = new mongoose.Schema(
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     likesCount: { type: Number, default: 0 },
     bookmarksCount: { type: Number, default: 0 },
+    favoritesCount: { type: Number, default: 0 },
     reportCount: { type: Number, default: 0 },
+    reports: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        reason: { type: String },
+        comment: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     titleTranslations: { type: Map, of: String, default: {} },
     tags: { type: [String], default: [] },
     series: { type: String },

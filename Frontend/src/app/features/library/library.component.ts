@@ -42,7 +42,7 @@ type LibraryTab =
       <div class="hero-section">
         <div class="wrap">
           <h1>{{ 'libraryPage.title' | translate }}</h1>
-          <p>Manage your entire reading journey</p>
+          <p>{{ 'libraryPage.subtitle' | translate }}</p>
         </div>
       </div>
 
@@ -65,19 +65,19 @@ type LibraryTab =
               type="text"
               [(ngModel)]="searchQuery"
               (ngModelChange)="applyFilters()"
-              placeholder="Search library..."
+              [placeholder]="'libraryPage.searchPlaceholder' | translate"
             />
           </div>
 
           <div class="filter-group">
             <select [(ngModel)]="sortBy" (ngModelChange)="applyFilters()">
-              <option value="recent">Recently Added</option>
-              <option value="title">Title (A-Z)</option>
-              <option value="author">Author</option>
+              <option value="recent">{{ 'libraryPage.recentlyAdded' | translate }}</option>
+              <option value="title">{{ 'libraryPage.titleAZ' | translate }}</option>
+              <option value="author">{{ 'libraryPage.author' | translate }}</option>
             </select>
 
             <select [(ngModel)]="filterGenre" (ngModelChange)="applyFilters()">
-              <option value="">All Genres</option>
+              <option value="">{{ 'libraryPage.allGenres' | translate }}</option>
               <option *ngFor="let g of availableGenres" [value]="g">
                 {{ g }}
               </option>
@@ -93,21 +93,28 @@ type LibraryTab =
               [class.active]="activeTab() === 'bookmarks'"
               (click)="activeTab.set('bookmarks')"
             >
-              Bookmarks
+              {{ 'libraryPage.bookmarks' | translate }}
             </button>
             <button
               class="tab-btn"
               [class.active]="activeTab() === 'downloaded'"
               (click)="activeTab.set('downloaded')"
             >
-              Downloaded
+              {{ 'libraryPage.downloaded' | translate }}
             </button>
             <button
               class="tab-btn"
               [class.active]="activeTab() === 'history'"
               (click)="activeTab.set('history')"
             >
-              Reading History
+              {{ 'libraryPage.readingHistory' | translate }}
+            </button>
+            <button
+              class="tab-btn"
+              [class.active]="activeTab() === 'favorites'"
+              (click)="activeTab.set('favorites')"
+            >
+              {{ 'libraryPage.favorites' | translate }}
             </button>
           </div>
         </div>
@@ -149,17 +156,16 @@ type LibraryTab =
                     />
                   </svg>
                 </div>
-                <h2>Upgrade to Download</h2>
+                <h2>{{ 'libraryPage.upgradeTitle' | translate }}</h2>
                 <p>
-                  Your current subscription plan doesn't include offline
-                  downloads.
+                  {{ 'libraryPage.upgradeDesc' | translate }}
                 </p>
                 <button
                   class="btn-primary"
                   routerLink="/settings"
                   [queryParams]="{ tab: 'subscription' }"
                 >
-                  Choose a different plan
+                  {{ 'libraryPage.choosePlan' | translate }}
                 </button>
               </div>
             } @else {
@@ -176,6 +182,13 @@ type LibraryTab =
           <div *ngSwitchCase="'history'">
             <ng-container
               *ngTemplateOutlet="storyGrid; context: { list: filteredHistory }"
+            ></ng-container>
+          </div>
+
+          <!-- FAVORITES -->
+          <div *ngSwitchCase="'favorites'">
+            <ng-container
+              *ngTemplateOutlet="storyGrid; context: { list: filteredFavorites }"
             ></ng-container>
           </div>
 
@@ -209,9 +222,9 @@ type LibraryTab =
               ></path>
             </svg>
           </div>
-          <h2>Nothing here yet</h2>
-          <p>We couldn't find any items matching your criteria.</p>
-          <button class="btn-primary" routerLink="/">Discover Stories</button>
+          <h2>{{ 'libraryPage.emptyTitle' | translate }}</h2>
+          <p>{{ 'libraryPage.emptyDesc' | translate }}</p>
+          <button class="btn-primary" routerLink="/">{{ 'libraryPage.discover' | translate }}</button>
         </div>
       }
     </ng-template>
@@ -504,6 +517,7 @@ export class LibraryComponent implements OnInit {
 
   // Raw Data
   allBookmarks: Story[] = [];
+  allFavorites: Story[] = [];
   allHistory: Story[] = [];
   allFollowing: UserProfile[] = [];
   allDownloaded: Story[] = [];
@@ -511,6 +525,7 @@ export class LibraryComponent implements OnInit {
 
   // Filtered Data
   filteredBookmarks: Story[] = [];
+  filteredFavorites: Story[] = [];
   filteredHistory: Story[] = [];
   filteredCompleted: Story[] = [];
   filteredDownloaded: Story[] = []; // Currently mock data
@@ -568,13 +583,18 @@ export class LibraryComponent implements OnInit {
 
     forkJoin({
       books: this.authService.getLibrary(),
+      favorites: this.authService.getFavorites(),
       authors: this.authService.getFollowing(),
       progressItems: this.authService.getReadingProgress()
     }).subscribe({
-      next: ({ books, authors, progressItems }) => {
+      next: ({ books, favorites, authors, progressItems }) => {
         // 1. Bookmarks
         this.allBookmarks = books.map((b) => this.mapToStory(b));
         this.extractGenres(this.allBookmarks);
+        
+        // 1.5. Favorites
+        this.allFavorites = favorites.map((b) => this.mapToStory(b));
+        this.extractGenres(this.allFavorites);
 
         // 2. Following
         this.allFollowing = authors.map((a) => ({
@@ -694,6 +714,7 @@ export class LibraryComponent implements OnInit {
     };
 
     this.filteredBookmarks = filterAndSort(this.allBookmarks);
+    this.filteredFavorites = filterAndSort(this.allFavorites);
     this.filteredHistory = filterAndSort(this.allHistory);
     this.filteredCompleted = filterAndSort(this.allHistory, true);
     this.filteredDownloaded = filterAndSort(this.allDownloaded);

@@ -40,10 +40,12 @@ const CompetitionSchema = new mongoose.Schema({
     required: true,
     default: "/write/new",
   },
-  winnerBookId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Book",
-  },
-});
+  winnerBookIds: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+    }
+  ],
+}, { timestamps: true });
 
 module.exports = mongoose.model("Competition", CompetitionSchema);

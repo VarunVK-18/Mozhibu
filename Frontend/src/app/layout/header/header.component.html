@@ -54,8 +54,8 @@
         }}</a>
 
         @if (authService.user()) {
-          <a routerLink="/profile" routerLinkActive="active">Profile</a>
-          <a routerLink="/library" routerLinkActive="active">Library</a>
+          <a routerLink="/profile" routerLinkActive="active">{{ "header.myProfile" | translate }}</a>
+          <a routerLink="/library" routerLinkActive="active">{{ "nav.library" | translate }}</a>
         }
       </nav>
     </div>
@@ -117,12 +117,12 @@
         </a>
       </div>
 
-      <!-- Engagement / Heart (Activity Notifications) -->
+      <!-- Engagement / Heart (Favourites) -->
       <div class="engagement-wrapper">
         <button
           class="icon-btn"
-          aria-label="Engagement"
-          (click)="requireAuth($event, toggleEngagement.bind(this))"
+          aria-label="Favourites"
+          (click)="requireAuth($event, navigateToFavorites.bind(this))"
         >
           <svg
             width="18"
@@ -134,18 +134,41 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            ></path>
+            <polygon
+              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+            ></polygon>
           </svg>
-          <span class="dot" *ngIf="unreadActivityCount() > 0"></span>
         </button>
-        <div
-          class="engagement-dropdown notifications-dropdown"
-          [class.open]="engagementOpen()"
+
+      </div>
+
+      <!-- Notifications (Bell for General Notifications) -->
+      <div class="notifications-wrapper">
+        <button
+          class="icon-btn"
+          aria-label="Notifications"
+          (click)="requireAuth($event, toggleNotifications.bind(this))"
         >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M13.7 21a2 2 0 0 1-3.4 0"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="dot" *ngIf="unreadGeneralCount() > 0"></span>
+        </button>
+        <div class="notifications-dropdown" [class.open]="notificationsOpen()">
           <div class="notif-header">
-            <h4>Activity</h4>
+            <h4>{{ "header.notifications" | translate }}</h4>
             <div class="notif-actions">
               <button
                 class="mark-read"
@@ -188,13 +211,33 @@
               </button>
             </div>
           </div>
+          <div class="notif-filters">
+            <button [class.active]="notificationFilter() === 'all'" (click)="notificationFilter.set('all')">{{ "notifications.all" | translate }}</button>
+            <button [class.active]="notificationFilter() === 'followers'" (click)="notificationFilter.set('followers')">{{ "notifications.follows" | translate }}</button>
+            <button [class.active]="notificationFilter() === 'likes'" (click)="notificationFilter.set('likes')">{{ "notifications.likes" | translate }}</button>
+            <button [class.active]="notificationFilter() === 'comments'" (click)="notificationFilter.set('comments')">{{ "notifications.comments" | translate }}</button>
+            <button [class.active]="notificationFilter() === 'announcements'" (click)="notificationFilter.set('announcements')">{{ "notifications.announcements" | translate }}</button>
+          </div>
           <div class="notif-list">
-            @if (activityNotifications().length === 0) {
+            @if (generalNotifications().length === 0) {
               <div class="no-notifs">
-                <p>No activity yet</p>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
+                </svg>
+                <p>{{ 'notifications.empty' | translate }}</p>
               </div>
             } @else {
-              @for (notif of activityNotifications(); track notif._id) {
+              @for (notif of generalNotifications(); track notif._id) {
                 <div
                   class="notif-item"
                   [class.unread]="!notif.isRead"
@@ -228,6 +271,76 @@
                         (click)="goToProfile($event, notif.sender._id)"
                       />
                     } @else {
+                      @if (notif.type === "new_chapter") {
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path
+                            d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
+                          ></path>
+                          <path
+                            d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
+                          ></path>
+                        </svg>
+                      }
+                      @if (notif.type === "competition") {
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <circle cx="12" cy="8" r="7"></circle>
+                          <polyline
+                            points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"
+                          ></polyline>
+                        </svg>
+                      }
+                      @if (notif.type === "announcement") {
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                          <path
+                            d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+                          ></path>
+                        </svg>
+                      }
+                      @if (notif.type === "system") {
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="3"></circle>
+                          <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                          ></path>
+                        </svg>
+                      }
                       @if (notif.type === "like") {
                         <svg
                           width="18"
@@ -295,196 +408,6 @@
         </div>
       </div>
 
-      <!-- Notifications (Bell for General Notifications) -->
-      <div class="notifications-wrapper">
-        <button
-          class="icon-btn"
-          aria-label="Notifications"
-          (click)="requireAuth($event, toggleNotifications.bind(this))"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M13.7 21a2 2 0 0 1-3.4 0"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
-          <span class="dot" *ngIf="unreadGeneralCount() > 0"></span>
-        </button>
-        <div class="notifications-dropdown" [class.open]="notificationsOpen()">
-          <div class="notif-header">
-            <h4>Notifications</h4>
-            <div class="notif-actions">
-              <button
-                class="mark-read"
-                (click)="markAllAsRead($event)"
-                title="Mark all as read"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </button>
-              <button
-                class="clear-all"
-                (click)="clearAllNotifications($event)"
-                title="Clear all"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path
-                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div class="notif-list">
-            @if (generalNotifications().length === 0) {
-              <div class="no-notifs">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                  <path d="M13.7 21a2 2 0 0 1-3.4 0"></path>
-                </svg>
-                <p>No notifications yet</p>
-              </div>
-            } @else {
-              @for (notif of generalNotifications(); track notif._id) {
-                <div
-                  class="notif-item"
-                  [class.unread]="!notif.isRead"
-                  (click)="handleNotificationClick(notif)"
-                  style="cursor: pointer"
-                >
-                  <div
-                    class="notif-icon"
-                    [ngClass]="notif.type"
-                    style="
-                      width: 32px;
-                      height: 32px;
-                      flex-shrink: 0;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                    "
-                  >
-                    @if (notif.type === "new_chapter") {
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
-                        ></path>
-                        <path
-                          d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
-                        ></path>
-                      </svg>
-                    }
-                    @if (notif.type === "competition") {
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="8" r="7"></circle>
-                        <polyline
-                          points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"
-                        ></polyline>
-                      </svg>
-                    }
-                    @if (notif.type === "announcement") {
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                        <path
-                          d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
-                        ></path>
-                      </svg>
-                    }
-                    @if (notif.type === "system") {
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-                        ></path>
-                      </svg>
-                    }
-                  </div>
-                  <div class="notif-content">
-                    <strong>{{ notif.title }}</strong>
-                    <p [innerHTML]="notif.message"></p>
-                    <span>{{ notif.createdAt | date: "short" }}</span>
-                  </div>
-                </div>
-              }
-            }
-          </div>
-        </div>
-      </div>
-
       <!-- Avatar -->
       @if (authService.user(); as user) {
         <div class="user-profile-wrapper">
@@ -521,7 +444,7 @@
               routerLink="/admin"
               class="profile-option"
               style="text-decoration: none; display: block"
-              >Admin Dashboard</a
+              >{{ "header.adminPanel" | translate }}</a
             >
             <a
               routerLink="/subscription/me"
@@ -536,9 +459,9 @@
               class="profile-option"
               style="text-decoration: none; display: block"
               (click)="profileMenuOpen.set(false)"
-              >Settings</a
+              >{{ "header.settings" | translate }}</a
             >
-            <button class="profile-option" (click)="onLogout()">Logout</button>
+            <button class="profile-option" (click)="onLogout()">{{ "header.logOut" | translate }}</button>
           </div>
         </div>
       } @else {

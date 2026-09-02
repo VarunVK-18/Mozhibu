@@ -46,11 +46,22 @@ export class LanguageService {
   readonly translations$ = this._translations.asObservable();
 
   constructor(private http: HttpClient) {
-    const savedLang =
-      typeof localStorage !== 'undefined'
-        ? (localStorage.getItem('preferredLang') as Lang)
-        : null;
-    const initialLang = savedLang || 'en';
+    let initialLang: Lang = 'en';
+    
+    if (typeof localStorage !== 'undefined') {
+      const savedLang = localStorage.getItem('preferredLang') as Lang;
+      if (savedLang) {
+        initialLang = savedLang;
+      } else if (typeof navigator !== 'undefined') {
+        // Detect device/browser language (e.g., 'ta-IN' becomes 'ta')
+        const browserLang = navigator.language.split('-')[0] as Lang;
+        const isSupported = this.languages.some(l => l.code === browserLang);
+        if (isSupported) {
+          initialLang = browserLang;
+        }
+      }
+    }
+    
     this._lang.set(initialLang);
     this.loadTranslations(initialLang);
   }

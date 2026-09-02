@@ -573,6 +573,37 @@
   color: #ef4444;
   background: #fee2e2;
 }
+.notif-filters {
+  display: flex;
+  padding: 8px 16px;
+  gap: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--card);
+}
+.notif-filters::-webkit-scrollbar {
+  display: none;
+}
+.notif-filters button {
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--border-soft);
+  background: none;
+  font-size: 12px;
+  font-family: var(--body);
+  color: var(--ink-soft);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.notif-filters button:hover {
+  background: var(--paper-warm);
+}
+.notif-filters button.active {
+  background: var(--forest);
+  color: white;
+  border-color: var(--forest);
+}
 .notif-list {
   max-height: 360px;
   overflow-y: auto;
@@ -589,7 +620,7 @@
   background: var(--paper-warm);
 }
 .notif-item.unread {
-  background: var(--forest-tint);
+  /* No special background for unread */
 }
 .notif-icon {
   width: 8px;

@@ -7,7 +7,7 @@ const router = express.Router();
 // @desc Get the active competition banner config
 router.get("/active", async (req, res) => {
   try {
-    let competition = await Competition.findOne();
+    let competition = await Competition.findOne().sort({ createdAt: -1 });
     if (!competition) {
       // If none exists, return a default inactive one or create it
       competition = new Competition({ isActive: false });
@@ -26,7 +26,7 @@ router.get("/active", async (req, res) => {
 
     // Populate winner details if present
     competition = await Competition.findById(competition._id).populate({
-      path: "winnerBookId",
+      path: "winnerBookIds",
       populate: { path: "author", select: "username" },
     });
 

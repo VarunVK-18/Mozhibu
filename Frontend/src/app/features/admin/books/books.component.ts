@@ -30,10 +30,8 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
             <option value="all">All Books</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
-            <option value="pending">Pending</option>
-            <option value="rejected">Rejected</option>
             <option value="suspended">Suspended</option>
-            <option value="reported">Reported Queue (10+)</option>
+            <option value="reported">Reported Queue</option>
           </select>
         </div>
       </header>
@@ -79,9 +77,30 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   </td>
                   <td class="date-cell">
                     @if (statusFilter === 'reported') {
-                      <span style="color: var(--rose); font-weight: bold;"
-                        >{{ book.reportCount }} Reports</span
-                      >
+                      <div class="reports-info">
+                        @if (book.reports && book.reports.length > 0) {
+                          <ul class="report-list">
+                            @for (r of book.reports; track r.createdAt || $index) {
+                              <li>
+                                <div class="report-reason-row">
+                                  <strong>{{ r.reason }}</strong>
+                                  @if (r.comment) {
+                                    <div class="comment-icon-wrapper" [title]="r.comment">
+                                      <svg class="comment-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                      </svg>
+                                    </div>
+                                  }
+                                </div>
+                                <span class="reporter">by {{ r.user.username || 'Unknown User' }}</span>
+                              </li>
+                            }
+                          </ul>
+                        }
+                        <span class="report-count-text">
+                          {{ book.reportCount }} Reports
+                        </span>
+                      </div>
                     } @else {
                       {{ book.submittedAt | date: 'mediumDate' }}
                     }
@@ -249,6 +268,54 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
       .status-badge.suspended {
         background: #fef3c7;
         color: #92400e;
+      }
+
+      .report-list {
+        margin: 0 0 8px 0;
+        padding: 0;
+        list-style: none;
+        font-size: 13px;
+        color: var(--ink-soft);
+      }
+      .report-list li {
+        margin-bottom: 8px;
+        line-height: 1.4;
+        background: #f8fafc;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-soft);
+      }
+      .report-reason-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink);
+      }
+      .comment-icon-wrapper {
+        display: flex;
+        align-items: center;
+        color: var(--ink-soft);
+        cursor: help;
+      }
+      .comment-icon-wrapper:hover {
+        color: var(--forest);
+      }
+      .comment-icon {
+        width: 14px;
+        height: 14px;
+      }
+      .reporter {
+        color: var(--ink-faint);
+        font-size: 11px;
+        display: block;
+        margin-top: 2px;
+      }
+      .report-count-text {
+        font-size: 11px;
+        color: var(--rose);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       .status-badge.draft {
         background: #f3f4f6;

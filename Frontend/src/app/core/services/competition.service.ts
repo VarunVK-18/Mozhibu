@@ -10,7 +10,7 @@ export interface CompetitionConfig {
   endDate: string;
   buttonText: string;
   buttonLink: string;
-  winnerBookId?: any;
+  winnerBookIds?: any[];
 }
 
 @Injectable({

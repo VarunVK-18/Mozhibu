@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StoryService } from '../../../core/services/story.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -29,6 +30,7 @@ import { OfflineService } from '../../../core/services/offline.service';
     CommentListComponent,
     StoryCardComponent,
     DownloadModalComponent,
+    TranslatePipe,
   ],
   template: `
     <div class="story-detail-page">
@@ -52,13 +54,13 @@ import { OfflineService } from '../../../core/services/offline.service';
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <h3>Access Denied</h3>
+              <h3>{{ 'storyDetail.accessDenied' | translate }}</h3>
             </div>
             <div class="modal-body">
               <p>{{ ageWarningMessage() }}</p>
             </div>
             <div class="modal-actions">
-              <button class="btn-confirm warning-btn" (click)="showAgeWarning.set(false)">Understood</button>
+              <button class="btn-confirm warning-btn" (click)="showAgeWarning.set(false)">{{ 'storyDetail.understood' | translate }}</button>
             </div>
           </div>
         </div>
@@ -89,21 +91,25 @@ import { OfflineService } from '../../../core/services/offline.service';
 
           <app-story-actions
             [userProgress]="story()!.userProgress"
+            [chapterCount]="story()!.chapterCount || 0"
             [isBookmarked]="story()!.isBookmarked"
             [isLiked]="story()!.isLiked"
+            [isFavorited]="story()!.isFavorited"
             [bookmarks]="story()!.bookmarks"
             [likes]="story()!.likes"
+            [favorites]="story()!.favorites"
             [accessType]="story()!.accessType"
             [isPremiumSubscriber]="isPremiumSubscriber()"
             (readClicked)="onReadClicked()"
             (bookmarkClicked)="onBookmarkClicked()"
             (likeClicked)="onLikeClicked()"
+            (favoriteClicked)="onFavoriteClicked()"
             (downloadClicked)="onDownloadClicked()"
             (reportSubmitted)="onReportSubmitted($event)"
           ></app-story-actions>
 
           <div class="synopsis-section">
-            <h3>Synopsis</h3>
+            <h3>{{ 'storyDetail.synopsis' | translate }}</h3>
             <p [class.expanded]="synopsisExpanded()">
               {{ story()!.synopsis }}
             </p>
@@ -111,13 +117,14 @@ import { OfflineService } from '../../../core/services/offline.service';
               class="btn-read-more"
               (click)="synopsisExpanded.set(!synopsisExpanded())"
             >
-              {{ synopsisExpanded() ? 'Read Less' : 'Read More' }}
+              {{ synopsisExpanded() ? ('storyDetail.readLess' | translate) : ('storyDetail.readMore' | translate) }}
             </button>
           </div>
 
           <app-chapter-list
             [episodes]="episodes()"
             [storyId]="story()?.id || ''"
+            [isMature]="story()?.isMature || false"
             (chapterClick)="onReadClicked($event)"
           ></app-chapter-list>
 
@@ -138,7 +145,7 @@ import { OfflineService } from '../../../core/services/offline.service';
 
           <!-- Related Stories -->
           <div class="related-section">
-            <h2>More like this</h2>
+            <h2>{{ 'storyDetail.moreLikeThis' | translate }}</h2>
             <div class="related-grid">
               @for (related of relatedStories(); track related.id) {
                 <app-story-card [story]="related"></app-story-card>
@@ -430,6 +437,8 @@ export class StoryDetailComponent implements OnInit {
   }
 
   onReadClicked(chapter?: number) {
+    if (this.story()?.chapterCount === 0) return;
+    
     if (this.story()?.accessType === 'premium' && !this.isPremiumSubscriber()) {
       this.router.navigate(['/subscription/plans']);
       return;
@@ -477,6 +486,12 @@ export class StoryDetailComponent implements OnInit {
   onLikeClicked() {
     if (this.requireAuth()) {
       this.storyService.toggleLike();
+    }
+  }
+
+  onFavoriteClicked() {
+    if (this.requireAuth()) {
+      this.storyService.toggleFavorite();
     }
   }
 
@@ -556,9 +571,9 @@ export class StoryDetailComponent implements OnInit {
     }
   }
 
-  onReportSubmitted(reason: string) {
+  onReportSubmitted(event: { reason: string; comment: string }) {
     if (this.requireAuth()) {
-      this.storyService.reportBook(reason);
+      this.storyService.reportBook(event.reason, event.comment);
     }
   }
 

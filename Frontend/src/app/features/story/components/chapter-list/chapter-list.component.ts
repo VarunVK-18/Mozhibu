@@ -101,7 +101,11 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
                   <span class="ep-duration">{{ ep.readingTime }}</span>
                 </div>
               </div>
-              <p class="ep-synopsis" [innerHTML]="ep.synopsis"></p>
+              @if (!isMature) {
+                <p class="ep-synopsis" [innerHTML]="ep.synopsis"></p>
+              } @else {
+                <p class="ep-synopsis" style="font-style: italic; opacity: 0.7;">Hidden for 18+ content</p>
+              }
             </div>
           </a>
         }
@@ -291,6 +295,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 export class ChapterListComponent implements OnChanges {
   @Input() episodes: StoryEpisode[] = [];
   @Input() storyId: string = '';
+  @Input() isMature: boolean = false;
   @Output() chapterClick = new EventEmitter<number>();
 
   activeSeason: number = 1;

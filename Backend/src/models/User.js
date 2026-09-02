@@ -32,6 +32,7 @@ const UserSchema = new mongoose.Schema(
     avatar: { type: String },
     bio: { type: String, default: "" },
     savedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
+    favoriteBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     dob: { type: Date },
     resetPasswordToken: { type: String, select: false },

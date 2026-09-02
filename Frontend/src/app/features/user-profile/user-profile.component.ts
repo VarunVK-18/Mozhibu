@@ -11,13 +11,14 @@ import { finalize } from 'rxjs/operators';
 import { StoryCardComponent } from '../../shared/components/story-card/story-card.component';
 import { UserCardComponent } from '../../shared/components/user-card/user-card.component';
 import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, StoryCardComponent, UserCardComponent, SafeUrlPipe],
+  imports: [CommonModule, RouterModule, StoryCardComponent, UserCardComponent, SafeUrlPipe, TranslatePipe],
   template: `
     <div class="profile-layout">
       <!-- Profile Banner -->
@@ -38,7 +39,7 @@ import { environment } from '../../../environments/environment';
                   user()?.role === 'writer' || user()?.role === 'superadmin'
                 "
               >
-                <strong>{{ followersCount() }}</strong> Followers
+                <strong>{{ followersCount() }}</strong> {{ 'profile.followers' | translate }}
               </span>
               <span
                 class="meta-item"
@@ -46,16 +47,16 @@ import { environment } from '../../../environments/environment';
                   user()?.role !== 'writer' && user()?.role !== 'superadmin'
                 "
               >
-                Reader
+                {{ 'profile.reader' | translate }}
               </span>
               <span class="meta-separator">•</span>
               <span class="meta-item">
-                <strong>{{ following().length }}</strong> Following
+                <strong>{{ following().length }}</strong> {{ 'profile.following' | translate }}
               </span>
             </div>
 
             <div class="author-bio">
-              <p>{{ user()?.bio || "This user hasn't written a bio yet." }}</p>
+              <p>{{ user()?.bio || ('profile.noBio' | translate) }}</p>
             </div>
           </div>
 
@@ -65,7 +66,7 @@ import { environment } from '../../../environments/environment';
               routerLink="/settings"
               [queryParams]="{ tab: 'profile' }"
             >
-              Edit Profile
+              {{ 'profile.editProfile' | translate }}
             </button>
           </div>
         </div>
@@ -79,21 +80,21 @@ import { environment } from '../../../environments/environment';
             [class.active]="activeTab() === 'published'"
             (click)="activeTab.set('published')"
           >
-            Published Contents ({{ publishedStories().length }})
+            {{ 'profile.publishedContents' | translate }} ({{ publishedStories().length }})
           </button>
           <button
             class="tab-btn"
             [class.active]="activeTab() === 'following'"
             (click)="activeTab.set('following')"
           >
-            Following ({{ following().length }})
+            {{ 'profile.following' | translate }} ({{ following().length }})
           </button>
           <button
             class="tab-btn"
             [class.active]="activeTab() === 'followers'"
             (click)="activeTab.set('followers')"
           >
-            Followers ({{ followers().length }})
+            {{ 'profile.followers' | translate }} ({{ followers().length }})
           </button>
         </nav>
       </div>
@@ -119,27 +120,27 @@ import { environment } from '../../../environments/environment';
                 </div>
               } @else {
                 <div class="empty-state">
-                  <p>You haven't published any stories yet.</p>
+                  <p>{{ 'profile.noPublished' | translate }}</p>
                   <button class="btn-primary" routerLink="/write">
-                    Start Writing
+                    {{ 'profile.startWriting' | translate }}
                   </button>
                 </div>
               }
             } @else {
               <div class="empty-state author-promo">
-                <h3>Want to publish your own stories?</h3>
+                <h3>{{ 'profile.promoTitle' | translate }}</h3>
                 <p>
-                  Join our growing community of authors and share your world.
+                  {{ 'profile.promoDesc' | translate }}
                 </p>
                 <button
                   class="btn-primary"
-                  (click)="requestAuthorStatus()"
-                  [disabled]="authorStatus() === 'pending'"
+                  routerLink="/settings"
+                  [queryParams]="{ tab: 'account' }"
                 >
                   {{
                     authorStatus() === 'pending'
-                      ? 'Request Pending'
-                      : 'Become an Author'
+                      ? ('profile.requestPending' | translate)
+                      : ('profile.becomeAuthor' | translate)
                   }}
                 </button>
               </div>
@@ -158,15 +159,14 @@ import { environment } from '../../../environments/environment';
             } @else {
               <div class="empty-state">
                 <p>
-                  You aren't following anyone yet. Follow authors you love to
-                  get notified when they publish new stories.
+                  {{ 'profile.noFollowing' | translate }}
                 </p>
                 <button
                   class="btn-primary"
                   [routerLink]="['/search']"
                   [queryParams]="{ type: 'authors' }"
                 >
-                  Find Authors
+                  {{ 'profile.findAuthors' | translate }}
                 </button>
               </div>
             }
@@ -183,8 +183,7 @@ import { environment } from '../../../environments/environment';
             } @else {
               <div class="empty-state">
                 <p>
-                  You don't have any followers yet. Keep writing and sharing
-                  your stories to grow your audience!
+                  {{ 'profile.noFollowers' | translate }}
                 </p>
               </div>
             }
@@ -712,20 +711,6 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
-  requestAuthorStatus() {
-    this.http.put('/api/users/upgrade-role', {}).subscribe({
-      next: (res: any) => {
-        if (res.user) {
-          this.authorStatus.set(res.user.authorStatus || 'pending');
-          this.authService.user.set({
-            ...this.authService.user()!,
-            ...res.user,
-          });
-        }
-      },
-      error: (err) => console.error(err),
-    });
-  }
 
   getAvatarUrl(path: string | undefined, name?: string): string {
     if (!path) return this.api.getFallbackAvatar(name);

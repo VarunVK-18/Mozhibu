@@ -11,7 +11,13 @@
   },
   "header": {
     "startWriting": "લખવાનું શરૂ કરો",
-    "langLabel": "EN"
+    "langLabel": "EN",
+    "search": "શોધો",
+    "notifications": "સૂચનાઓ",
+    "myProfile": "મારી પ્રોફાઇલ",
+    "settings": "સેટિંગ્સ",
+    "logOut": "લોગ આઉટ",
+    "adminPanel": "એડમિન પેનલ"
   },
   "hero": {
     "eyebrow": "૧૨ ભાષાઓ, એક લાઇબ્રેરી",
@@ -97,16 +103,83 @@
     "copyright": "© ૨૦૨૬ મોઝિબુ. સર્વાધિકાર સુરક્ષિત.",
     "instagram": "ઇન્સ્ટાગ્રામ",
     "x": "X",
-    "youtube": "યુટ્યુબ"
+    "youtube": "યુટ્યુબ",
+    "resourceLinks": {
+      "help": "મદદ કેન્દ્ર",
+      "guidelines": "સમુદાય માર્ગદર્શિકા",
+      "writers": "લેખક પોર્ટલ",
+      "competitions": "સ્પર્ધાઓ"
+    },
+    "legalLinks": {
+      "terms": "સેવાની શરતો",
+      "privacy": "ગોપનીયતા નીતિ",
+      "cookies": "કુકી નીતિ",
+      "copyright": "કૉપિરાઇટ"
+    },
+    "resources": "સંસાધનો",
+    "legal": "કાનૂની"
   },
   "libraryPage": {
     "title": "તમારી લાઇબ્રેરી",
     "subtitle": "તમારી સાચવેલી વાર્તાઓ અને મનપસંદ લેખકોનો તમારો વ્યક્તિગત સંગ્રહ.",
     "savedStories": "સાચવેલી વાર્તાઓ",
-    "followedAuthors": "અનુસરાયેલા લેખકો"
+    "followedAuthors": "અનુસરાયેલા લેખકો",
+    "searchPlaceholder": "લાઇબ્રેરી શોધો...",
+    "recentlyAdded": "તાજેતરમાં ઉમેરાયેલ",
+    "titleAZ": "શીર્ષક (A-Z)",
+    "author": "લેખક",
+    "allGenres": "બધી શૈલીઓ",
+    "bookmarks": "બુકમાર્ક્સ",
+    "downloaded": "ડાઉનલોડ કરેલ",
+    "readingHistory": "વાંચન ઇતિહાસ",
+    "favorites": "મનપસંદ",
+    "upgradeTitle": "ડાઉનલોડ કરવા માટે અપગ્રેડ કરો",
+    "upgradeDesc": "તમારી વર્તમાન સબ્સ્ક્રિપ્શન યોજનામાં ઑફલાઇન ડાઉનલોડ્સ શામેલ નથી.",
+    "choosePlan": "બીજી યોજના પસંદ કરો",
+    "emptyTitle": "અહીં હજી સુધી કંઈ નથી",
+    "emptyDesc": "અમને તમારા માપદંડ સાથે મેળ ખાતી કોઈ આઇટમ મળી નથી.",
+    "discover": "વાર્તાઓ શોધો"
   },
   "brand": {
     "name": "મોઝીબુ",
     "tagline": "આ એક નવો વિચાર છે"
+  },
+  "notifications": {
+    "all": "બધા",
+    "follows": "અનુસરણ",
+    "likes": "પસંદગીઓ",
+    "comments": "ટિપ્પણીઓ",
+    "announcements": "જાહેરાતો"
+  },
+  "home": {
+    "recommended": "ભલામણ કરેલ",
+    "latest": "નવીનતમ",
+    "following": "અનુસરી રહ્યાં છો",
+    "authors": "લેખકો"
+  },
+  "storyDetail": {
+    "accessDenied": "પ્રવેશ નકારાયો",
+    "understood": "સમજી ગયા",
+    "synopsis": "સારાંશ",
+    "readLess": "ઓછું વાંચો",
+    "readMore": "વધુ વાંચો",
+    "moreLikeThis": "આના જેવું વધુ"
+  },
+  "profile": {
+    "followers": "અનુયાયીઓ",
+    "following": "અનુસરી રહ્યાં છો",
+    "reader": "વાચક",
+    "noBio": "આ વપરાશકર્તાએ હજુ સુધી કોઈ પરિચય લખ્યો નથી.",
+    "editProfile": "પ્રોફાઇલમાં ફેરફાર કરો",
+    "publishedContents": "પ્રકાશિત સામગ્રી",
+    "noPublished": "તમે હજી સુધી કોઈ વાર્તાઓ પ્રકાશિત કરી નથી.",
+    "startWriting": "લખવાનું શરૂ કરો",
+    "promoTitle": "તમારી પોતાની વાર્તાઓ પ્રકાશિત કરવા માંગો છો?",
+    "promoDesc": "અમારા લેખકોના વધતા સમુદાયમાં જોડાઓ અને તમારું વિશ્વ શેર કરો.",
+    "requestPending": "વિનંતી બાકી છે",
+    "becomeAuthor": "લેખક બનો",
+    "noFollowing": "તમે હજી સુધી કોઈને ફોલો કરી રહ્યાં નથી. તમારા મનપસંદ લેખકોને ફોલો કરો જેથી તેઓ નવી વાર્તાઓ પ્રકાશિત કરે ત્યારે તમને સૂચના મળે.",
+    "findAuthors": "લેખકો શોધો",
+    "noFollowers": "તમારી પાસે હજી સુધી કોઈ ફોલોઅર્સ નથી. તમારા પ્રેક્ષકોને વધારવા માટે તમારી વાર્તાઓ લખવાનું અને શેર કરવાનું ચાલુ રાખો!"
   }
 }

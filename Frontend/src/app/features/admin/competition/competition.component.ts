@@ -200,59 +200,72 @@ import { ConfirmService } from '../../../core/services/confirm.service';
                       class="btn-outline btn-small"
                       [routerLink]="['/admin/books', entry._id]"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path
-                          d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"
-                        ></path>
-                        <path
-                          d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
-                        ></path>
-                      </svg>
                       View
                     </button>
-                    <button
-                      class="btn-primary btn-small"
-                      (click)="announceWinner(entry._id)"
-                      [disabled]="isAnnouncing"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                        <path d="M4 22h16"></path>
-                        <path
-                          d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"
-                        ></path>
-                        <path
-                          d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"
-                        ></path>
-                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                      </svg>
-                      Pick Winner
-                    </button>
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                      <input 
+                        type="checkbox" 
+                        [checked]="selectedEntries.includes(entry._id)"
+                        (change)="toggleSelection(entry._id)"
+                        [disabled]="isAnnouncing"
+                      />
+                      Select
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
+            
+            <div class="form-actions" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
+              <button
+                class="btn-primary"
+                (click)="announceWinners()"
+                [disabled]="isAnnouncing || selectedEntries.length === 0"
+              >
+                Announce Winners ({{ selectedEntries.length }} selected)
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="card" style="margin-top: 24px;">
+        <h2>Competition History</h2>
+        <p style="color: var(--ink-soft); font-size: 14px; margin-bottom: 24px;">
+          Past competitions with announced winners.
+        </p>
+        
+        @if (history.length === 0) {
+          <div class="empty-state">No past competitions found.</div>
+        } @else {
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day</th>
+                  <th>Title</th>
+                  <th>Tag</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let comp of history">
+                  <td>{{ comp.createdAt | date: 'mediumDate' }}</td>
+                  <td>{{ comp.createdAt | date: 'EEEE' }}</td>
+                  <td><strong>{{ comp.title }}</strong></td>
+                  <td><span class="badge tag-badge">{{ comp.tag }}</span></td>
+                  <td>
+                    <span class="badge" [ngClass]="comp.winnerBookIds?.length ? 'success-badge' : 'neutral-badge'">
+                      {{ comp.winnerBookIds?.length ? 'Winners Picked' : 'Closed' }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <a [routerLink]="['/admin/competition/history', comp._id]" class="btn-outline btn-small">View Details</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         }
       </div>
@@ -274,6 +287,7 @@ export class AdminCompetitionComponent implements OnInit {
   errorMessage = '';
 
   entries: AdminBook[] = [];
+  selectedEntries: string[] = [];
 
   config: any = {
     isActive: false,
@@ -283,6 +297,7 @@ export class AdminCompetitionComponent implements OnInit {
     endDate: '',
     buttonText: '',
   };
+  history: any[] = [];
 
   ngOnInit() {
     this.loadConfig();
@@ -317,12 +332,22 @@ export class AdminCompetitionComponent implements OnInit {
             .slice(0, 16);
         }
         this.isLoading = false;
+        this.loadHistory();
       },
       error: (err) => {
         console.error(err);
         this.isLoading = false;
         this.errorMessage = 'Failed to load configuration';
       },
+    });
+  }
+
+  loadHistory() {
+    this.adminService.getCompetitionHistory().subscribe({
+      next: (history) => {
+        this.history = history;
+      },
+      error: (err) => console.error(err)
     });
   }
 
@@ -383,12 +408,23 @@ export class AdminCompetitionComponent implements OnInit {
     event.target.src = this.api.getFallbackCover();
   }
 
-  announceWinner(bookId: string) {
+  toggleSelection(bookId: string) {
+    const index = this.selectedEntries.indexOf(bookId);
+    if (index > -1) {
+      this.selectedEntries.splice(index, 1);
+    } else {
+      this.selectedEntries.push(bookId);
+    }
+  }
+
+  announceWinners() {
+    if (this.selectedEntries.length === 0) return;
+
     this.confirmService.confirm(
-      'Announce Winner',
-      'Are you sure? This will immediately end the competition, set this book as the winner, and notify EVERYONE on the platform!',
+      'Announce Winners',
+      `Are you sure? This will immediately end the competition, set ${this.selectedEntries.length} book(s) as the winners, and notify EVERYONE on the platform!`,
       true, 
-      'Yes, Announce Winner'
+      'Yes, Announce Winners'
     ).subscribe((confirmed) => {
       if (!confirmed) return;
 
@@ -396,17 +432,19 @@ export class AdminCompetitionComponent implements OnInit {
       this.successMessage = '';
       this.errorMessage = '';
 
-      this.adminService.announceCompetitionWinner(bookId).subscribe({
+      this.adminService.announceCompetitionWinner(this.selectedEntries).subscribe({
         next: (res) => {
           this.isAnnouncing = false;
           this.config = res.competition;
-          this.successMessage = 'Winner announced successfully! The competition is now closed.';
+          this.selectedEntries = [];
+          this.loadConfig();
+          this.successMessage = 'Winners announced successfully! The competition is now closed.';
           setTimeout(() => this.successMessage = '', 5000);
         },
         error: (err) => {
           console.error(err);
           this.isAnnouncing = false;
-          this.errorMessage = 'Failed to announce winner.';
+          this.errorMessage = 'Failed to announce winners.';
           setTimeout(() => this.errorMessage = '', 5000);
         },
       });

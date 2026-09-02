@@ -278,6 +278,15 @@ router.put("/:id", protect, author, async (req, res) => {
       }
     }
 
+    // 18+ books must go through admin approval — never allow direct publish
+    if (updateData.status === 'published') {
+      const currentBook = await Book.findById(req.params.id).select('isMature');
+      const willBeMature = updateData.isMature !== undefined ? updateData.isMature : currentBook?.isMature;
+      if (willBeMature) {
+        updateData.status = 'pending';
+      }
+    }
+
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
@@ -401,6 +410,10 @@ router.post("/:id/reviews", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    if (book.author.toString() === req.user.id) {
+      return res.status(403).json({ msg: "You cannot review your own book" });
+    }
 
     // Allow multiple comments per user (removed existingReview check)
 
@@ -599,15 +612,29 @@ router.post("/:id/report", protect, async (req, res) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
+    // Validate comment word count (max 100 words)
+    if (req.body.comment) {
+      const wordCount = req.body.comment.trim().split(/\s+/).filter(w => w).length;
+      if (wordCount > 100) {
+        return res.status(400).json({ msg: "Report comment cannot exceed 100 words" });
+      }
+    }
+
     const newReport = new Report({
       book: req.params.id,
       reporter: req.user.id,
       reason: req.body.reason || "Other",
+      comment: req.body.comment,
     });
 
     await newReport.save();
 
     book.reportCount = (book.reportCount || 0) + 1;
+    book.reports.push({
+      user: req.user.id,
+      reason: req.body.reason || "Other",
+      comment: req.body.comment
+    });
     if (book.reportCount >= 50) {
       book.status = "suspended";
     }

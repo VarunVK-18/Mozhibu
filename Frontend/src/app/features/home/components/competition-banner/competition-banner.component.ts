@@ -37,11 +37,11 @@ export class CompetitionBannerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.competitionService.getActiveCompetition().subscribe({
       next: (data) => {
-        if (data) {
+        console.log('DATA:', data); if (data) {
           if (data.isActive) {
             this.config = data;
             this.startCountdown();
-          } else if (data.winnerBookId) {
+          } else if (data.winnerBookIds && data.winnerBookIds.length > 0) {
             this.config = data;
             this.isExpired = true; // Signal that it's no longer a countdown
           } else {

@@ -270,6 +270,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'competition/history/:id',
+        loadComponent: () =>
+          import('./features/admin/competition/competition-history-detail.component').then(
+            (m) => m.CompetitionHistoryDetailComponent,
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/admin/settings/settings.component').then(
