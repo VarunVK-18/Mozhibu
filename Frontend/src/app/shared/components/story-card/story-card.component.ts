@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 export interface Story {
   id?: string;
@@ -22,7 +23,7 @@ export interface Story {
 @Component({
   selector: 'app-story-card',
   standalone: true,
-  imports: [CommonModule, RouterModule, SafeUrlPipe],
+  imports: [CommonModule, RouterModule, SafeUrlPipe, TranslatePipe],
   template: `
     <div
       class="story-card group"
@@ -36,6 +37,11 @@ export interface Story {
           (error)="onImgError($event)"
         />
         <div class="top-left-badges">
+
+          <div class="genre-tag" *ngIf="story.genre">{{ ('trending.tabs.' + story.genre.toLowerCase() | translate) !== 'trending.tabs.' + story.genre.toLowerCase() ? ('trending.tabs.' + story.genre.toLowerCase() | translate) : story.genre }}</div>
+        </div>
+        <div class="top-right-badges">
+          <div class="mature-badge" *ngIf="story.isMature">18+</div>
           <div class="paid-badge" *ngIf="story.accessType === 'premium'">
             <svg
               width="24"
@@ -51,25 +57,22 @@ export interface Story {
                 fill="var(--gold)"
               />
             </svg>
-            <span class="premium-text">PREMIUM</span>
           </div>
-          <div class="genre-tag" *ngIf="story.genre">{{ story.genre }}</div>
-          <div class="mature-badge" *ngIf="story.isMature" style="background: rgba(220,38,38,0.9); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">18+</div>
-        </div>
-        <div class="audio-badge" *ngIf="story.isAudio">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path
-              d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
-            ></path>
-          </svg>
+          <div class="audio-badge" *ngIf="story.isAudio">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path
+                d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"
+              ></path>
+            </svg>
+          </div>
         </div>
         <div class="overlay">
           <button class="read-btn">Read Now</button>
@@ -159,12 +162,13 @@ export interface Story {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.7);
-        border: 1px solid #ffd700;
-        border-radius: 4px;
-        padding: 4px 6px;
-        backdrop-filter: blur(4px);
-        gap: 4px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 215, 0, 0.5);
+        border-radius: 8px;
+        padding: 6px;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
       .paid-badge svg {
         width: 14px;
@@ -180,18 +184,42 @@ export interface Story {
         fill: #ffd700; /* Fallback to gold if var is missing */
       }
       .genre-tag {
-        background: rgba(43, 38, 32, 0.85);
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
         color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
         font-size: 11px;
         font-weight: 600;
         padding: 4px 10px;
         border-radius: 100px;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-      .audio-badge {
+      .mature-badge {
+        background: rgba(220, 38, 38, 0.4);
+        border: 1px solid rgba(255, 200, 200, 0.4);
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        font-size: 10px;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 8px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .top-right-badges {
         position: absolute;
         top: 12px;
         right: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+        z-index: 2;
+      }
+      .audio-badge {
         background: var(--gold);
         color: var(--ink);
         width: 28px;
@@ -200,7 +228,6 @@ export interface Story {
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 2;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
       .overlay {

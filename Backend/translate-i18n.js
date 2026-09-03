@@ -4,7 +4,7 @@ const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
 const frontendI18nPath = path.join(__dirname, '../Frontend/src/assets/i18n');
 const enJsonPath = path.join(frontendI18nPath, 'en.json');

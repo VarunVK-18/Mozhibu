@@ -143,6 +143,10 @@ export class AdminService {
       .pipe(map((book) => this.fixCoverUrl(book)));
   }
 
+  clearBookReports(id: string): Observable<any> {
+    return this.api.delete(`/admin/books/${id}/reports`);
+  }
+
   updateBookStatus(
     id: string,
     status: string,

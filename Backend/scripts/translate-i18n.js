@@ -9,7 +9,7 @@ if (API_KEYS.length === 0) {
   process.exit(1);
 }
 const genAI = new GoogleGenerativeAI(API_KEYS[0]);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
 const i18nPath = path.join(__dirname, "../../Frontend/src/assets/i18n");
 const languages = {

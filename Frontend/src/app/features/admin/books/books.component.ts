@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService, AdminBook } from '../../../core/services/admin.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-admin-books',
@@ -28,6 +29,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
             class="filter-select"
           >
             <option value="all">All Books</option>
+            <option value="pending">Pending Approval</option>
             <option value="published">Published</option>
             <option value="draft">Draft</option>
             <option value="suspended">Suspended</option>
@@ -78,28 +80,14 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   <td class="date-cell">
                     @if (statusFilter === 'reported') {
                       <div class="reports-info">
-                        @if (book.reports && book.reports.length > 0) {
-                          <ul class="report-list">
-                            @for (r of book.reports; track r.createdAt || $index) {
-                              <li>
-                                <div class="report-reason-row">
-                                  <strong>{{ r.reason }}</strong>
-                                  @if (r.comment) {
-                                    <div class="comment-icon-wrapper" [title]="r.comment">
-                                      <svg class="comment-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                      </svg>
-                                    </div>
-                                  }
-                                </div>
-                                <span class="reporter">by {{ r.user.username || 'Unknown User' }}</span>
-                              </li>
-                            }
-                          </ul>
-                        }
                         <span class="report-count-text">
-                          {{ book.reportCount }} Reports
+                          {{ book.reportCount }} {{ book.reportCount === 1 ? 'Report' : 'Reports' }}
                         </span>
+                        @if (book.reports && book.reports.length > 0) {
+                          <a [routerLink]="['/admin/books', book._id, 'reports']" class="view-reports-link">
+                            View Reports →
+                          </a>
+                        }
                       </div>
                     } @else {
                       {{ book.submittedAt | date: 'mediumDate' }}
@@ -113,6 +101,31 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                           (click)="updateStatus(book, 'suspended')"
                         >
                           Suspend
+                        </button>
+                        @if (statusFilter === 'reported') {
+                          <button
+                            class="btn-clear"
+                            title="Dismiss Reports"
+                            (click)="clearReports(book)"
+                          >
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        }
+                      } @else if (book.status === 'pending') {
+                        <button
+                          class="btn-approve"
+                          (click)="updateStatus(book, 'published')"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          class="btn-reject"
+                          (click)="updateStatus(book, 'rejected')"
+                        >
+                          Reject
                         </button>
                       } @else if (
                         book.status === 'rejected' ||
@@ -270,45 +283,21 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         color: #92400e;
       }
 
-      .report-list {
-        margin: 0 0 8px 0;
-        padding: 0;
-        list-style: none;
-        font-size: 13px;
-        color: var(--ink-soft);
-      }
-      .report-list li {
-        margin-bottom: 8px;
-        line-height: 1.4;
-        background: #f8fafc;
-        padding: 6px 10px;
-        border-radius: 6px;
-        border: 1px solid var(--border-soft);
-      }
-      .report-reason-row {
+      .reports-info {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 6px;
-        color: var(--ink);
       }
-      .comment-icon-wrapper {
-        display: flex;
-        align-items: center;
-        color: var(--ink-soft);
-        cursor: help;
-      }
-      .comment-icon-wrapper:hover {
+      .view-reports-link {
+        display: inline-block;
         color: var(--forest);
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        margin-top: 6px;
       }
-      .comment-icon {
-        width: 14px;
-        height: 14px;
-      }
-      .reporter {
-        color: var(--ink-faint);
-        font-size: 11px;
-        display: block;
-        margin-top: 2px;
+      .view-reports-link:hover {
+        text-decoration: underline;
       }
       .report-count-text {
         font-size: 11px;
@@ -316,6 +305,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        display: inline-block;
       }
       .status-badge.draft {
         background: #f3f4f6;
@@ -351,11 +341,27 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         border-color: var(--rose);
         background: var(--rose-tint);
       }
+      .btn-clear {
+        padding: 6px;
+        background: var(--card);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-s);
+        color: var(--ink-soft);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-clear:hover {
+        background: #f1f5f9;
+        color: var(--ink);
+      }
     `,
   ],
 })
 export class BooksComponent implements OnInit {
   adminService = inject(AdminService);
+  private confirmService = inject(ConfirmService);
 
   books = signal<AdminBook[]>([]);
   searchQuery = signal('');
@@ -399,13 +405,21 @@ export class BooksComponent implements OnInit {
   }
 
   updateStatus(book: AdminBook, status: string, reason?: string) {
-    if (confirm(`Are you sure you want to mark this book as ${status}?`)) {
-      this.adminService
-        .updateBookStatus(book._id, status, reason)
-        .subscribe(() => {
-          this.loadBooks();
-        });
-    }
+    this.confirmService.confirm(
+      'Confirm Action',
+      `Are you sure you want to mark this book as ${status}?`,
+      true,
+      'Confirm',
+      'Cancel'
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.adminService
+          .updateBookStatus(book._id, status, reason)
+          .subscribe(() => {
+            this.loadBooks();
+          });
+      }
+    });
   }
 
   rejectBook(book: AdminBook) {
@@ -413,6 +427,28 @@ export class BooksComponent implements OnInit {
     if (reason !== null) {
       this.updateStatus(book, 'rejected', reason);
     }
+  }
+
+  clearReports(book: AdminBook) {
+    this.confirmService.confirm(
+      'Dismiss Reports',
+      `Are you sure you want to dismiss all reports for "${book.title}"?`,
+      true,
+      'Dismiss',
+      'Cancel'
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.adminService.clearBookReports(book._id).subscribe({
+          next: () => {
+            this.loadBooks();
+          },
+          error: (err) => {
+            console.error('Failed to clear reports', err);
+            this.confirmService.confirm('Error', 'Failed to clear reports', false, 'OK', '').subscribe();
+          }
+        });
+      }
+    });
   }
 }
 

@@ -1,7 +1,9 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { AdminService, AdminBook } from '../../../core/services/admin.service';
+import { BookService } from '../../../core/services/book.service';
+import { ConfirmService } from '../../../core/services/confirm.service';
 
 @Component({
   selector: 'app-admin-book-detail',
@@ -64,6 +66,17 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                   Suspend Book
                 </button>
               </div>
+            } @else if (book()?.status === 'pending') {
+              <h3>Pending Approval</h3>
+              <p>This book requires admin approval to be published.</p>
+              <div class="action-buttons">
+                <button class="btn-approve" (click)="updateStatus('published')">
+                  Approve & Publish
+                </button>
+                <button class="btn-reject" (click)="rejectBook()">
+                  Reject Book
+                </button>
+              </div>
             } @else if (book()?.status === 'rejected') {
               <h3>Rejected Book</h3>
               <p><strong>Reason:</strong> {{ book()?.rejectionReason }}</p>
@@ -79,26 +92,11 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         <section class="book-content-preview">
           <h2>Content Preview</h2>
           <div class="preview-box">
-            <!-- In a real app, this would render the book chapters/text -->
-            <p>
-              <em
-                >[The full text of the story would be rendered here for the
-                admin to read and review. Since this is a placeholder, assume
-                the admin can scroll through the entire manuscript.]</em
-              >
-            </p>
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat.
-            </p>
-            <p>
-              Duis aute irure dolor in reprehenderit in voluptate velit esse
-              cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-              cupidatat non proident, sunt in culpa qui officia deserunt mollit
-              anim id est laborum.
-            </p>
+            @if (chapters().length === 0) {
+              <p class="no-content">No chapters available for this book.</p>
+            } @else {
+              <div class="chapter-content" [innerHTML]="chapters()[0].content"></div>
+            }
           </div>
         </section>
       }
@@ -270,15 +268,18 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
         border-radius: var(--radius-m);
         padding: 48px;
         max-width: 800px;
+        max-height: 500px;
+        overflow-y: auto;
       }
-      .preview-box p {
+      .chapter-content {
         font-size: 16px;
         line-height: 1.8;
         color: var(--ink);
-        margin-bottom: 24px;
       }
-      .preview-box p:last-child {
-        margin-bottom: 0;
+      .no-content {
+        color: var(--ink-soft);
+        font-style: italic;
+        text-align: center;
       }
     `,
   ],
@@ -287,9 +288,13 @@ export class BookDetailComponent implements OnInit {
   route = inject(ActivatedRoute);
   router = inject(Router);
   adminService = inject(AdminService);
+  bookService = inject(BookService);
+  confirmService = inject(ConfirmService);
 
   book = signal<AdminBook | null>(null);
   loading = signal(true);
+  
+  chapters = signal<any[]>([]);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -297,7 +302,7 @@ export class BookDetailComponent implements OnInit {
       this.adminService.getBookDetails(id).subscribe({
         next: (data) => {
           this.book.set(data);
-          this.loading.set(false);
+          this.loadChapters(id);
         },
         error: () => {
           this.loading.set(false);
@@ -307,19 +312,42 @@ export class BookDetailComponent implements OnInit {
     }
   }
 
+  loadChapters(bookId: string) {
+    this.bookService.getChapters(bookId).subscribe({
+      next: (data) => {
+        this.chapters.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load chapters', err);
+        this.loading.set(false);
+      }
+    });
+  }
+
   updateStatus(status: string, reason?: string) {
     if (!this.book()) return;
 
-    if (confirm(`Are you sure you want to mark this book as ${status}?`)) {
-      this.adminService
-        .updateBookStatus(this.book()!._id, status, reason)
-        .subscribe({
-          next: (updated) => this.book.set(updated),
-        });
-    }
+    this.confirmService.confirm(
+      'Confirm Action',
+      `Are you sure you want to mark this book as ${status}?`,
+      true,
+      'Confirm',
+      'Cancel'
+    ).subscribe((confirmed) => {
+      if (confirmed) {
+        this.adminService
+          .updateBookStatus(this.book()!._id, status, reason)
+          .subscribe({
+            next: (updated) => this.book.set(updated),
+          });
+      }
+    });
   }
 
   rejectBook() {
+    // Note: If you want to replace prompt() with ConfirmService you'll need an input modal.
+    // For now we leave prompt as is or use a custom component, but since it wasn't requested, we keep it simple.
     const reason = prompt('Please provide a reason for rejection:');
     if (reason !== null) {
       this.updateStatus('rejected', reason);

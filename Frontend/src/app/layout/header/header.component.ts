@@ -44,6 +44,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   notificationsOpen = signal(false);
   showAuthorModal = signal(false);
   isHeaderHidden = signal(false);
+  isScrolled = signal(false);
   private lastScrollY = 0;
 
   notifications = signal<NotificationItem[]>([]);
@@ -200,24 +201,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     const currentScrollY =
       window.pageYOffset || document.documentElement.scrollTop || 0;
 
-    // If scrolling down and past the header height, hide it
-    if (currentScrollY > this.lastScrollY && currentScrollY > 80) {
-      if (!this.isHeaderHidden()) {
-        this.isHeaderHidden.set(true);
-        // Close dropdowns when hiding header
-        this.langMenuOpen.set(false);
-        this.profileMenuOpen.set(false);
-        this.notificationsOpen.set(false);
-      }
-    }
-    // If scrolling up, show it
-    else if (currentScrollY < this.lastScrollY) {
-      if (this.isHeaderHidden()) {
-        this.isHeaderHidden.set(false);
-      }
+    if (currentScrollY > 10) {
+      if (!this.isScrolled()) this.isScrolled.set(true);
+    } else {
+      if (this.isScrolled()) this.isScrolled.set(false);
     }
 
-    // For Mobile or negative scrolling
+    // Update lastScrollY for potential future use
     this.lastScrollY = currentScrollY <= 0 ? 0 : currentScrollY;
   }
 

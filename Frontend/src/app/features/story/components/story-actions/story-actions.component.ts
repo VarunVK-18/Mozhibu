@@ -134,6 +134,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
         </svg>
       </button>
 
+      @if (!isAuthor) {
       <button
         class="action-btn icon-only text-rose"
         title="Report"
@@ -152,6 +153,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           <line x1="4" y1="22" x2="4" y2="15"></line>
         </svg>
       </button>
+      }
     </div>
 
     <!-- Modals (Simple overlays) -->
@@ -442,6 +444,7 @@ export class StoryActionsComponent {
   @Input() favorites = 0;
   @Input() accessType?: string;
   @Input() isPremiumSubscriber = false;
+  @Input() isAuthor = false;
 
   @Output() readClicked = new EventEmitter<void>();
   @Output() bookmarkClicked = new EventEmitter<void>();

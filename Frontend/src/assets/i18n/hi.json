@@ -94,12 +94,13 @@
       "संपादक गाइड",
       "विश्लेषण"
     ],
-    "companyLinks": [
-      "मोझिबु के बारे में",
-      "समुदाय दिशानिर्देश",
-      "सहायता",
-      "करियर"
-    ],
+    "companyLinks": {
+      "about": "हमारे बारे में",
+      "careers": "करियर",
+      "press": "प्रेस",
+      "blog": "ब्लॉग",
+      "contact": "संपर्क"
+    },
     "copyright": "© 2026 Mozhibu. सर्वाधिकार सुरक्षित।",
     "instagram": "Instagram",
     "x": "X",
@@ -181,5 +182,27 @@
     "noFollowing": "आप अभी तक किसी को फ़ॉलो नहीं कर रहे हैं। अपनी पसंद के लेखकों को फ़ॉलो करें ताकि जब वे नई कहानियाँ प्रकाशित करें तो आपको सूचना मिल सके।",
     "findAuthors": "लेखक खोजें",
     "noFollowers": "अभी आपका कोई फ़ॉलोअर नहीं है। अपने दर्शकों को बढ़ाने के लिए कहानियां लिखना और साझा करना जारी रखें!"
-  }
+  },
+  "reportModal": {
+    "title": "कहानी की रिपोर्ट करें",
+    "subtitle": "आप इस कहानी की रिपोर्ट क्यों कर रहे हैं?",
+    "plagiarism": "साहित्यिक चोरी",
+    "inappropriate": "अनुचित सामग्री",
+    "spam": "स्पैम",
+    "other": "अन्य",
+    "placeholder": "अतिरिक्त विवरण...",
+    "cancel": "रद्द करें",
+    "submit": "रिपोर्ट सबमिट करें",
+    "success": "रिपोर्ट सफलतापूर्वक सबमिट की गई।"
+  },
+  "announcements": {
+    "readMore": "और पढ़ें",
+    "type": {
+      "update": "अपडेट",
+      "event": "इवेंट",
+      "news": "समाचार"
+    }
+  },
+  "Competition Winners Announced!": "प्रतियोगिता के विजेताओं की घोषणा!",
+  "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!": "प्रतियोगिता 'द ट्वेल्व टंग्स प्राइज 882' समाप्त हो गई है। 'winnerwillbeme' के लिए आधी और 'contest' के लिए वरुण को बधाई!"
 }

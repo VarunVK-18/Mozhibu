@@ -80,4 +80,31 @@ describe('Books API', () => {
       expect(res.statusCode).toEqual(401);
     });
   });
+  describe('PUT /api/books/:id', () => {
+    it('should force 18+ books into pending status when trying to publish', async () => {
+      // First create a book
+      const createRes = await request(app)
+        .post('/api/books')
+        .set('Authorization', `Bearer ${writerToken}`)
+        .send({
+          title: 'Mature Book',
+          genre: 'Romance'
+        });
+      
+      const bookId = createRes.body._id;
+
+      // Now attempt to update it to published with isMature = true
+      const updateRes = await request(app)
+        .put(`/api/books/${bookId}`)
+        .set('Authorization', `Bearer ${writerToken}`)
+        .send({
+          status: 'published',
+          isMature: true
+        });
+      
+      expect(updateRes.statusCode).toEqual(200);
+      expect(updateRes.body.status).toEqual('pending'); // Should be pending, not published
+      expect(updateRes.body.isMature).toBe(true);
+    });
+  });
 });

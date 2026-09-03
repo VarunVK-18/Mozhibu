@@ -21,6 +21,18 @@ import { Subject, filter, takeUntil } from 'rxjs';
       @if (isLoading) {
         <div class="loading-state">Loading story details...</div>
       } @else if (book) {
+        @if (book.status === 'pending') {
+          <div class="status-banner pending-banner">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="banner-content">
+              <strong>Pending Admin Approval:</strong> Your book contains 18+ content and is currently under review by our moderation team. It will be published automatically once approved.
+            </div>
+          </div>
+        }
         <div class="dashboard-header">
           <div class="wrap">
             <div class="book-summary">
@@ -117,6 +129,7 @@ import { Subject, filter, takeUntil } from 'rxjs';
                               : 'assets/default-cover.png'
                           "
                           [alt]="chapter.title"
+                          (error)="onCoverError($event)"
                         />
                       </div>
                       <div class="chapter-text">
@@ -171,10 +184,28 @@ import { Subject, filter, takeUntil } from 'rxjs';
   styles: [
     `
       .dashboard-page {
-        min-height: calc(100vh - 72px);
+        min-height: 100vh;
         background: var(--paper-warm);
+        padding-bottom: 80px;
       }
-
+      .status-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px 24px;
+        font-size: 14px;
+        line-height: 1.5;
+        border-radius: 0;
+      }
+      .pending-banner {
+        background: #fff8e6;
+        color: #856404;
+        border-bottom: 1px solid #ffeeba;
+      }
+      .banner-content strong {
+        font-weight: 600;
+        margin-right: 4px;
+      }
       .dashboard-header {
         background: var(--card);
         border-bottom: 1px solid var(--border-soft);

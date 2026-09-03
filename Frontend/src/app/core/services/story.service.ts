@@ -3,6 +3,7 @@ import { Observable, of, delay } from 'rxjs';
 import { BookService } from './book.service';
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
+import { ConfirmService } from './confirm.service';
 
 export interface StoryEpisode {
   id: string;
@@ -97,6 +98,7 @@ export class StoryService {
 
   private bookService = inject(BookService);
   private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
 
   loadStory(id: string, resume: boolean = false) {
     const baseUrl = environment.apiUrl.replace('/api', '');
@@ -484,9 +486,12 @@ export class StoryService {
         this.storyComments.update((comments) =>
           comments.filter((c) => c.id !== newComment.id),
         );
-        alert(
+        this.confirmService.confirm(
+          'Notice',
           err.error?.msg ||
             'Failed to post comment. You may have already reviewed this story.',
+          false,
+          'OK'
         );
       },
     });

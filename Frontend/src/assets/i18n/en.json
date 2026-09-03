@@ -174,5 +174,15 @@
     "cancel": "Cancel",
     "submit": "Submit Report",
     "success": "Report submitted successfully."
-  }
+  },
+  "announcements": {
+    "readMore": "Read More",
+    "type": {
+      "update": "Update",
+      "event": "Event",
+      "news": "News"
+    }
+  },
+  "Competition Winners Announced!": "Competition Winners Announced!",
+  "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!": "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!"
 }

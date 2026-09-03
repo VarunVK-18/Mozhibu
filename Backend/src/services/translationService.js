@@ -17,6 +17,28 @@ const langMap = {
   or: "Odia",
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function generateContentWithRetry(model, prompt, retries = 4, delay = 12000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      // Add a mandatory base delay between requests in batches to prevent 429
+      if (i === 0) await sleep(2000); 
+      
+      const result = await model.generateContent(prompt);
+      return result;
+    } catch (err) {
+      if (err.status === 429 || err.status === 503) {
+        if (i === retries - 1) throw err;
+        const backoff = delay * Math.pow(2, i);
+        console.warn(`[Translation] API overloaded (${err.status}). Retrying in ${backoff/1000}s...`);
+        await sleep(backoff);
+      } else {
+        throw err;
+      }
+    }
+  }
+}
 async function translateBooks(books, targetLang) {
   if (!targetLang || targetLang === "en" || !books || books.length === 0)
     return books;
@@ -26,7 +48,7 @@ async function translateBooks(books, targetLang) {
     : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const genAI = new GoogleGenerativeAI(randomKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
   const targetLangName = langMap[targetLang] || targetLang;
 
   // Filter books that need translation
@@ -47,7 +69,7 @@ Data:
 ${JSON.stringify(titlesObj)}`;
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await generateContentWithRetry(model, prompt);
       let text = result.response.text();
       if (text.startsWith("\`\`\`json"))
         text = text.replace(/\`\`\`json\n?/, "").replace(/\`\`\`\n?$/, "");
@@ -104,7 +126,7 @@ async function translateChapters(chapters, targetLang) {
     : [];
   const randomKey = keys[Math.floor(Math.random() * keys.length)];
   const genAI = new GoogleGenerativeAI(randomKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
   const targetLangName = langMap[targetLang] || targetLang;
 
   // Filter chapters that need title translation
@@ -125,7 +147,7 @@ Data:
 ${JSON.stringify(titlesObj)}`;
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await generateContentWithRetry(model, prompt);
       let text = result.response.text();
       if (text.startsWith("\`\`\`json"))
         text = text.replace(/\`\`\`json\n?/, "").replace(/\`\`\`\n?$/, "");
@@ -176,7 +198,7 @@ Content to translate:
 ${c.content}`;
 
     try {
-      const result = await model.generateContent(prompt);
+      const result = await generateContentWithRetry(model, prompt);
       let translatedContent = result.response.text();
       if (translatedContent.startsWith("\`\`\`html")) {
         translatedContent = translatedContent

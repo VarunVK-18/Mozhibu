@@ -323,8 +323,12 @@ router.get("/:id/chapters", protectOptional, async (req, res) => {
 
     const isAuthor =
       req.user && book.author && book.author.toString() === req.user.id;
+    const isAdmin =
+      req.user && ["admin", "superadmin"].includes(req.user.role);
+    const isPrivileged = isAuthor || isAdmin;
+
     const query = { book: req.params.id };
-    if (!isAuthor) {
+    if (!isPrivileged) {
       query.status = "published";
     }
 
@@ -338,8 +342,8 @@ router.get("/:id/chapters", protectOptional, async (req, res) => {
 
       const chapObj = chapter.toObject();
 
-      // Authors can always read their own chapters
-      if (isAuthor) {
+      // Privileged users (author or admin) can always read all chapters
+      if (isPrivileged) {
         chapObj.isLocked = false;
         return chapObj;
       }
@@ -411,11 +415,19 @@ router.post("/:id/reviews", protect, async (req, res) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
+    // Allow author to make exactly one review
     if (book.author.toString() === req.user.id) {
-      return res.status(403).json({ msg: "You cannot review your own book" });
+      const existingReview = await Review.findOne({
+        book: req.params.id,
+        user: req.user.id,
+        parentReview: { $exists: false },
+      });
+      if (existingReview) {
+        return res.status(403).json({ msg: "You can only write one review for your own book" });
+      }
     }
 
-    // Allow multiple comments per user (removed existingReview check)
+    // Allow multiple comments per user (removed existingReview check for non-authors)
 
     const newReview = new Review({
       book: req.params.id,
@@ -611,6 +623,11 @@ router.post("/:id/report", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ msg: "Book not found" });
+    // Check if user has already reported this book
+    const existingReport = await Report.findOne({ book: req.params.id, reporter: req.user.id });
+    if (existingReport) {
+      return res.status(400).json({ msg: "You have already reported this book" });
+    }
 
     // Validate comment word count (max 100 words)
     if (req.body.comment) {

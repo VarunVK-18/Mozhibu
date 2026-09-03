@@ -174,5 +174,15 @@
     "cancel": "ரத்துசெய்",
     "submit": "புகாரைச் சமர்ப்பி",
     "success": "புகார் வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது."
-  }
+  },
+  "announcements": {
+    "readMore": "மேலும் படிக்க",
+    "type": {
+      "update": "புதுப்பிப்பு",
+      "event": "நிகழ்வு",
+      "news": "செய்திகள்"
+    }
+  },
+  "Competition Winners Announced!": "போட்டி வெற்றியாளர்கள் அறிவிப்பு!",
+  "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!": "'தி டுவெல்வ் டங்க்ஸ் பிரைஸ் 882' போட்டி முடிவடைந்தது. 'winnerwillbeme' என்ற புத்தகத்திற்காக அதியையும், 'contest' என்ற புத்தகத்திற்காக வருணையும் வாழ்த்துகிறோம்!"
 }

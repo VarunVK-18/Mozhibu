@@ -121,7 +121,18 @@ router.get("/broadcasts", protectOptional, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
-    res.json(broadcasts);
+
+    const lang = req.query.lang;
+    const translatedBroadcasts = broadcasts.map(b => {
+      if (lang && lang !== "en" && b.translations && b.translations[lang]) {
+        b.title = b.translations[lang].title || b.title;
+        b.message = b.translations[lang].message || b.message;
+      }
+      delete b.translations; // no need to send all translations to client
+      return b;
+    });
+
+    res.json(translatedBroadcasts);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server Error" });

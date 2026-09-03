@@ -16,6 +16,7 @@ import {
 import { ContinueReadingComponent } from './components/continue-reading/continue-reading.component';
 import { BookService } from '../../core/services/book.service';
 import { ApiService } from '../../core/services/api.service';
+import { LanguageService } from '../../core/services/language.service';
 import { OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { GoogleAdComponent } from '../../shared/components/ad/google-ad.component';
@@ -117,7 +118,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           <!-- Announcements -->
           <section class="announcement-section">
             <div class="section-header">
-              <h2 class="section-title">Announcements</h2>
+              <h2 class="section-title">{{ "notifications.announcements" | translate }}</h2>
             </div>
             <div class="scroll-container">
               <div class="announcements-track">
@@ -142,7 +143,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           ></app-story-section>
 
           <app-story-section
-            title="Trending"
+            [title]="'trending.title' | translate"
             [stories]="trendingStories"
             [isLoading]="isStoriesLoading"
             viewAllLink="/categories"
@@ -274,6 +275,7 @@ export class HomeComponent implements OnInit {
   authService = inject(AuthService);
   bookService = inject(BookService);
   private apiService = inject(ApiService);
+  private languageService = inject(LanguageService);
 
   recommendedStories: any[] = [];
   trendingStories: any[] = [];
@@ -351,7 +353,8 @@ export class HomeComponent implements OnInit {
     }
 
     // Fetch real announcements from backend broadcasts
-    this.apiService.get<any[]>('/notifications/broadcasts').subscribe({
+    const currentLang = this.languageService.currentLang() || 'en';
+    this.apiService.get<any[]>(`/notifications/broadcasts?lang=${currentLang}`).subscribe({
       next: (broadcasts) => {
         this.announcements = broadcasts.map((b: any) => ({
           id: b._id,

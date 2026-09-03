@@ -228,6 +228,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'books/:id/reports',
+        loadComponent: () =>
+          import('./features/admin/book-reports/book-reports.component').then(
+            (m) => m.BookReportsComponent,
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/admin/users/users.component').then(

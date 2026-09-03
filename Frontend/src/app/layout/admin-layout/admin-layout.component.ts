@@ -324,7 +324,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
     `
       .admin-layout {
         display: flex;
-        min-height: 100vh;
+        height: 100vh;
         background: var(--paper); /* Soft off-white background */
         font-family: var(--body);
         overflow: hidden;

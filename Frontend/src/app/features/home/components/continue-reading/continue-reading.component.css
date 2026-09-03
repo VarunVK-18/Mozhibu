@@ -32,17 +32,34 @@
 .cr-card {
   display: flex;
   gap: 16px;
-  background: var(--card);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-m);
+  background: rgba(238, 245, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  border-radius: 20px;
   padding: 16px;
   transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border 0.2s ease;
 }
 .cr-card:hover {
-  box-shadow: 0 12px 28px -16px rgba(43, 38, 32, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+:host-context(.dark-mode) .cr-card,
+.dark-mode .cr-card {
+  background: rgba(43, 38, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+:host-context(.dark-mode) .cr-card:hover,
+.dark-mode .cr-card:hover {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25);
 }
 
 .cr-cover {

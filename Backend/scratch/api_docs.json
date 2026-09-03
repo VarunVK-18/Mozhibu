@@ -1,0 +1,1476 @@
+{
+  "admin": [
+    {
+      "route": "GET /api/admin/stats",
+      "desc": "Get dashboard statistics",
+      "responses": []
+    },
+    {
+      "route": "GET /stats",
+      "desc": "Get dashboard statistics",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/books",
+      "desc": "Get all books with optional status filter",
+      "responses": []
+    },
+    {
+      "route": "GET /books",
+      "desc": "Get all books with optional status filter",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/reported-books",
+      "desc": "Get all books with more than 10 reports",
+      "responses": []
+    },
+    {
+      "route": "GET /reported-books",
+      "desc": "Get all books with more than 10 reports",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/books/:id",
+      "desc": "Get book details",
+      "responses": []
+    },
+    {
+      "route": "GET /books/:id",
+      "desc": "Get book details",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/admin/books/:id/status",
+      "desc": "Update book status (approve/reject)",
+      "responses": []
+    },
+    {
+      "route": "PUT /books/:id/status",
+      "desc": "Update book status (approve/reject)",
+      "responses": [
+        "400 status",
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/users",
+      "desc": "Get all users",
+      "responses": []
+    },
+    {
+      "route": "GET /users",
+      "desc": "Get all users",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/admin/users/:id/status",
+      "desc": "Suspend or reactivate user",
+      "responses": []
+    },
+    {
+      "route": "PUT /users/:id/status",
+      "desc": "Suspend or reactivate user",
+      "responses": [
+        "400 status",
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/admin/users/:id",
+      "desc": "Delete user/author account permanently by admin",
+      "responses": []
+    },
+    {
+      "route": "DELETE /users/:id",
+      "desc": "Delete user/author account permanently by admin",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/authors",
+      "desc": "Get authors with their published book count",
+      "responses": []
+    },
+    {
+      "route": "GET /authors",
+      "desc": "Get authors with their published book count",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/authors/:id",
+      "desc": "Get author profile details and their books",
+      "responses": []
+    },
+    {
+      "route": "GET /authors/:id",
+      "desc": "Get author profile details and their books",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/pending-authors",
+      "desc": "Get users requesting author status",
+      "responses": []
+    },
+    {
+      "route": "GET /pending-authors",
+      "desc": "Get users requesting author status",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/admin/pending-authors/:id/status",
+      "desc": "Approve or reject an author request",
+      "responses": []
+    },
+    {
+      "route": "PUT /pending-authors/:id/status",
+      "desc": "Approve or reject an author request",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/admin/broadcast",
+      "desc": "Broadcast announcement to users",
+      "responses": []
+    },
+    {
+      "route": "POST /broadcast",
+      "desc": "Broadcast announcement to users",
+      "responses": [
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/broadcasts",
+      "desc": "Get broadcast history",
+      "responses": []
+    },
+    {
+      "route": "GET /broadcasts",
+      "desc": "Get broadcast history",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/admin/broadcasts/:id",
+      "desc": "Delete a broadcast from history",
+      "responses": []
+    },
+    {
+      "route": "DELETE /broadcasts/:id",
+      "desc": "Delete a broadcast from history",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/competition",
+      "desc": "Get competition config",
+      "responses": []
+    },
+    {
+      "route": "GET /competition",
+      "desc": "Get competition config",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/admin/competition",
+      "desc": "Update competition config",
+      "responses": []
+    },
+    {
+      "route": "PUT /competition",
+      "desc": "Update competition config",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/competition/entries",
+      "desc": "Get books submitted to the active competition",
+      "responses": []
+    },
+    {
+      "route": "GET /competition/entries",
+      "desc": "Get books submitted to the active competition",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/admin/competition/notify",
+      "desc": "Send a broadcast to writers inviting them to the competition",
+      "responses": []
+    },
+    {
+      "route": "POST /competition/notify",
+      "desc": "Send a broadcast to writers inviting them to the competition",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/admin/competition/announce-winner",
+      "desc": "Set the winner and announce it to everyone",
+      "responses": []
+    },
+    {
+      "route": "POST /competition/announce-winner",
+      "desc": "Set the winner and announce it to everyone",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/competitions/history",
+      "desc": "Get past competitions",
+      "responses": []
+    },
+    {
+      "route": "GET /competitions/history",
+      "desc": "Get past competitions",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/competitions/:id",
+      "desc": "Get a specific competition's details including submissions and winners",
+      "responses": []
+    },
+    {
+      "route": "GET /competitions/:id",
+      "desc": "Get a specific competition's details including submissions and winners",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/plans",
+      "desc": "Get all subscription plans",
+      "responses": []
+    },
+    {
+      "route": "GET /plans",
+      "desc": "Get all subscription plans",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/admin/plans",
+      "desc": "Create a new subscription plan",
+      "responses": []
+    },
+    {
+      "route": "POST /plans",
+      "desc": "Create a new subscription plan",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/admin/plans/:id",
+      "desc": "Update a subscription plan",
+      "responses": []
+    },
+    {
+      "route": "PUT /plans/:id",
+      "desc": "Update a subscription plan",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PATCH /api/admin/plans/:id/status",
+      "desc": "Toggle active status of a plan",
+      "responses": []
+    },
+    {
+      "route": "PATCH /plans/:id/status",
+      "desc": "Toggle active status of a plan",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/admin/plans/:id",
+      "desc": "Delete a plan (only if zero subscribers)",
+      "responses": []
+    },
+    {
+      "route": "DELETE /plans/:id",
+      "desc": "Delete a plan (only if zero subscribers)",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/admin/plans/:id/history",
+      "desc": "Get audit trail for a plan",
+      "responses": []
+    },
+    {
+      "route": "GET /plans/:id/history",
+      "desc": "Get audit trail for a plan",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "auth": [
+    {
+      "route": "POST /api/auth/register",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /register",
+      "desc": "@route POST /api/auth/register",
+      "responses": [
+        "400 status",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/auth/login",
+      "desc": "Authenticate user & get token",
+      "responses": []
+    },
+    {
+      "route": "POST /login",
+      "desc": "@access  Public",
+      "responses": [
+        "400 status",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/auth/logout",
+      "desc": "Logout user and clear cookie",
+      "responses": []
+    },
+    {
+      "route": "POST /logout",
+      "desc": "@access  Public",
+      "responses": [
+        "JSON response"
+      ]
+    },
+    {
+      "route": "POST /api/auth/google",
+      "desc": "Authenticate user with Google",
+      "responses": []
+    },
+    {
+      "route": "POST /google",
+      "desc": "@access  Public",
+      "responses": [
+        "400 status"
+      ]
+    },
+    {
+      "route": "POST /api/auth/forgot-password",
+      "desc": "Generate reset token and print link",
+      "responses": []
+    },
+    {
+      "route": "POST /forgot-password",
+      "desc": "@access  Public",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/auth/reset-password",
+      "desc": "Reset password using token",
+      "responses": []
+    },
+    {
+      "route": "POST /reset-password",
+      "desc": "@access  Public",
+      "responses": [
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/auth/change-password",
+      "desc": "Change user password",
+      "responses": []
+    },
+    {
+      "route": "PUT /change-password",
+      "desc": "@access  Private",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "books": [
+    {
+      "route": "POST /api/books/cover",
+      "desc": "Upload a cover image and get its URL (Base64)",
+      "responses": [
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/categories",
+      "desc": "Get all unique book genres with counts",
+      "responses": []
+    },
+    {
+      "route": "GET /categories",
+      "desc": "Get all unique book genres with counts",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/me",
+      "desc": "Get all books written by the logged-in author",
+      "responses": []
+    },
+    {
+      "route": "GET /me",
+      "desc": "Get all books written by the logged-in author",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/books/:id/status",
+      "desc": "Toggle the completion status of a book",
+      "responses": []
+    },
+    {
+      "route": "PUT /:id/status",
+      "desc": "Toggle the completion status of a book",
+      "responses": [
+        "404 status",
+        "403 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books",
+      "desc": "Get all published books (paginated)",
+      "responses": []
+    },
+    {
+      "route": "GET /",
+      "desc": "Get all published books (paginated)",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/:id",
+      "desc": "Get a single published book (or unpublished if requested by author)",
+      "responses": []
+    },
+    {
+      "route": "GET /:id",
+      "desc": "Get a single published book (or unpublished if requested by author)",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/books/:id",
+      "desc": "Update an existing book",
+      "responses": []
+    },
+    {
+      "route": "PUT /:id",
+      "desc": "Update an existing book",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/:id/chapters",
+      "desc": "Get all chapters for a book",
+      "responses": []
+    },
+    {
+      "route": "GET /:id/chapters",
+      "desc": "Get all chapters for a book",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/:id/reviews",
+      "desc": "Get all approved reviews for a book",
+      "responses": []
+    },
+    {
+      "route": "GET /:id/reviews",
+      "desc": "Get all approved reviews for a book",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/reviews",
+      "desc": "Post a review for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/reviews",
+      "desc": "Post a review for a book",
+      "responses": [
+        "404 status",
+        "403 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/reviews/:reviewId/like",
+      "desc": "Like a comment",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/reviews/:reviewId/like",
+      "desc": "Like a comment",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/reviews/:reviewId/dislike",
+      "desc": "Dislike a comment",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/reviews/:reviewId/dislike",
+      "desc": "Dislike a comment",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/reviews/:reviewId/reply",
+      "desc": "Reply to a comment",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/reviews/:reviewId/reply",
+      "desc": "Reply to a comment",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/like",
+      "desc": "Toggle like for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/like",
+      "desc": "Toggle like for a book",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/report",
+      "desc": "Report a book",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/report",
+      "desc": "Report a book",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books",
+      "desc": "Create a new book",
+      "responses": []
+    },
+    {
+      "route": "POST /",
+      "desc": "Create a new book",
+      "responses": [
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/chapters",
+      "desc": "Create a new chapter for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/chapters",
+      "desc": "Create a new chapter for a book",
+      "responses": [
+        "404 status",
+        "403 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/books/:id/chapters/:chapterId",
+      "desc": "Get a single chapter",
+      "responses": []
+    },
+    {
+      "route": "GET /:id/chapters/:chapterId",
+      "desc": "Get a single chapter",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/books/:id/chapters/:chapterId",
+      "desc": "Update a chapter",
+      "responses": []
+    },
+    {
+      "route": "PUT /:id/chapters/:chapterId",
+      "desc": "Update a chapter",
+      "responses": [
+        "404 status",
+        "403 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/books/:id/chapters/:chapterId",
+      "desc": "Delete a chapter",
+      "responses": []
+    },
+    {
+      "route": "DELETE /:id/chapters/:chapterId",
+      "desc": "Delete a chapter",
+      "responses": [
+        "404 status",
+        "403 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/books/translate-html",
+      "desc": "Translate raw HTML to target language (for UI demo)",
+      "responses": []
+    },
+    {
+      "route": "POST /translate-html",
+      "desc": "Translate raw HTML to target language (for UI demo)",
+      "responses": [
+        "400 status",
+        "JSON response"
+      ]
+    },
+    {
+      "route": "POST /api/books/:id/chapters/:chapterId/translate",
+      "desc": "Translate a chapter to a target language using Gemini",
+      "responses": []
+    },
+    {
+      "route": "POST /:id/chapters/:chapterId/translate",
+      "desc": "Translate a chapter to a target language using Gemini",
+      "responses": [
+        "400 status",
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "competitions": [
+    {
+      "route": "GET /api/competitions/active",
+      "desc": "Get the active competition banner config",
+      "responses": []
+    },
+    {
+      "route": "GET /active",
+      "desc": "Get the active competition banner config",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "earnings": [
+    {
+      "route": "GET /api/earnings/me — full history",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /earnings/me",
+      "desc": "GET /api/earnings/me — full history",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/earnings/withdraw — Request payout for pending earnings",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /earnings/withdraw",
+      "desc": "POST /api/earnings/withdraw — Request payout for pending earnings",
+      "responses": [
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/earnings/me/projection — current month estimate",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /earnings/me/projection",
+      "desc": "GET /api/earnings/me/projection — current month estimate",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/rewards/me — full history",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /rewards/me",
+      "desc": "GET /api/rewards/me — full history",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/rewards/track-read",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /rewards/track-read",
+      "desc": "Called by the chapter reader to log a reading event",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "notifications": [
+    {
+      "route": "GET /api/notifications",
+      "desc": "Get all notifications for current user",
+      "responses": []
+    },
+    {
+      "route": "GET /",
+      "desc": "Get all notifications for current user",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/notifications/:id/read",
+      "desc": "Mark a single notification as read",
+      "responses": []
+    },
+    {
+      "route": "PUT /:id/read",
+      "desc": "Mark a single notification as read",
+      "responses": [
+        "404 status",
+        "401 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/notifications/read-all",
+      "desc": "Mark all notifications as read for current user",
+      "responses": []
+    },
+    {
+      "route": "PUT /read-all",
+      "desc": "Mark all notifications as read for current user",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/notifications/clear-all",
+      "desc": "Delete all notifications for current user",
+      "responses": []
+    },
+    {
+      "route": "DELETE /clear-all",
+      "desc": "Delete all notifications for current user",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/notifications/test",
+      "desc": "Seed test notifications for current user",
+      "responses": []
+    },
+    {
+      "route": "POST /test",
+      "desc": "Seed test notifications for current user",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/notifications/broadcasts",
+      "desc": "Get recent broadcast announcements (public, latest 10)",
+      "responses": []
+    },
+    {
+      "route": "GET /broadcasts",
+      "desc": "",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "revenue": [
+    {
+      "route": "GET /api/revenue/config",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /config",
+      "desc": "GET /api/revenue/config",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/config",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "PUT /config",
+      "desc": "PUT /api/revenue/config",
+      "responses": [
+        "JSON response",
+        "400 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/engagement-config",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "PUT /engagement-config",
+      "desc": "PUT /api/revenue/engagement-config",
+      "responses": [
+        "JSON response",
+        "400 status"
+      ]
+    },
+    {
+      "route": "POST /api/revenue/monthly",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /monthly",
+      "desc": "POST /api/revenue/monthly",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/revenue/compute/:year/:month",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /compute/:year/:month",
+      "desc": "POST /api/revenue/compute/:year/:month",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/revenue/report/:year/:month",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /report/:year/:month",
+      "desc": "GET /api/revenue/report/:year/:month",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/revenue/analytics",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /analytics",
+      "desc": "GET /api/revenue/analytics",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/revenue/author-earnings",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /author-earnings",
+      "desc": "GET /api/revenue/author-earnings",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/author-earnings/:id/pay",
+      "desc": "",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/reader-rewards/:id/pay",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "PUT /reader-rewards/:id/pay",
+      "desc": "PUT /api/revenue/reader-rewards/:id/pay",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/revenue/plans",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /plans",
+      "desc": "POST /api/revenue/plans",
+      "responses": [
+        "JSON response",
+        "400 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/plans/:id",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "PUT /plans/:id",
+      "desc": "PUT /api/revenue/plans/:id",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "400 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/revenue/plans/:id  (soft delete — deactivate)",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "DELETE /plans/:id",
+      "desc": "DELETE /api/revenue/plans/:id  (soft delete — deactivate)",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/revenue/coupons",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "GET /coupons",
+      "desc": "GET /api/revenue/coupons",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/revenue/coupons",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "POST /coupons",
+      "desc": "POST /api/revenue/coupons",
+      "responses": [
+        "JSON response",
+        "400 status"
+      ]
+    },
+    {
+      "route": "PUT /api/revenue/coupons/:id",
+      "desc": "",
+      "responses": []
+    },
+    {
+      "route": "PUT /coupons/:id",
+      "desc": "PUT /api/revenue/coupons/:id",
+      "responses": [
+        "JSON response",
+        "400 status"
+      ]
+    }
+  ],
+  "search": [
+    {
+      "route": "GET /api/search",
+      "desc": "Advanced search across stories, authors, series, and tags",
+      "responses": []
+    },
+    {
+      "route": "GET /",
+      "desc": "Advanced search across stories, authors, series, and tags",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "subscriptions": [
+    {
+      "route": "GET /plans",
+      "desc": "─── GET /api/subscriptions/plans ────────────────────────────",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /coupon/validate",
+      "desc": "─── POST /api/subscriptions/coupon/validate ─────────────────",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /purchase",
+      "desc": "Step 1: Create a Razorpay order and return it to frontend",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /verify",
+      "desc": "Step 2: Verify payment signature and activate subscription",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status",
+        "400 status"
+      ]
+    },
+    {
+      "route": "GET /me",
+      "desc": "─── GET /api/subscriptions/me ────────────────────────────────",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /me/cancel",
+      "desc": "─── POST /api/subscriptions/me/cancel ───────────────────────",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /me/history",
+      "desc": "─── GET /api/subscriptions/me/history ───────────────────────",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "route": "PUT /api/users/upgrade-role",
+      "desc": "Upgrade a reader to a writer",
+      "responses": []
+    },
+    {
+      "route": "PUT /upgrade-role",
+      "desc": "Upgrade a reader to a writer",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me",
+      "desc": "Get current user's full profile",
+      "responses": []
+    },
+    {
+      "route": "GET /me",
+      "desc": "Get current user's full profile",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me/library",
+      "desc": "Get current user's saved books",
+      "responses": []
+    },
+    {
+      "route": "GET /me/library",
+      "desc": "Get current user's saved books",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/users/me/bookmarks/:bookId",
+      "desc": "Toggle bookmark status for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /me/bookmarks/:bookId",
+      "desc": "Toggle bookmark status for a book",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me/favorites",
+      "desc": "Get current user's favorite books",
+      "responses": []
+    },
+    {
+      "route": "GET /me/favorites",
+      "desc": "Get current user's favorite books",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/users/me/favorites/:bookId",
+      "desc": "Toggle favorite status for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /me/favorites/:bookId",
+      "desc": "Toggle favorite status for a book",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me/following",
+      "desc": "Get current user's followed authors",
+      "responses": []
+    },
+    {
+      "route": "GET /me/following",
+      "desc": "Get current user's followed authors",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me/followers",
+      "desc": "Get current user's followers",
+      "responses": []
+    },
+    {
+      "route": "GET /me/followers",
+      "desc": "Get current user's followers",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/authors",
+      "desc": "Get all platform authors",
+      "responses": []
+    },
+    {
+      "route": "GET /authors",
+      "desc": "Get all platform authors",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/author/:id",
+      "desc": "Get author profile and their published books",
+      "responses": []
+    },
+    {
+      "route": "GET /author/:id",
+      "desc": "Get author profile and their published books",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/users/follow/:authorId",
+      "desc": "Follow or unfollow an author",
+      "responses": []
+    },
+    {
+      "route": "POST /follow/:authorId",
+      "desc": "Follow or unfollow an author",
+      "responses": [
+        "404 status",
+        "400 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "GET /api/users/me/progress",
+      "desc": "Get reading progress for user",
+      "responses": []
+    },
+    {
+      "route": "GET /me/progress",
+      "desc": "Get reading progress for user",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/users/me/progress",
+      "desc": "Update reading progress for a book",
+      "responses": []
+    },
+    {
+      "route": "POST /me/progress",
+      "desc": "Update reading progress for a book",
+      "responses": [
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "POST /api/users/me/avatar",
+      "desc": "Upload a user avatar",
+      "responses": [
+        "400 status",
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/users/me/profile",
+      "desc": "Update user profile (bio)",
+      "responses": []
+    },
+    {
+      "route": "PUT /me/profile",
+      "desc": "Update user profile (bio)",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "PUT /api/users/me/deactivate",
+      "desc": "Deactivate user's own account",
+      "responses": []
+    },
+    {
+      "route": "PUT /me/deactivate",
+      "desc": "Deactivate user's own account",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    },
+    {
+      "route": "DELETE /api/users/me",
+      "desc": "Delete user's own account permanently",
+      "responses": []
+    },
+    {
+      "route": "DELETE /me",
+      "desc": "Delete user's own account permanently",
+      "responses": [
+        "404 status",
+        "JSON response",
+        "500 status"
+      ]
+    }
+  ]
+}

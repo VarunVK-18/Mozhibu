@@ -23,6 +23,10 @@ const BroadcastSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  translations: {
+    type: Object,
+    default: {}
+  }
 });
 
 module.exports = mongoose.model("Broadcast", BroadcastSchema);

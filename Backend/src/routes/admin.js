@@ -2,6 +2,8 @@ const express = require("express");
 const { protect, superadmin } = require("../middleware/auth");
 const User = require("../models/User");
 const Book = require("../models/Book");
+const Competition = require("../models/Competition");
+const { translateContent } = require("../utils/translator");
 const Notification = require("../models/Notification");
 const Broadcast = require("../models/Broadcast");
 const SubscriptionPlan = require("../models/SubscriptionPlan");
@@ -135,13 +137,38 @@ router.get("/reported-books", async (req, res) => {
 // @desc Get book details
 router.get("/books/:id", async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id).populate(
-      "author",
-      "username email",
-    );
+    const book = await Book.findById(req.params.id)
+      .populate("author", "username email")
+      .populate("reports.user", "username email avatar");
     if (!book) return res.status(404).json({ msg: "Book not found" });
     res.json(book);
   } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route DELETE /api/admin/books/:id/reports
+// @desc Clear all reports for a book
+router.delete("/books/:id/reports", async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    // Remove all standalone report documents for this book
+    const Report = require("../models/Report");
+    await Report.deleteMany({ book: req.params.id });
+
+    // Clear the book's report records
+    book.reports = [];
+    book.reportCount = 0;
+    
+    // If the book was suspended automatically due to reports, we might want to let the admin republish it manually. 
+    // We won't change the status automatically here to be safe.
+
+    await book.save();
+    res.json({ msg: "Reports cleared successfully" });
+  } catch (err) {
+    console.error(err.message);
     res.status(500).json({ msg: "Server Error" });
   }
 });
@@ -437,11 +464,13 @@ router.post("/broadcast", async (req, res) => {
     await Notification.insertMany(notifications);
 
     // Save broadcast history
+    const translations = await translateContent(title, message);
     const broadcastRecord = new Broadcast({
       title,
       message,
       audience,
       sentBy: req.user.id,
+      translations,
     });
     await broadcastRecord.save();
 
@@ -495,7 +524,6 @@ router.delete("/broadcasts/:id", async (req, res) => {
   }
 });
 
-const Competition = require("../models/Competition");
 
 // @route GET /api/admin/competition
 // @desc Get competition config
@@ -586,12 +614,15 @@ router.post("/competition/notify", async (req, res) => {
   try {
     const { message } = req.body;
 
+    const title = "New Competition Announcement";
+    const msg = message || "A new competition has started! Submit your entry now.";
+    const translations = await translateContent(title, msg);
     const broadcast = new Broadcast({
-      title: "New Competition Announcement",
-      message:
-        message || "A new competition has started! Submit your entry now.",
+      title: title,
+      message: msg,
       audience: "writers",
       sentBy: req.user.id,
+      translations,
     });
 
     await broadcast.save();
@@ -642,11 +673,15 @@ router.post("/competition/announce-winner", async (req, res) => {
 
     // Announce to EVERYONE
     const winnerNames = winningBooks.map(b => `${b.author.username} for "${b.title}"`).join(", ");
+    const title = "Competition Winners Announced!";
+    const message = `The competition "${competition.title}" has concluded. Congratulations to ${winnerNames}!`;
+    const translations = await translateContent(title, message);
     const broadcast = new Broadcast({
-      title: "Competition Winners Announced!",
-      message: `The competition "${competition.title}" has concluded. Congratulations to ${winnerNames}!`,
+      title,
+      message,
       audience: "all",
       sentBy: req.user.id,
+      translations,
     });
     await broadcast.save();
 

@@ -7,7 +7,8 @@ import {
   inject,
   computed,
   effect,
-  afterNextRender
+  afterNextRender,
+  HostBinding
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -25,60 +26,21 @@ import { StoryService } from '../../core/services/story.service';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="reader-container" [class.dark-mode]="isDarkMode()">
+      
       <!-- Topbar -->
       <header class="reader-header" [class.hidden]="!showControls()">
-        <nav class="breadcrumbs">
-          <a routerLink="/" class="breadcrumb-item home-link" title="Home">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </a>
-          <span class="separator">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </span>
-          <a
-            [routerLink]="['/story', storyId]"
-            class="breadcrumb-item story-link"
-            >{{ storyTitle }}</a
-          >
-          <span class="separator">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </span>
-          <span class="breadcrumb-item current">{{ chapterTitle }}</span>
-        </nav>
-
+        <button class="back-btn" (click)="goBack()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <div class="chapter-info">
+          <span class="story-title">{{ storyTitle }}</span>
+          <span class="chapter-title">{{ chapterTitle }}</span>
+        </div>
         <div class="header-actions">
-          <select
-            (change)="onLangChange($event)"
-            class="lang-select-reader"
-            [value]="langService.currentLang()"
-          >
+          <select (change)="onLangChange($event)" class="lang-select-reader" [value]="langService.currentLang()">
             @for (lang of langService.languages; track lang.code) {
               <option [value]="lang.code">{{ lang.native }}</option>
             }
@@ -87,532 +49,361 @@ import { StoryService } from '../../core/services/story.service';
       </header>
 
       <!-- Reading Area -->
-      <main
-        class="reading-area"
-        (click)="toggleControls()"
-        [style.fontSize.px]="fontSize()"
-      >
+      <main class="reading-area" (click)="toggleControls()" [style.fontSize.px]="fontSize()">
         @if (requiresSubscription()) {
           <div class="paywall-overlay">
             <div class="paywall-content">
               <div class="paywall-icon">👑</div>
               <h2>Premium Chapter</h2>
               <p>This chapter is exclusive to Mozhibu Premium subscribers.</p>
-              <a routerLink="/subscription/plans" class="btn-subscribe"
-                >View Premium Plans</a
-              >
+              <a routerLink="/subscription/plans" class="btn-subscribe">View Premium Plans</a>
             </div>
           </div>
         } @else {
-          <div
-            class="content-wrapper"
-            [innerHTML]="chapterContent()"
-            [style.display]="isTranslating() ? 'none' : 'block'"
-          ></div>
+          <div class="content-wrapper" [innerHTML]="chapterContent()" [style.display]="isTranslating() ? 'none' : 'block'"></div>
         }
-
+        
         <div class="skeleton-buffer" *ngIf="isTranslating()">
           <div class="skeleton-line" style="width: 80%"></div>
           <div class="skeleton-line" style="width: 100%"></div>
           <div class="skeleton-line" style="width: 90%"></div>
           <div class="skeleton-line" style="width: 95%"></div>
           <div class="skeleton-line" style="width: 60%"></div>
-          <br />
+          <br>
           <div class="skeleton-line" style="width: 100%"></div>
           <div class="skeleton-line" style="width: 85%"></div>
           <div class="skeleton-line" style="width: 95%"></div>
-          <br />
+          <br>
           <div class="skeleton-line" style="width: 90%"></div>
           <div class="skeleton-line" style="width: 100%"></div>
         </div>
       </main>
 
       <!-- Bottom Toolbar -->
-      <footer
-        class="reader-footer"
-        [class.hidden]="!showControls() || requiresSubscription()"
-      >
+      <footer class="reader-footer" [class.hidden]="!showControls() || requiresSubscription()">
         <div class="toolbar-content">
-          <button
-            class="nav-btn"
-            (click)="prevChapter()"
-            [disabled]="currentChapterNum() === 1"
-            [style.opacity]="currentChapterNum() === 1 ? '0.3' : '1'"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M15 18l-6-6 6-6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+          <button class="nav-btn" (click)="prevChapter()" [disabled]="currentChapterNum() === 1" [style.opacity]="currentChapterNum() === 1 ? '0.3' : '1'">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             Prev
           </button>
-
+          
           <div class="settings-group">
-            <!-- Auto Scroll Controls -->
-            <button
-              class="icon-btn"
-              (click)="toggleAutoScroll()"
-              [title]="isAutoScrolling() ? 'Pause Auto-Scroll' : 'Start Auto-Scroll'"
-            >
-              @if (isAutoScrolling()) {
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="6" y="4" width="4" height="16"></rect>
-                  <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-              } @else {
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-              }
-            </button>
-            <button
-              class="icon-btn"
-              (click)="decreaseScrollSpeed()"
-              [disabled]="scrollSpeed() <= 0.5"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-            <span class="font-size-display" style="width: 40px;">{{ scrollSpeed() | number:'1.1-1' }}x</span>
-            <button
-              class="icon-btn"
-              (click)="increaseScrollSpeed()"
-              [disabled]="scrollSpeed() >= 3.0"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </button>
-            <div class="divider"></div>
-
-            <button
-              class="icon-btn"
-              (click)="decreaseFont()"
-              [disabled]="fontSize() <= 14"
-            >
+            <button class="icon-btn" (click)="decreaseFont()" [disabled]="fontSize() <= 14">
               <span class="text-icon small">A</span>
             </button>
             <span class="font-size-display">{{ fontSize() }}px</span>
-            <button
-              class="icon-btn"
-              (click)="increaseFont()"
-              [disabled]="fontSize() >= 28"
-            >
+            <button class="icon-btn" (click)="increaseFont()" [disabled]="fontSize() >= 28">
               <span class="text-icon large">A</span>
             </button>
-
+            
             <div class="divider"></div>
-
+            
             <button class="icon-btn theme-btn" (click)="toggleTheme()">
               @if (isDarkMode()) {
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <circle cx="12" cy="12" r="5" />
-                  <path
-                    d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-                  />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
               } @else {
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                 </svg>
               }
             </button>
           </div>
 
-          <button
-            class="nav-btn"
-            (click)="nextChapter()"
-            [disabled]="currentChapterNum() >= storyEpisodes().length"
-            [style.opacity]="
-              currentChapterNum() >= storyEpisodes().length ? '0.3' : '1'
-            "
-          >
+          <button class="nav-btn" (click)="nextChapter()">
             Next
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M9 18l6-6-6-6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
       </footer>
     </div>
   `,
-  styles: [
-    `
-      /* Base Reader Variables */
-      :host {
-        display: block;
-        --reader-bg: #ffffff;
-        --reader-text: #2b2620;
-        --reader-surface: #f7f7f7;
-        --reader-border: #e6ddcb;
-        --reader-accent: #3f6259;
-      }
+  styles: [`
+    /* Base Reader Variables */
+    :host {
+      display: block;
+      --reader-bg: #FFFFFF;
+      --reader-text: #2B2620;
+      --reader-surface: #F7F7F7;
+      --reader-border: #E6DDCB;
+      --reader-accent: #3F6259;
+    }
+    
+    .dark-mode {
+      --reader-bg: #121212;
+      --reader-text: #E0E0E0;
+      --reader-surface: #1E1E1E;
+      --reader-border: #333333;
+      --reader-accent: #5C8F82;
+    }
 
-      .dark-mode {
-        --reader-bg: #121212;
-        --reader-text: #e0e0e0;
-        --reader-surface: #1e1e1e;
-        --reader-border: #333333;
-        --reader-accent: #5c8f82;
-      }
+    .reader-container {
+      min-height: 100vh;
+      background-color: var(--reader-bg);
+      color: var(--reader-text);
+      font-family: var(--body);
+      transition: background-color 0.3s, color 0.3s;
+      position: relative;
+    }
 
-      .reader-container {
-        min-height: 100vh;
-        background-color: var(--reader-bg);
-        color: var(--reader-text);
-        font-family: var(--body);
-        transition:
-          background-color 0.3s,
-          color 0.3s;
-        position: relative;
-      }
+    /* Topbar */
+    .reader-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 64px;
+      background-color: var(--reader-surface);
+      border-bottom: 1px solid var(--reader-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 50;
+      transition: transform 0.3s ease;
+    }
+    
+    .reader-header.hidden {
+      transform: translateY(-100%);
+    }
 
-      /* Topbar */
-      .reader-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 64px;
-        background-color: var(--reader-surface);
-        border-bottom: 1px solid var(--reader-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-        z-index: 50;
-        transition: transform 0.3s ease;
-      }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      color: var(--reader-text);
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 8px;
+    }
 
-      .reader-header.hidden {
-        transform: translateY(-100%);
-      }
+    .chapter-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
 
-      .breadcrumbs {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: var(--display);
-        font-size: 14px;
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        flex: 1;
-        margin-right: 16px;
-      }
+    .story-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--reader-text);
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-      .breadcrumb-item {
-        color: var(--reader-text);
-        text-decoration: none;
-        transition: color 0.2s;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-      }
+    .chapter-title {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .chapter-title {
+      font-family: var(--display);
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+    
+    .lang-select-reader {
+      background: var(--reader-bg);
+      color: var(--reader-text);
+      border: 1px solid var(--reader-border);
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-family: var(--body);
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+    }
 
-      .breadcrumb-item:hover:not(.current) {
-        color: var(--reader-accent);
-      }
+    .skeleton-buffer {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 0;
+    }
+    .skeleton-line { height: 1em; background: var(--reader-border); margin-bottom: 0.8em; border-radius: 4px; animation: pulse 1.5s infinite; }
+    
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+      100% { opacity: 0.4; }
+    }
 
-      .breadcrumb-item.home-link {
-        opacity: 0.7;
-      }
+    /* Reading Area */
+    .reading-area {
+      min-height: 100vh;
+      padding: 100px 24px;
+      cursor: pointer;
+    }
 
-      .breadcrumb-item.story-link {
-        opacity: 0.85;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    .content-wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
 
-      .breadcrumb-item.current {
-        font-weight: 700;
-        cursor: default;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
+    .content-wrapper p {
+      margin-bottom: 1.5em;
+    }
 
-      .separator {
-        color: var(--reader-border);
-        display: flex;
-        align-items: center;
-        opacity: 0.7;
-      }
+    /* Paywall */
+    .paywall-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50vh;
+      text-align: center;
+    }
+    .paywall-content {
+      background: var(--reader-surface);
+      border: 1px solid var(--reader-border);
+      border-radius: 16px;
+      padding: 48px;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .paywall-icon { font-size: 48px; margin-bottom: 16px; }
+    .paywall-content h2 { font-family: var(--display); font-size: 24px; margin: 0 0 12px; }
+    .paywall-content p { font-size: 15px; opacity: 0.8; margin: 0 0 24px; line-height: 1.5; }
+    .btn-subscribe {
+      display: inline-block;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 15px;
+      transition: transform 0.2s;
+    }
+    .btn-subscribe:hover { transform: translateY(-2px); }
 
-      .header-actions {
-        display: flex;
-        align-items: center;
-      }
+    /* Bottom Toolbar */
+    .reader-footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 72px;
+      background-color: var(--reader-surface);
+      border-top: 1px solid var(--reader-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      transition: transform 0.3s ease;
+    }
 
-      .lang-select-reader {
-        background: var(--reader-bg);
-        color: var(--reader-text);
-        border: 1px solid var(--reader-border);
-        padding: 6px 12px;
-        border-radius: 100px;
-        font-family: var(--body);
-        font-size: 13px;
-        cursor: pointer;
-        outline: none;
-      }
+    .reader-footer.hidden {
+      transform: translateY(100%);
+    }
 
-      .skeleton-buffer {
-        max-width: 680px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 20px 0;
-      }
-      .skeleton-line {
-        height: 1em;
-        background: var(--reader-border);
-        margin-bottom: 0.8em;
-        border-radius: 4px;
-        animation: pulse 1.5s infinite;
-      }
+    .toolbar-content {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
 
-      @keyframes pulse {
-        0% {
-          opacity: 0.4;
-        }
-        50% {
-          opacity: 0.8;
-        }
-        100% {
-          opacity: 0.4;
-        }
-      }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--reader-text);
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    
+    .nav-btn:hover {
+      color: var(--reader-accent);
+    }
 
-      /* Reading Area */
-      .reading-area {
-        min-height: 100vh;
-        padding: 100px 24px;
-        cursor: pointer;
-      }
+    .settings-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-      .content-wrapper {
-        max-width: 680px;
-        margin: 0 auto;
-        line-height: 1.8;
-        white-space: pre-wrap;
-      }
-
-      .content-wrapper p,
-      .content-wrapper span,
-      .content-wrapper div {
-        font-size: inherit;
-      }
-
-      .content-wrapper p {
-        margin-bottom: 1.5em;
-      }
-
-      /* Paywall */
-      .paywall-overlay {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 50vh;
-        text-align: center;
-      }
-      .paywall-content {
-        background: var(--reader-surface);
-        border: 1px solid var(--reader-border);
-        border-radius: 16px;
-        padding: 48px;
-        max-width: 400px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      }
-      .paywall-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-      }
-      .paywall-content h2 {
-        font-family: var(--display);
-        font-size: 24px;
-        margin: 0 0 12px;
-      }
-      .paywall-content p {
-        font-size: 15px;
-        opacity: 0.8;
-        margin: 0 0 24px;
-        line-height: 1.5;
-      }
-      .btn-subscribe {
-        display: inline-block;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        color: white;
-        text-decoration: none;
-        padding: 12px 24px;
-        border-radius: 100px;
-        font-weight: 700;
-        font-size: 15px;
-        transition: transform 0.2s;
-      }
-      .btn-subscribe:hover {
-        transform: translateY(-2px);
-      }
-
-      /* Bottom Toolbar */
-      .reader-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 72px;
-        background-color: var(--reader-surface);
-        border-top: 1px solid var(--reader-border);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 50;
-        transition: transform 0.3s ease;
-      }
-
-      .reader-footer.hidden {
-        transform: translateY(100%);
-      }
-
-      .toolbar-content {
-        width: 100%;
-        max-width: 680px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 24px;
-      }
-
-      .nav-btn {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        background: none;
-        border: none;
-        color: var(--reader-text);
-        font-family: var(--display);
-        font-weight: 600;
-        font-size: 15px;
-        cursor: pointer;
-        transition: color 0.2s;
-      }
-
-      .nav-btn:hover {
-        color: var(--reader-accent);
-      }
-
-      .settings-group {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .icon-btn {
-        background: none;
-        border: none;
-        color: var(--reader-text);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        transition: background-color 0.2s;
-      }
-
-      .icon-btn:hover:not(:disabled) {
-        background-color: rgba(128, 128, 128, 0.1);
-      }
-
-      .icon-btn:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-      }
-
-      .text-icon {
-        font-family: serif;
-        font-weight: bold;
-      }
-      .text-icon.small {
-        font-size: 14px;
-      }
-      .text-icon.large {
-        font-size: 20px;
-      }
-
-      .font-size-display {
-        font-size: 14px;
-        font-variant-numeric: tabular-nums;
-        width: 40px;
-        text-align: center;
-        opacity: 0.7;
-      }
-
-      .divider {
-        width: 1px;
-        height: 24px;
-        background-color: var(--reader-border);
-      }
-
-      @media (max-width: 600px) {
-        .reading-area {
-          padding: 80px 20px;
-        }
-        .breadcrumb-item.story-link {
-          max-width: 100px;
-          font-size: 12px;
-        }
-        .breadcrumb-item.current {
-          font-size: 12px;
-        }
-        .toolbar-content {
-          padding: 0 16px;
-        }
-      }
-    `,
-  ],
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--reader-text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+    
+    .icon-btn:hover:not(:disabled) {
+      background-color: rgba(128, 128, 128, 0.1);
+    }
+    
+    .icon-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    
+    .text-icon {
+      font-family: serif;
+      font-weight: bold;
+    }
+    .text-icon.small { font-size: 14px; }
+    .text-icon.large { font-size: 20px; }
+    
+    .font-size-display {
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      width: 40px;
+      text-align: center;
+      opacity: 0.7;
+    }
+    
+    .divider {
+      width: 1px;
+      height: 24px;
+      background-color: var(--reader-border);
+    }
+    
+    @media (max-width: 600px) {
+      .reading-area { padding: 80px 20px; }
+      .chapter-title { font-size: 14px; }
+      .story-title { font-size: 10px; }
+      .toolbar-content { padding: 0 16px; }
+    }
+  `]
 })
 export class ReaderComponent implements OnInit, OnDestroy {
+  @HostBinding('class.dark-mode') get isDark() { return this.isDarkMode(); }
+
   storyTitle = 'Reading...';
   chapterTitle = '';
   currentChapterNum = signal(1);
+  scrollPercentage = signal(0);
 
   showControls = signal(true);
   isDarkMode = signal(false);
@@ -775,6 +566,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
 
     percent = Math.max(0, Math.min(100, Math.round(percent)));
     this.scrollSubject.next(percent);
+    this.scrollPercentage.set(percent);
   }
 
   saveProgress(percentage: number) {
@@ -893,6 +685,15 @@ export class ReaderComponent implements OnInit, OnDestroy {
       return newVal;
     });
   }
+
+  cycleLanguage(): void {
+    const langs = this.langService.languages;
+    const current = this.langService.currentLang();
+    const idx = langs.findIndex(l => l.code === current);
+    const nextIdx = (idx + 1) % langs.length;
+    this.langService.setLanguage(langs[nextIdx].code);
+  }
+
 
   increaseFont(): void {
     if (this.fontSize() < 28) {

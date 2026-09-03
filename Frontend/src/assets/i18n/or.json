@@ -88,12 +88,13 @@
       "ସମ୍ପାଦକ ଗାଇଡ୍",
       "ଆନାଲିଟିକ୍ସ"
     ],
-    "companyLinks": [
-      "ମୋଝିବୁ ବିଷୟରେ",
-      "ସମ୍ପ୍ରଦାୟ ଗାଇଡଲାଇନ",
-      "ସମର୍ଥନ",
-      "କ୍ୟାରିଅର୍"
-    ],
+    "companyLinks": {
+      "about": "ଆମ ବିଷୟରେ",
+      "careers": "କ୍ୟାରିୟର୍",
+      "press": "ପ୍ରେସ୍",
+      "blog": "ବ୍ଲଗ୍",
+      "contact": "ସମ୍ପର୍କ"
+    },
     "copyright": "© ୨୦୨୬ ମୋଝିବୁ। ସମସ୍ତ ଅଧିକାର ସଂରକ୍ଷିତ।",
     "instagram": "ଇନଷ୍ଟାଗ୍ରାମ",
     "x": "X",
@@ -114,5 +115,27 @@
   "notifications": {},
   "home": {},
   "storyDetail": {},
-  "profile": {}
+  "profile": {},
+  "reportModal": {
+    "title": "କାହାଣୀ ରିପୋର୍ଟ କରନ୍ତୁ",
+    "subtitle": "ଆପଣ କାହିଁକି ଏହି କାହାଣୀ ରିପୋର୍ଟ କରୁଛନ୍ତି?",
+    "plagiarism": "ଚୋରି",
+    "inappropriate": "ଅନୁପଯୁକ୍ତ ବିଷୟବସ୍ତୁ",
+    "spam": "ସ୍ପାମ୍",
+    "other": "ଅନ୍ୟ",
+    "placeholder": "ଅତିରିକ୍ତ ବିବରଣୀ...",
+    "cancel": "ବାତିଲ୍ କରନ୍ତୁ",
+    "submit": "ରିପୋର୍ଟ ଦାଖଲ କରନ୍ତୁ",
+    "success": "ରିପୋର୍ଟ ସଫଳତାର ସହ ଦାଖଲ ହୋଇଛି।"
+  },
+  "announcements": {
+    "readMore": "ଅଧିକ ପଢ଼ନ୍ତୁ",
+    "type": {
+      "update": "ଅପଡେଟ୍",
+      "event": "ଇଭେଣ୍ଟ",
+      "news": "ଖବର"
+    }
+  },
+  "Competition Winners Announced!": "ପ୍ରତିଯୋଗିତାର ବିଜେତାମାନଙ୍କ ଘୋଷଣା!",
+  "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!": "ପ୍ରତିଯୋଗିତା 'ଦ ଟ୍ୱେଲଭ୍ ଟଙ୍ଗ୍ସ ପ୍ରାଇଜ୍ 882' ଶେଷ ହୋଇଛି। 'winnerwillbeme' ପାଇଁ ଆଧିଙ୍କୁ ଏବଂ 'contest' ପାଇଁ ବରୁଣଙ୍କୁ ଅଭିନନ୍ଦନ!"
 }

@@ -75,7 +75,7 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
       </div>
 
       <!-- Write Review/Comment Input -->
-      @if (!isStoryAuthor) {
+      @if (!isStoryAuthor || !hasUserReviewed) {
         <div class="comment-input-area write-review-box">
           <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
         <div class="input-wrapper">
@@ -1231,6 +1231,12 @@ export class CommentListComponent {
   get isStoryAuthor(): boolean {
     return (
       !!this.storyAuthorName && this.currentUserName === this.storyAuthorName
+    );
+  }
+
+  get hasUserReviewed(): boolean {
+    return this.comments.some(
+      (c) => c.user && c.user.username === this.currentUserName
     );
   }
 

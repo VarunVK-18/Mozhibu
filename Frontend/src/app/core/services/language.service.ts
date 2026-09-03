@@ -79,8 +79,15 @@ export class LanguageService {
   }
 
   translate(key: string): string {
-    const keys = key.split('.');
     let val: any = this._translations.getValue();
+    if (!val) return key;
+
+    // Fast path for exact match (supports sentences with dots)
+    if (val[key] !== undefined) {
+      return typeof val[key] === 'string' ? val[key] : key;
+    }
+
+    const keys = key.split('.');
     for (const k of keys) {
       val = val?.[k];
       if (val === undefined) return key;

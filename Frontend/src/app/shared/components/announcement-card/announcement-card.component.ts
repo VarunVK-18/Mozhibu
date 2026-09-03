@@ -1,5 +1,6 @@
 import { Component, Input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 export interface Announcement {
   id: string;
@@ -12,21 +13,21 @@ export interface Announcement {
 @Component({
   selector: 'app-announcement-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   template: `
     <div class="announcement-card">
       <div class="card-header">
         <span class="type-badge" [ngClass]="announcement.type">{{
-          announcement.type
+          "announcements.type." + announcement.type | translate
         }}</span>
         <span class="date">{{ announcement.date }}</span>
       </div>
-      <h4 class="title">{{ announcement.title }}</h4>
+      <h4 class="title">{{ announcement.title | translate }}</h4>
       <div class="content-wrapper">
-        <div class="content" [innerHTML]="announcement.content"></div>
+        <div class="content" [innerHTML]="announcement.content | translate"></div>
         <div class="fade-out"></div>
       </div>
-      <button class="read-more" (click)="openModal()">Read More →</button>
+      <button class="read-more" (click)="openModal()">{{ "announcements.readMore" | translate }} →</button>
     </div>
 
     <!-- Read More Modal -->
@@ -37,12 +38,12 @@ export interface Announcement {
 
           <div class="modal-header">
             <span class="type-badge" [ngClass]="announcement.type">{{
-              announcement.type
+              "announcements.type." + announcement.type | translate
             }}</span>
             <span class="date">{{ announcement.date }}</span>
           </div>
-          <h2 class="modal-title">{{ announcement.title }}</h2>
-          <div class="modal-body" [innerHTML]="announcement.content"></div>
+          <h2 class="modal-title">{{ announcement.title | translate }}</h2>
+          <div class="modal-body" [innerHTML]="announcement.content | translate"></div>
         </div>
       </div>
     }

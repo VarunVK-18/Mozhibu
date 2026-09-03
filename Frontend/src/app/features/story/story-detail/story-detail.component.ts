@@ -100,6 +100,7 @@ import { OfflineService } from '../../../core/services/offline.service';
             [favorites]="story()!.favorites"
             [accessType]="story()!.accessType"
             [isPremiumSubscriber]="isPremiumSubscriber()"
+            [isAuthor]="currentUser()?.id === story()?.author?.id"
             (readClicked)="onReadClicked()"
             (bookmarkClicked)="onBookmarkClicked()"
             (likeClicked)="onLikeClicked()"

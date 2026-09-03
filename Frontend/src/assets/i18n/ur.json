@@ -94,12 +94,13 @@
       "ایڈیٹر گائیڈ",
       "تجزیات"
     ],
-    "companyLinks": [
-      "موزھیبو کے بارے میں",
-      "کمیونٹی گائیڈ لائنز",
-      "سپورٹ",
-      "کیریئرز"
-    ],
+    "companyLinks": {
+      "about": "ہمارے بارے میں",
+      "careers": "کیریئر",
+      "press": "پریس",
+      "blog": "بلاگ",
+      "contact": "رابطہ کریں"
+    },
     "copyright": "© 2026 Mozhibu. تمام حقوق محفوظ ہیں۔",
     "instagram": "انسٹاگرام",
     "x": "ایکس",
@@ -181,5 +182,27 @@
     "noFollowing": "آپ ابھی تک کسی کی پیروی نہیں کر رہے ہیں۔ اپنے پسندیدہ مصنفین کی پیروی کریں تاکہ ان کی نئی کہانیاں شائع ہونے پر آپ کو اطلاع مل سکے۔",
     "findAuthors": "مصنفین تلاش کریں",
     "noFollowers": "ابھی تک آپ کا کوئی پیروکار نہیں ہے۔ اپنے قارئین کی تعداد بڑھانے کے لیے کہانیاں لکھتے اور شیئر کرتے رہیں!"
-  }
+  },
+  "reportModal": {
+    "title": "کہانی کی رپورٹ کریں",
+    "subtitle": "آپ اس کہانی کی رپورٹ کیوں کر رہے ہیں؟",
+    "plagiarism": "سرقہ",
+    "inappropriate": "نامناسب مواد",
+    "spam": "سپیم",
+    "other": "دیگر",
+    "placeholder": "اضافی تفصیلات...",
+    "cancel": "منسوخ کریں",
+    "submit": "رپورٹ جمع کریں",
+    "success": "رپورٹ کامیابی کے ساتھ جمع کر دی گئی۔"
+  },
+  "announcements": {
+    "readMore": "مزید پڑھیں",
+    "type": {
+      "update": "اپ ڈیٹ",
+      "event": "تقریب",
+      "news": "خبریں"
+    }
+  },
+  "Competition Winners Announced!": "مقابلے کے فاتحین کا اعلان!",
+  "The competition \"The Twelve Tongues Prize 882\" has concluded. Congratulations to Adhi for \"winnerwillbeme\", varun for \"contest\"!": "مقابلہ 'دی ٹویلھ ٹنگز پرائز 882' ختم ہو گیا ہے۔ 'winnerwillbeme' کے لیے آدھی اور 'contest' کے لیے ورون کو مبارکباد!"
 }

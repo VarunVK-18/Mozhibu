@@ -1,4 +1,4 @@
-<header class="site-header" [class.hidden]="isHeaderHidden()">
+<header class="site-header" [class.hidden]="isHeaderHidden()" [class.scrolled]="isScrolled()">
   <div class="header-row">
     <!-- Left side: Logo + Nav -->
     <div class="header-left">
@@ -445,6 +445,13 @@
               class="profile-option"
               style="text-decoration: none; display: block"
               >{{ "header.adminPanel" | translate }}</a
+            >
+            <a
+              routerLink="/profile"
+              class="profile-option"
+              style="text-decoration: none; display: block"
+              (click)="profileMenuOpen.set(false)"
+              >My Profile</a
             >
             <a
               routerLink="/subscription/me"
