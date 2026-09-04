@@ -61,6 +61,7 @@ import { AdminRevenueComponent } from '../revenue/admin-revenue.component';
           
           <div class="form-actions">
             <button type="submit" class="btn btn-primary" [disabled]="couponForm.invalid || isSubmitting">
+              <div *ngIf="isSubmitting" class="btn-loader"></div>
               {{ isSubmitting ? 'Creating...' : 'Create Coupon' }}
             </button>
           </div>

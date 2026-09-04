@@ -160,11 +160,9 @@ import {
           </div>
 
           <div class="form-actions">
-            <button
-              type="submit"
-              class="btn-primary"
-              [disabled]="!broadcastForm.valid || isSubmitting"
-            >
+            <button type="submit" class="btn btn-primary" 
+              [disabled]="!broadcastForm.valid || isSubmitting">
+              <div *ngIf="isSubmitting" class="btn-loader"></div>
               {{ isSubmitting ? 'Sending...' : 'Send Broadcast' }}
             </button>
           </div>

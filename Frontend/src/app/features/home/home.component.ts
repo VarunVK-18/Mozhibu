@@ -83,12 +83,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
           viewAllLink="/categories"
           (loadMore)="loadMoreBooks('latest', 'latest')"
         ></app-story-section>
-        <app-story-section
-          title="Completed Stories"
-          [stories]="completedStories"
-          [isLoading]="isStoriesLoading"
-          viewAllLink="/categories"
-        ></app-story-section>
+
         <app-story-section
           title="Ongoing Stories"
           [stories]="ongoingStories"
@@ -282,7 +277,6 @@ export class HomeComponent implements OnInit {
   mostReadStories: any[] = [];
   editorPicks: any[] = [];
   newlyPublished: any[] = [];
-  completedStories: any[] = [];
   ongoingStories: any[] = [];
   audioStories: any[] = [];
 
@@ -307,7 +301,6 @@ export class HomeComponent implements OnInit {
         // Some fallback slices for completed/ongoing/picks (we can just duplicate for demo)
         this.mostReadStories = [...this.recommendedStories];
         this.editorPicks = [...this.trendingStories];
-        this.completedStories = [...this.newlyPublished];
         this.ongoingStories = [...this.audioStories];
 
         this.isStoriesLoading = false;

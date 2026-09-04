@@ -66,10 +66,12 @@ import { environment } from '../../../environments/environment';
           </button>
           
           <button class="btn-secondary" [disabled]="isSaving" (click)="publishChapter(true)" title="Save Draft">
+            <div *ngIf="isSaving" class="btn-loader dark"></div>
             Save Draft
           </button>
 
           <button class="btn-primary" [disabled]="isSaving" (click)="publishChapter(false)">
+            <div *ngIf="isSaving" class="btn-loader"></div>
             {{ scheduledAt ? 'Schedule' : 'Publish' }}
           </button>
         </div>

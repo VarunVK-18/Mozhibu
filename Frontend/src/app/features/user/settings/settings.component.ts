@@ -48,12 +48,18 @@ import { ThemeService } from '../../../core/services/theme.service';
               <div
                 class="avatar-preview"
                 [style.backgroundImage]="getAvatarStyle()"
-                (click)="fileInput.click()"
+                (click)="!uploading() && fileInput.click()"
+                [class.is-uploading]="uploading()"
               >
-                <span *ngIf="!auth.user()?.avatar">{{
+                <span *ngIf="!auth.user()?.avatar && !uploading()">{{
                   auth.user()?.username?.charAt(0)
                 }}</span>
-                <div class="upload-overlay">
+                
+                <div class="spinner-overlay" *ngIf="uploading()">
+                  <div class="spinner"></div>
+                </div>
+
+                <div class="upload-overlay" *ngIf="!uploading()">
                   <svg
                     width="24"
                     height="24"
@@ -109,19 +115,24 @@ import { ThemeService } from '../../../core/services/theme.service';
                   [aspectRatio]="1 / 1"
                   [roundCropper]="true"
                   format="jpeg"
+                  [canvasRotation]="canvasRotation"
                   (imageCropped)="imageCropped($event)"
                 >
                 </image-cropper>
                 <div class="cropper-actions">
-                  <button class="btn-secondary" (click)="cancelCrop()">
+                  <button class="btn btn-ghost" (click)="cancelCrop()">
                     Cancel
                   </button>
+                  <button class="btn btn-ghost" (click)="rotateImage()">
+                    Rotate 90°
+                  </button>
                   <button
-                    class="btn-primary"
+                    class="btn btn-primary"
                     (click)="saveCroppedAvatar()"
                     [disabled]="!croppedBlob || uploading()"
                   >
-                    Save
+                    <div *ngIf="uploading()" class="btn-loader"></div>
+                    {{ uploading() ? 'Saving...' : 'Save Avatar' }}
                   </button>
                 </div>
               </div>
@@ -165,11 +176,12 @@ import { ThemeService } from '../../../core/services/theme.service';
 
             <div class="settings-actions">
               <button
-                class="btn btn-primary"
+                class="btn btn-primary btn-save-profile"
                 (click)="saveProfile()"
                 [disabled]="savingProfile()"
               >
-                {{ savingProfile() ? 'Saving...' : 'Save Profile' }}
+                <div *ngIf="savingProfile()" class="btn-loader"></div>
+                {{ savingProfile() ? 'Saving Profile...' : 'Save Profile Changes' }}
               </button>
             </div>
           </div>
@@ -480,6 +492,30 @@ import { ThemeService } from '../../../core/services/theme.service';
       .avatar-preview:hover .upload-overlay {
         opacity: 1;
       }
+      .avatar-preview.is-uploading {
+        cursor: not-allowed;
+      }
+      .spinner-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: 50%;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
       .avatar-actions {
         margin-top: 8px;
       }
@@ -694,6 +730,20 @@ import { ThemeService } from '../../../core/services/theme.service';
         margin-bottom: 16px;
         font-size: 13px;
       }
+      
+      .btn-save-profile {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
+        border-radius: 12px;
+        margin-top: 24px;
+        justify-content: center;
+        background: var(--forest-deep);
+      }
+      .btn-save-profile:hover {
+        background: var(--forest);
+      }
+
 
       .danger-zone {
         border: 1px solid #fca5a5 !important;
@@ -970,6 +1020,11 @@ export class SettingsComponent implements OnInit {
 
   imageChangedEvent: any = '';
   croppedBlob: Blob | null = null;
+  canvasRotation: number = 0;
+
+  rotateImage() {
+    this.canvasRotation++;
+  }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -989,6 +1044,7 @@ export class SettingsComponent implements OnInit {
   cancelCrop() {
     this.imageChangedEvent = '';
     this.croppedBlob = null;
+    this.canvasRotation = 0;
   }
 
   saveCroppedAvatar() {

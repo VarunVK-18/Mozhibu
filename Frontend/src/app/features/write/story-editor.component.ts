@@ -247,6 +247,7 @@ import { environment } from '../../../environments/environment';
               [disabled]="isSaving"
               (click)="publishChapter(true)"
             >
+              <div *ngIf="isSaving" class="btn-loader dark"></div>
               Save Draft
             </button>
             <button
@@ -254,6 +255,7 @@ import { environment } from '../../../environments/environment';
               [disabled]="isSaving"
               (click)="publishChapter(false)"
             >
+              <div *ngIf="isSaving" class="btn-loader"></div>
               Publish Chapter
             </button>
           </div>
