@@ -373,7 +373,50 @@ export const routes: Routes = [
       import('./features/info/info-page.component').then(
         (m) => m.InfoPageComponent,
       ),
-    data: { title: 'Privacy Policy' },
+    data: { 
+      title: 'Privacy Policy',
+      content: `
+        <p><strong>What information does Company collect?</strong></p>
+        <p>For Company to offer its Services to Users and to continuously improve the Users’ experience, Company collects certain information which constitute personally identifiable information (information which can be used to identify an individual) and non-personally identifiable information (information which cannot directly identify an individual) (together ‘User Information’) as mentioned below:</p>
+        <table>
+          <tr>
+            <th>Type of Information</th>
+            <th>Includes</th>
+          </tr>
+          <tr><td>Registration/Log in Data</td><td></td></tr>
+          <tr><td>Usage Data</td><td></td></tr>
+          <tr><td>Device Data</td><td></td></tr>
+          <tr><td>Contact List/ Friends List</td><td></td></tr>
+          <tr><td>Payment Data</td><td></td></tr>
+          <tr><td>Customer support</td><td></td></tr>
+        </table>
+
+        <p><strong>What does Company use the collected User Information for?</strong></p>
+        <p>Company uses the User Information to:</p>
+        <ol>
+          <li></li>
+          <li></li>
+          <li></li>
+        </ol>
+
+        <p><strong>Can any third party access the User Information?</strong></p>
+        <p>Business Partners:</p>
+        <ol>
+          <li>Analytics Services</li>
+          <li>Notifications Services</li>
+          <li>To process payment</li>
+        </ol>
+
+        <p><strong>Where is the User Information stored and how is it secured?</strong></p>
+
+        <p><strong>How is the User Information collected and what are the opt-out options?</strong></p>
+        <ol>
+          <li>User provided information</li>
+          <li>Collected through Cookies</li>
+          <li>API Calls</li>
+        </ol>
+      `
+    },
   },
   {
     path: 'cookies',
