@@ -37,6 +37,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'account-suspended',
+    loadComponent: () =>
+      import(
+        './features/auth/account-suspended/account-suspended.component'
+      ).then((m) => m.AccountSuspendedComponent),
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/user/settings/settings.component').then(

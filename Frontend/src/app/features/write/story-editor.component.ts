@@ -349,6 +349,11 @@ import { environment } from '../../../environments/environment';
             (keydown)="onTextareaKeydown($event, contentInput)"
           ></textarea>
         </div>
+
+        <div class="editor-footer-stats">
+          <span>{{ wordCount }} words</span>
+          <span>{{ charCount }} characters</span>
+        </div>
       </main>
     </div>
   `,
@@ -602,6 +607,22 @@ import { environment } from '../../../environments/environment';
         justify-content: flex-end;
         gap: 12px;
       }
+      .editor-footer-stats {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        display: flex;
+        gap: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        pointer-events: none;
+        z-index: 100;
+      }
       @media (max-width: 900px) {
         .editor-layout {
           flex-direction: column;
@@ -659,6 +680,15 @@ export class StoryEditorComponent implements OnInit {
     title: '',
     content: '',
   };
+
+  get wordCount() {
+    const text = (this.chapter.content || '').trim();
+    return text ? text.split(/\s+/).length : 0;
+  }
+
+  get charCount() {
+    return (this.chapter.content || '').trim().length;
+  }
 
   ngOnInit() {
     const savedLang = localStorage.getItem('typingLanguage');

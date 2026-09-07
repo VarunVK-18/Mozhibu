@@ -413,7 +413,10 @@
         <div class="user-profile-wrapper">
           <div class="user-profile" (click)="onProfileClick()">
             <div class="user-info">
-              <span class="user-name">{{ camelCaseName }}</span>
+              <span class="user-name" style="display: flex; align-items: center; gap: 4px;">
+                {{ camelCaseName }}
+                <span *ngIf="isPremium()" class="pro-badge" style="font-size: 10px; padding: 2px 6px; border-radius: 12px; background: linear-gradient(135deg, #fbbc04, #ea4335); color: white; font-weight: bold; line-height: 1;">PRO</span>
+              </span>
             </div>
             <div class="avatar-ring" [class.premium-ring]="isPremium()">
               <img

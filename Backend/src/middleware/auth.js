@@ -26,6 +26,28 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ msg: "Not authorized, user not found" });
       }
 
+      if (req.user.status === "suspended") {
+        if (req.user.suspendedUntil && new Date() >= req.user.suspendedUntil) {
+          req.user.status = "active";
+          req.user.suspendedUntil = null;
+          await req.user.save();
+        } else {
+          const isMeRoute =
+            (req.originalUrl === "/api/users/me" ||
+              req.baseUrl + req.path === "/api/users/me" ||
+              req.path === "/me") &&
+            req.method === "GET";
+          if (!isMeRoute) {
+            return res.status(403).json({
+              code: "ACCOUNT_SUSPENDED",
+              status: "suspended",
+              suspendedUntil: req.user.suspendedUntil,
+              msg: "Your account has been suspended. Please contact support.",
+            });
+          }
+        }
+      }
+
       next();
     } catch (error) {
       console.error(error);

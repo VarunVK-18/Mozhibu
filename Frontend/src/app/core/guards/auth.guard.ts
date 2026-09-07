@@ -6,7 +6,12 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.user()) {
+  const user = authService.user();
+  if (user) {
+    if (user.status === 'suspended') {
+      router.navigate(['/account-suspended']);
+      return false;
+    }
     return true;
   }
 

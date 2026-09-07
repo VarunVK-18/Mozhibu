@@ -1,5 +1,7 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, computed } from '@angular/core';
+import { Router } from '@angular/router';
 import { ApiService } from './api.service';
+import { NotificationService } from './notification.service';
 import { tap, catchError } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 
@@ -9,6 +11,8 @@ export interface User {
   email: string;
   mobile: string;
   role?: string;
+  status?: string;
+  suspendedUntil?: string | Date;
   authorStatus?: string;
   avatar?: string;
   followersCount?: number;
@@ -16,6 +20,7 @@ export interface User {
   savedBooks?: string[];
   favoriteBooks?: string[];
   dob?: string;
+  isPremium?: boolean;
 }
 
 @Injectable({
@@ -23,29 +28,71 @@ export interface User {
 })
 export class AuthService {
   private api = inject(ApiService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
   user = signal<User | null>(null);
+  isSuspended = computed(() => this.user()?.status === 'suspended');
 
   constructor() {
     // Check if user exists in local storage on startup
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      this.user.set(JSON.parse(storedUser));
-      // Fetch latest user data from backend to prevent stale local storage (e.g. missing avatar)
+      try {
+        const parsed: User = JSON.parse(storedUser);
+        this.user.set(parsed);
+        if (parsed.status === 'suspended') {
+          this.router.navigate(['/account-suspended']);
+        }
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
+
+      // Fetch latest user data from backend to prevent stale local storage (e.g. missing avatar or suspension)
       this.api.get<User>('/users/me').subscribe({
         next: (latestUser: User) => {
-          this.user.set({
+          const updated: User = {
             ...this.user()!,
             ...latestUser,
             id: latestUser.id || (latestUser as any)._id,
-          });
-          localStorage.setItem('user', JSON.stringify(this.user()));
+          };
+          this.user.set(updated);
+          localStorage.setItem('user', JSON.stringify(updated));
+          if (updated.status === 'suspended') {
+            this.router.navigate(['/account-suspended']);
+          }
         },
-        error: () => {
-          // If cookie is invalid or expired
-          this.logout().subscribe();
+        error: (err) => {
+          if (
+            err?.status === 403 &&
+            (err?.error?.code === 'ACCOUNT_SUSPENDED' ||
+              err?.error?.status === 'suspended')
+          ) {
+            this.markSuspended(err?.error?.suspendedUntil);
+            return;
+          }
+          // Only log out if it is explicitly a 401 unauthorized (token invalid or expired)
+          if (err?.status === 401) {
+            this.logout().subscribe();
+          } else {
+            console.warn('[AuthService] Background user profile sync failed, retaining cached session:', err?.message || err);
+          }
         },
       });
     }
+  }
+
+  markSuspended(suspendedUntil?: string | Date) {
+    const current = this.user();
+    if (current) {
+      const updated: User = {
+        ...current,
+        status: 'suspended',
+        suspendedUntil: suspendedUntil || current.suspendedUntil,
+      };
+      this.user.set(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
+    }
+    this.router.navigate(['/account-suspended']);
   }
 
   register(userData: any): Observable<any> {
@@ -92,6 +139,8 @@ export class AuthService {
       tap(() => {
         this.user.set(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        this.notificationService.clearCache();
       })
     );
   }
@@ -232,10 +281,34 @@ export class AuthService {
     return this.api.delete('/users/me');
   }
 
+  getToken(): string | null {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  }
+
+  updateUser(partial: Partial<User>) {
+    const current = this.user();
+    if (current) {
+      const updated = { ...current, ...partial };
+      this.user.set(updated);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(updated));
+      }
+    }
+  }
+
   private handleAuthResponse(res: any) {
-    if (res && res.user) {
-      this.user.set(res.user);
-      localStorage.setItem('user', JSON.stringify(res.user));
+    if (res) {
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+      }
+      if (res.user) {
+        this.user.set(res.user);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        this.notificationService.loadNotifications();
+        if (res.user.status === 'suspended') {
+          this.router.navigate(['/account-suspended']);
+        }
+      }
     }
   }
 }

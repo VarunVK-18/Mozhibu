@@ -19,11 +19,12 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StoryService } from '../../core/services/story.service';
+import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
 
 @Component({
   selector: 'app-reader',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NoCopyDirective],
   template: `
     <div class="reader-container" [class.dark-mode]="isDarkMode()">
       
@@ -49,7 +50,7 @@ import { StoryService } from '../../core/services/story.service';
       </header>
 
       <!-- Reading Area -->
-      <main class="reading-area" (click)="toggleControls()" [style.fontSize.px]="fontSize()">
+      <main class="reading-area" appNoCopy (click)="toggleControls()" [style.fontSize.px]="fontSize()">
         @if (requiresSubscription()) {
           <div class="paywall-overlay">
             <div class="paywall-content">
@@ -97,6 +98,39 @@ import { StoryService } from '../../core/services/story.service';
             <button class="icon-btn" (click)="increaseFont()" [disabled]="fontSize() >= 28">
               <span class="text-icon large">A</span>
             </button>
+            
+            <div class="divider"></div>
+
+            <!-- Auto-Scroll Controls -->
+            @if (isAutoScrolling()) {
+              <button class="icon-btn speed-btn" (click)="decreaseScrollSpeed()" [disabled]="scrollSpeed() <= 0.1" title="Slower">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+              </button>
+            }
+            <button
+              class="icon-btn autoscroll-btn"
+              [class.active]="isAutoScrolling()"
+              (click)="toggleAutoScroll()"
+              [title]="isAutoScrolling() ? 'Stop auto-scroll' : 'Auto-scroll'"
+            >
+              @if (isAutoScrolling()) {
+                <!-- Pause icon -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+                </svg>
+              } @else {
+                <!-- Play icon -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <path d="M5 3l14 9-14 9V3z"/>
+                </svg>
+              }
+            </button>
+            @if (isAutoScrolling()) {
+              <button class="icon-btn speed-btn" (click)="increaseScrollSpeed()" [disabled]="scrollSpeed() >= 3" title="Faster">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+              <span class="scroll-speed-display">{{ scrollSpeed().toFixed(1) }}×</span>
+            }
             
             <div class="divider"></div>
             
@@ -367,6 +401,33 @@ import { StoryService } from '../../core/services/story.service';
       opacity: 0.3;
       cursor: not-allowed;
     }
+
+    .autoscroll-btn {
+      transition: background-color 0.2s, color 0.2s, transform 0.2s;
+    }
+
+    .autoscroll-btn.active {
+      background-color: var(--reader-accent);
+      color: #fff;
+    }
+
+    .autoscroll-btn.active:hover {
+      background-color: var(--reader-accent);
+      opacity: 0.85;
+    }
+
+    .speed-btn {
+      width: 28px;
+      height: 28px;
+    }
+
+    .scroll-speed-display {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      width: 32px;
+      text-align: center;
+      opacity: 0.7;
+    }
     
     .text-icon {
       font-family: serif;
@@ -411,6 +472,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
   isAutoScrolling = signal(false);
   scrollSpeed = signal(1.0);
   private scrollAnimationId: number | null = null;
+  private accumulatedScroll: number = 0;
 
   storyId: string = '';
   chapterContent = signal<SafeHtml>('');
@@ -543,6 +605,12 @@ export class ReaderComponent implements OnInit, OnDestroy {
     this.stopAutoScroll();
   }
 
+  /** Block right-click context menu across the entire reader page */
+  @HostListener('window:contextmenu', ['$event'])
+  onWindowContextMenu(event: MouseEvent): void {
+    event.preventDefault();
+  }
+
   @HostListener('window:scroll', [])
   onWindowScroll() {
     const scrollOffset =
@@ -594,14 +662,14 @@ export class ReaderComponent implements OnInit, OnDestroy {
   increaseScrollSpeed(): void {
     const current = this.scrollSpeed();
     if (current < 3.0) {
-      this.scrollSpeed.set(Math.round((current + 0.5) * 10) / 10);
+      this.scrollSpeed.set(Math.round((current + 0.1) * 10) / 10);
     }
   }
 
   decreaseScrollSpeed(): void {
     const current = this.scrollSpeed();
-    if (current > 0.5) {
-      this.scrollSpeed.set(Math.round((current - 0.5) * 10) / 10);
+    if (current > 0.1) {
+      this.scrollSpeed.set(Math.round((current - 0.1) * 10) / 10);
     }
   }
 
@@ -609,6 +677,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
     if (this.scrollAnimationId) {
       cancelAnimationFrame(this.scrollAnimationId);
     }
+    this.accumulatedScroll = 0;
     let lastTime = performance.now();
     const loop = (time: number) => {
       if (!this.isAutoScrolling()) return;
@@ -618,9 +687,14 @@ export class ReaderComponent implements OnInit, OnDestroy {
       // Speed of 1.0 = ~1px per 16ms (roughly 60px per sec)
       const pixelsToScroll = (this.scrollSpeed() * 60 * deltaTime) / 1000;
       
-      // We temporarily disconnect the scroll listener so it doesn't pause itself
-      if (pixelsToScroll > 0.1) {
-        window.scrollBy(0, pixelsToScroll);
+      this.accumulatedScroll += pixelsToScroll;
+      
+      // Some browsers (like Chrome on Windows) ignore window.scrollBy for amounts < 1px.
+      // So we accumulate the fractional pixels until we have at least 1 full pixel to scroll.
+      if (this.accumulatedScroll >= 1) {
+        const scrollAmount = Math.floor(this.accumulatedScroll);
+        window.scrollBy(0, scrollAmount);
+        this.accumulatedScroll -= scrollAmount;
       }
       
       // Check if we reached the bottom of the page

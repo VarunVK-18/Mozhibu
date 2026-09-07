@@ -8,7 +8,8 @@ const ChapterSchema = new mongoose.Schema(
     content: { type: String, required: true },
     cover: { type: String },
     order: { type: Number, required: true },
-    status: { type: String, enum: ["draft", "published"], default: "draft" },
+    status: { type: String, enum: ["draft", "published", "scheduled"], default: "draft" },
+    scheduledAt: { type: Date },
     translations: { type: Map, of: String, default: {} },
     titleTranslations: { type: Map, of: String, default: {} },
     accessType: {

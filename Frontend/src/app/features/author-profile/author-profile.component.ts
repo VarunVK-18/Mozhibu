@@ -24,17 +24,24 @@ import { ConfirmService } from '../../core/services/confirm.service';
       } @else if (profile) {
         <!-- Profile Banner -->
         <div class="profile-banner">
-          <div class="profile-header">
-            <img
-              [src]="
-                getAvatarUrl(profile.author.avatar, profile.author.username)
-              "
-              alt="Author avatar"
-              class="author-avatar"
-              (error)="onAvatarError($event, profile.author.username)"
-            />
-            <div class="author-info">
-              <h1 class="author-name">{{ profile.author.username }}</h1>
+            <div class="profile-header">
+              <div class="avatar-ring premium-container" [class.premium-ring]="profile.author.isPremium">
+                <img
+                  [src]="
+                    getAvatarUrl(profile.author.avatar, profile.author.username)
+                  "
+                  alt="Author avatar"
+                  class="author-avatar"
+                  (error)="onAvatarError($event, profile.author.username)"
+                  (click)="toggleBigAvatar()"
+                  style="cursor: pointer;"
+                />
+              </div>
+              <div class="author-info">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h1 class="author-name">{{ profile.author.username }}</h1>
+                  <span *ngIf="profile.author.isPremium" class="pro-badge" style="font-size: 12px; padding: 3px 8px;">PRO</span>
+                </div>
               <div class="author-meta">
                 <span class="meta-item">
                   <strong>{{ profile.author.followersCount }}</strong> Followers
@@ -156,6 +163,21 @@ import { ConfirmService } from '../../core/services/confirm.service';
           <button class="btn-primary" routerLink="/">Return Home</button>
         </div>
       }
+
+      <!-- Enlarged Avatar Modal -->
+      @if (showBigAvatar && profile) {
+        <div class="avatar-modal-overlay" (click)="toggleBigAvatar()">
+          <div class="avatar-modal-content" (click)="$event.stopPropagation()">
+            <button class="close-btn" (click)="toggleBigAvatar()">×</button>
+            <img
+              [src]="getAvatarUrl(profile.author.avatar, profile.author.username)"
+              alt="Author avatar enlarged"
+              class="avatar-large"
+              (error)="onAvatarError($event, profile.author.username)"
+            />
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -187,6 +209,64 @@ import { ConfirmService } from '../../core/services/confirm.service';
         border: 4px solid var(--surface);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         flex-shrink: 0;
+        transition: transform 0.2s;
+      }
+      .author-avatar:hover {
+        transform: scale(1.05);
+      }
+
+      .avatar-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        cursor: pointer;
+        animation: fadeIn 0.2s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .avatar-modal-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+      }
+      .avatar-large {
+        width: 400px;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid var(--surface);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      }
+      .close-btn {
+        position: absolute;
+        top: -20px;
+        right: -40px;
+        background: transparent;
+        color: white;
+        border: none;
+        font-size: 36px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        .avatar-large {
+          width: 300px;
+          height: 300px;
+        }
+        .close-btn {
+          right: 0;
+          top: -40px;
+        }
       }
 
       .author-info {
@@ -414,6 +494,11 @@ export class AuthorProfileComponent implements OnInit {
   profile: AuthorProfile | null = null;
   isLoading = true;
   isFollowing = false;
+  showBigAvatar = false;
+
+  toggleBigAvatar() {
+    this.showBigAvatar = !this.showBigAvatar;
+  }
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {

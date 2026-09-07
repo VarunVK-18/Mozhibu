@@ -16,11 +16,20 @@
 
     <div class="authors-row" *ngIf="!isLoading()">
       @for (author of authors(); track author.name; let i = $index) {
-        <div class="author-card">
-          <div class="author-avatar" [style.background]="author.color">
-            {{ author.initials }}
-          </div>
-          <h4>{{ author.name }}</h4>
+        <div class="author-card" style="position: relative;">
+          <a [routerLink]="['/author', author.id]" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; color: inherit;">
+            <div class="avatar-ring premium-container" [class.premium-ring]="author.isPremium">
+              <div class="author-avatar" *ngIf="!author.avatar" [style.background]="author.color">
+                {{ author.initials }}
+              </div>
+              <img *ngIf="author.avatar" [src]="author.avatar" [alt]="author.name" class="author-avatar" style="object-fit: cover;" />
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 4px; margin-top: 12px; margin-bottom: 4px;">
+              <h4 style="margin: 0;">{{ author.name }}</h4>
+              <span *ngIf="author.isPremium" class="pro-badge">PRO</span>
+            </div>
+          </a>
           <div class="followers">
             {{ author.followers }} {{ "authors.followers" | translate }}
           </div>

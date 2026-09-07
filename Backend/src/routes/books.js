@@ -174,7 +174,7 @@ router.get("/", async (req, res) => {
     const totalBooks = await Book.countDocuments(query);
 
     const books = await Book.find(query)
-      .populate("author", "username avatar")
+      .populate("author", "username avatar isPremium")
       .sort(sortObj)
       .skip(skip)
       .limit(limit);
@@ -200,7 +200,7 @@ router.get("/:id", protectOptional, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id).populate(
       "author",
-      "username avatar status",
+      "username avatar status isPremium",
     );
 
     if (!book) return res.status(404).json({ msg: "Book not found" });
@@ -385,12 +385,12 @@ router.get("/:id/reviews", async (req, res) => {
     };
 
     const reviews = await Review.find(query)
-      .populate("user", "username avatar")
+      .populate("user", "username avatar isPremium")
       .populate({
         path: "replies",
-        populate: { path: "user", select: "username avatar" },
+        populate: { path: "user", select: "username avatar isPremium" },
       })
-      .sort({ createdAt: -1 })
+      .sort({ isPinned: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -506,6 +506,84 @@ router.post("/:id/reviews/:reviewId/like", protect, async (req, res) => {
   }
 });
 
+// @route POST /api/books/:id/reviews/:reviewId/pin
+// @desc Pin or unpin a comment (only author can do this)
+router.post("/:id/reviews/:reviewId/pin", protect, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+    if (book.author.toString() !== req.user.id) {
+      return res.status(403).json({ msg: "Only the author can pin comments" });
+    }
+
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) return res.status(404).json({ msg: "Review not found" });
+
+    review.isPinned = !review.isPinned;
+    await review.save();
+
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route PUT /api/books/:id/reviews/:reviewId
+// @desc Edit a comment (one-time only)
+router.put("/:id/reviews/:reviewId", protect, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.reviewId);
+    if (!review) return res.status(404).json({ msg: "Review not found" });
+
+    // Verify ownership
+    if (review.user.toString() !== req.user.id) {
+      return res.status(403).json({ msg: "Not authorized to edit this comment" });
+    }
+
+    // Verify 1-time edit limit
+    if (review.isEdited) {
+      return res.status(403).json({ msg: "You can only edit your comment once" });
+    }
+
+    const { content, rating } = req.body;
+    if (content) review.comment = content;
+    
+    // Only update rating if it's a top-level review (not a reply) and rating is provided
+    if (rating !== undefined && !review.parentReview) {
+      review.rating = rating;
+    }
+
+    review.isEdited = true;
+    await review.save();
+
+    // If it's a top level review, we need to recalculate the book's average rating
+    if (!review.parentReview) {
+      const book = await Book.findById(req.params.id);
+      if (book) {
+        const allReviews = await Review.find({
+          book: req.params.id,
+          status: "approved",
+          parentReview: { $exists: false },
+        });
+        
+        let avgRating = 0;
+        if (allReviews.length > 0) {
+          avgRating = allReviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / allReviews.length;
+        }
+        book.rating = avgRating;
+        await book.save();
+      }
+    }
+
+    // Populate user to return exactly what frontend expects
+    await review.populate("user", "username avatar isPremium");
+
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 // @route POST /api/books/:id/reviews/:reviewId/dislike
 // @desc Dislike a comment
 router.post("/:id/reviews/:reviewId/dislike", protect, async (req, res) => {
@@ -565,7 +643,7 @@ router.post("/:id/reviews/:reviewId/reply", protect, async (req, res) => {
     }
 
     // Populate user before sending back
-    await reply.populate("user", "username avatar");
+    await reply.populate("user", "username avatar isPremium");
     res.json(reply);
   } catch (err) {
     res.status(500).json({ msg: "Server Error" });

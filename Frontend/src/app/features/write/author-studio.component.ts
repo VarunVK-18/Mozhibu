@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
@@ -217,7 +217,10 @@ interface AuthorStory {
                   <div class="story-actions">
                     <button
                       class="btn-action edit"
-                      [routerLink]="['/write/book', story._id]"
+                      [class.disabled]="story.status === 'suspended'"
+                      [style.opacity]="story.status === 'suspended' ? '0.5' : '1'"
+                      [style.cursor]="story.status === 'suspended' ? 'not-allowed' : 'pointer'"
+                      (click)="onManageStory(story)"
                     >
                       <svg
                         width="18"
@@ -256,6 +259,26 @@ interface AuthorStory {
           }
         </div>
       </div>
+
+      <!-- Suspended Modal -->
+      @if (showSuspendedModal) {
+        <div class="modal-overlay" (click)="showSuspendedModal = false" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; animation: fadeIn 0.2s ease-out;">
+          <div class="modal-container" (click)="$event.stopPropagation()" style="background: var(--card, #fff); width: 90%; max-width: 400px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); animation: slideUp 0.2s ease-out; overflow: hidden;">
+            <div class="modal-header" style="padding: 24px 24px 16px; display: flex; align-items: center; justify-content: center; gap: 12px; color: #dc2626;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <h3 style="margin: 0; font-size: 20px; font-family: var(--display, 'Inter', sans-serif);">Content Suspended</h3>
+            </div>
+            <div class="modal-body" style="padding: 0 24px 24px; text-align: center;">
+              <p style="margin: 0; font-size: 15px; color: var(--ink-soft, #5a554c); line-height: 1.5;">This content has been suspended by an administrator due to a violation of our guidelines. While suspended, you cannot edit, manage, or update this story.</p>
+            </div>
+            <div class="modal-actions" style="padding: 16px 24px; background: var(--surface-soft, #f7f6f4); display: flex; justify-content: center;">
+              <button class="btn-primary" style="background: #dc2626; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-weight: 600; cursor: pointer;" (click)="showSuspendedModal = false">I Understand</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -596,10 +619,20 @@ export class AuthorStudioComponent implements OnInit {
   private bookService = inject(BookService);
   private authService = inject(AuthService);
   api = inject(ApiService);
+  router = inject(Router);
 
   myStories: any[] = [];
-  isLoading = true;
   currentFilter: 'All' | 'Published' | 'Ongoing' | 'Drafts' = 'All';
+  isLoading = true;
+  showSuspendedModal = false;
+
+  onManageStory(story: any) {
+    if (story.status === 'suspended') {
+      this.showSuspendedModal = true;
+    } else {
+      this.router.navigate(['/write/book', story._id]);
+    }
+  }
 
   totalReads = 0;
   totalLikes = 0;

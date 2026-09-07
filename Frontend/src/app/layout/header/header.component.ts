@@ -47,8 +47,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isScrolled = signal(false);
   private lastScrollY = 0;
 
-  notifications = signal<NotificationItem[]>([]);
+  public langService = inject(LanguageService);
+  public authService = inject(AuthService);
+  public router = inject(Router);
+  private bookService = inject(BookService);
+  private notificationService = inject(NotificationService);
+  private socketService = inject(SocketService);
+  private subService = inject(SubscriptionService);
+  private api = inject(ApiService);
+  private confirmService = inject(ConfirmService);
+  private destroy$ = new Subject<void>();
 
+  notifications = this.notificationService.notifications;
   notificationFilter = signal<string>('all');
 
   generalNotifications = computed(() => {
@@ -65,18 +75,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   unreadGeneralCount = computed(
     () => this.generalNotifications().filter((n) => !n.isRead).length,
   );
-  isPremium = signal(false);
 
-  private destroy$ = new Subject<void>();
-  public langService = inject(LanguageService);
-  public authService = inject(AuthService);
-  public router = inject(Router);
-  private bookService = inject(BookService);
-  private notificationService = inject(NotificationService);
-  private socketService = inject(SocketService);
-  private subService = inject(SubscriptionService);
-  private api = inject(ApiService);
-  private confirmService = inject(ConfirmService);
+  private _subActive = signal<boolean>(false);
+  isPremium = computed(() => !!this.authService.user()?.isPremium || this._subActive());
 
   getAvatarUrl(path: string | undefined): string {
     if (!path) return '';
@@ -220,10 +221,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
         
         this.subService.getMySubscription().subscribe({
           next: (sub) => {
-            this.isPremium.set(sub?.active || false);
+            const isActive = sub?.active || false;
+            this._subActive.set(isActive);
+            if (user.isPremium !== isActive) {
+              this.authService.updateUser({ isPremium: isActive });
+            }
           },
           error: () => {},
         });
+      } else {
+        this._subActive.set(false);
       }
     });
   }
@@ -244,12 +251,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   fetchNotifications() {
-    this.notificationService.getNotifications().subscribe({
-      next: (notifs) => {
-        this.notifications.set(notifs);
-      },
-      error: (err) => console.error('Failed to fetch notifications', err),
-    });
+    this.notificationService.loadNotifications();
   }
 
   goToProfile(event: Event, userId: string) {
@@ -260,13 +262,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   handleNotificationClick(notification: NotificationItem) {
     if (!notification.isRead) {
-      this.notificationService.markAsRead(notification._id).subscribe(() => {
-        this.notifications.update((notifs) =>
-          notifs.map((n) =>
-            n._id === notification._id ? { ...n, isRead: true } : n,
-          ),
-        );
-      });
+      this.notificationService.markAsRead(notification._id).subscribe();
     }
 
     if (notification.link) {
@@ -279,11 +275,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (event) {
       event.stopPropagation();
     }
-    this.notificationService.markAllAsRead().subscribe(() => {
-      this.notifications.update((notifs) =>
-        notifs.map((n) => ({ ...n, isRead: true })),
-      );
-    });
+    this.notificationService.markAllAsRead().subscribe();
   }
 
   clearAllNotifications(event?: Event) {
@@ -298,9 +290,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       )
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.notificationService.clearAll().subscribe(() => {
-            this.notifications.set([]);
-          });
+          this.notificationService.clearAll().subscribe();
         }
       });
   }
@@ -339,7 +329,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .subscribe((confirmed) => {
         if (confirmed) {
           this.authService.logout().subscribe(() => {
-            this.isPremium.set(false);
+            this._subActive.set(false);
             this.socketService.disconnect();
             this.profileMenuOpen.set(false);
             window.location.href = '/';

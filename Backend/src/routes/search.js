@@ -65,7 +65,7 @@ router.get("/", async (req, res) => {
         sort === "popularity" ? { followersCount: -1 } : { createdAt: -1 };
 
       const authors = await User.find(authorQuery)
-        .select("username avatar followersCount bio role")
+        .select("username avatar followersCount bio role isPremium")
         .sort(authorSort)
         .limit(Number(limit));
 

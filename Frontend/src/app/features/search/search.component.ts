@@ -196,13 +196,18 @@ import { environment } from '../../../environments/environment';
               @for (item of results; track item._id) {
                 @if (activeTab === 'authors') {
                   <div class="author-card" [routerLink]="['/author', item._id]">
-                    <img
-                      [src]="getAvatarUrl(item.avatar, item.username)"
-                      alt="Author avatar"
-                      class="author-avatar"
-                      (error)="onAvatarError($event, item.username)"
-                    />
-                    <h4 class="author-name">{{ item.username }}</h4>
+                    <div class="avatar-ring premium-container" [class.premium-ring]="item.isPremium">
+                      <img
+                        [src]="getAvatarUrl(item.avatar, item.username)"
+                        alt="Author avatar"
+                        class="author-avatar"
+                        (error)="onAvatarError($event, item.username)"
+                      />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px; margin-top: 16px; margin-bottom: 4px;">
+                      <h4 class="author-name" style="margin: 0;">{{ item.username }}</h4>
+                      <span *ngIf="item.isPremium" class="pro-badge">PRO</span>
+                    </div>
                     <p class="author-followers">
                       {{ item.followersCount }} Followers
                     </p>

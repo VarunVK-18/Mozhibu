@@ -450,3 +450,79 @@ body.dark-mode {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Google Gemini Premium Animated Circular Border - GLOBAL */
+.avatar-ring.premium-ring {
+  position: relative;
+  border-radius: 50%;
+  padding: 3px;
+  background: transparent;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-ring.premium-ring::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #1a73e8 0%, #8ab4f8 12%, #9b72cf 28%, #e91e63 46%, #ea4335 64%, #fbbc04 80%, #34a853 92%, #1a73e8 100%);
+  animation: geminiBorderSpin 4s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.avatar-ring.premium-ring::after {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #1a73e8 0%, #8ab4f8 12%, #9b72cf 28%, #e91e63 46%, #ea4335 64%, #fbbc04 80%, #34a853 92%, #1a73e8 100%);
+  filter: blur(6px);
+  opacity: 0.55;
+  animation: geminiBorderSpin 4s linear infinite;
+  z-index: -2;
+  pointer-events: none;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.avatar-ring.premium-ring .avatar, .avatar-ring.premium-ring img {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--paper, #ffffff);
+  transition: transform 0.2s ease;
+  border-radius: 50%;
+}
+
+.premium-container:hover .avatar-ring.premium-ring::after,
+.user-profile:hover .avatar-ring.premium-ring::after {
+  opacity: 0.85;
+  filter: blur(8px);
+}
+
+.premium-container:hover .avatar-ring.premium-ring .avatar,
+.user-profile:hover .avatar-ring.premium-ring .avatar,
+.premium-container:hover .avatar-ring.premium-ring img,
+.user-profile:hover .avatar-ring.premium-ring img {
+  transform: scale(1.02);
+}
+
+.pro-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fbbc04, #ea4335);
+  color: white;
+  font-weight: bold;
+  line-height: 1;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(234, 67, 53, 0.3);
+}
+
+@keyframes geminiBorderSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+

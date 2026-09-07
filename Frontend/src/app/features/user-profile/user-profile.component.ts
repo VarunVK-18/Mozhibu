@@ -29,6 +29,8 @@ import { environment } from '../../../environments/environment';
             alt="User avatar"
             class="author-avatar"
             (error)="onAvatarError($event, user()?.username)"
+            (click)="toggleBigAvatar()"
+            style="cursor: pointer;"
           />
           <div class="author-info">
             <h1 class="author-name">{{ user()?.username }}</h1>
@@ -190,6 +192,21 @@ import { environment } from '../../../environments/environment';
           </div>
         }
       </div>
+
+      <!-- Enlarged Avatar Modal -->
+      @if (showBigAvatar() && user()) {
+        <div class="avatar-modal-overlay" (click)="toggleBigAvatar()">
+          <div class="avatar-modal-content" (click)="$event.stopPropagation()">
+            <button class="close-btn" (click)="toggleBigAvatar()">×</button>
+            <img
+              [src]="getAvatarUrl(user()?.avatar, user()?.username)"
+              alt="User avatar enlarged"
+              class="avatar-large"
+              (error)="onAvatarError($event, user()?.username)"
+            />
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -219,6 +236,64 @@ import { environment } from '../../../environments/environment';
         border: 4px solid var(--surface);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         flex-shrink: 0;
+        transition: transform 0.2s;
+      }
+      .author-avatar:hover {
+        transform: scale(1.05);
+      }
+
+      .avatar-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        cursor: pointer;
+        animation: fadeIn 0.2s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .avatar-modal-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+      }
+      .avatar-large {
+        width: 400px;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid var(--surface);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      }
+      .close-btn {
+        position: absolute;
+        top: -20px;
+        right: -40px;
+        background: transparent;
+        color: white;
+        border: none;
+        font-size: 36px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 768px) {
+        .avatar-large {
+          width: 300px;
+          height: 300px;
+        }
+        .close-btn {
+          right: 0;
+          top: -40px;
+        }
       }
       .author-info {
         flex: 1;
@@ -628,6 +703,11 @@ export class UserProfileComponent implements OnInit {
   followersCount = signal<number>(0);
   following = signal<any[]>([]);
   followers = signal<any[]>([]);
+  showBigAvatar = signal<boolean>(false);
+
+  toggleBigAvatar() {
+    this.showBigAvatar.set(!this.showBigAvatar());
+  }
 
   ngOnInit() {
     this.authorStatus.set(this.user()?.authorStatus || '');

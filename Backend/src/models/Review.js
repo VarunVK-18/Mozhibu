@@ -15,6 +15,8 @@ const ReviewSchema = new mongoose.Schema(
     dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     parentReview: { type: mongoose.Schema.Types.ObjectId, ref: "Review" },
     replies: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
+    isPinned: { type: Boolean, default: false },
+    isEdited: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

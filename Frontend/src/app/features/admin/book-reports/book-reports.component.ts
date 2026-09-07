@@ -44,7 +44,7 @@ import { AdminService, AdminBook } from '../../../core/services/admin.service';
                         <img [src]="report.user.avatar" alt="avatar" class="avatar-sm" />
                       } @else {
                         <div class="avatar-placeholder">
-                          {{ report.user.username?.charAt(0) || 'U' | uppercase }}
+                          {{ (report.user.username ? report.user.username.charAt(0) : 'U') | uppercase }}
                         </div>
                       }
                       <span class="username">{{ report.user.username || 'Unknown User' }}</span>

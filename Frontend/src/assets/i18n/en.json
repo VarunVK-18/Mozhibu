@@ -24,7 +24,8 @@
     "follows": "Follows",
     "likes": "Likes",
     "comments": "Comments",
-    "announcements": "Announcements"
+    "announcements": "Announcements",
+    "empty": "No notifications yet"
   },
   "home": {
     "recommended": "Recommended",
@@ -89,7 +90,15 @@
   },
   "footer": {
     "tagline": "Stories worth staying up for. Read and publish fiction in 12+ languages with your progress saved across every device.",
+    "emailPlaceholder": "Your email address",
+    "joinBtn": "Join",
+    "explore": "Explore",
+    "write": "Write",
     "company": "Company",
+    "readIn": "Read in",
+    "instagram": "Instagram",
+    "x": "X (Twitter)",
+    "youtube": "YouTube",
     "companyLinks": {
       "about": "About Us",
       "careers": "Careers",

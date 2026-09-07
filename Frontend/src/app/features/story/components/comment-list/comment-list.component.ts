@@ -13,14 +13,18 @@ import { ApiService } from '../../../../core/services/api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmService } from '../../../../core/services/confirm.service';
 
+import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-comment-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="comments-section" id="reviews-section">
-      <!-- Ratings & Reviews Dashboard -->
-      <div class="ratings-dashboard">
+      <div class="comments-section-grid">
+        <div class="ratings-column">
+          <!-- Ratings & Reviews Dashboard -->
+          <div class="ratings-dashboard">
         <div class="dashboard-left">
           <h2>Ratings & Reviews</h2>
           <div class="avg-score">
@@ -72,8 +76,10 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
             }
           </div>
         </div>
+        </div>
       </div>
-
+      
+      <div class="reviews-column">
       <!-- Write Review/Comment Input -->
       @if (!isStoryAuthor || !hasUserReviewed) {
         <div class="comment-input-area write-review-box">
@@ -144,16 +150,37 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
         <div class="comment-thread" [class.pinned]="comment.isPinned">
           <!-- Parent Comment -->
           <div class="comment-card" [class.highlight-pinned]="comment.isPinned">
-            <img
-              [src]="comment.authorAvatar"
-              [alt]="comment.authorName"
-              class="avatar"
-            />
+            <a [routerLink]="['/author', comment.authorId]" *ngIf="comment.authorId; else noLinkAvatar">
+              <div class="avatar-ring premium-container" [class.premium-ring]="comment.isPremium">
+                <img
+                  [src]="comment.authorAvatar"
+                  [alt]="comment.authorName"
+                  class="avatar"
+                  (error)="onAvatarError($event, comment.authorName)"
+                />
+              </div>
+            </a>
+            <ng-template #noLinkAvatar>
+              <div class="avatar-ring premium-container" [class.premium-ring]="comment.isPremium">
+                <img
+                  [src]="comment.authorAvatar"
+                  [alt]="comment.authorName"
+                  class="avatar"
+                  (error)="onAvatarError($event, comment.authorName)"
+                />
+              </div>
+            </ng-template>
             <div class="comment-content">
               <div class="comment-header">
                 <div class="comment-header-left">
-                  <span class="author-name">{{ comment.authorName }}</span>
-                  <span class="timestamp">{{ comment.timestamp }}</span>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <a [routerLink]="['/author', comment.authorId]" *ngIf="comment.authorId; else noLinkName" class="author-name hover-underline" style="color: inherit; text-decoration: none;">{{ comment.authorName }}</a>
+                    <ng-template #noLinkName>
+                      <span class="author-name">{{ comment.authorName }}</span>
+                    </ng-template>
+                    <span *ngIf="comment.isPremium" class="pro-badge">PRO</span>
+                  </div>
+                  <span class="timestamp">{{ comment.timestamp }} <span *ngIf="comment.isEdited" style="font-size: 11px; font-style: italic; opacity: 0.7;">(edited)</span></span>
                   @if (comment.isPinned) {
                     <span class="pinned-badge">📌 Pinned</span>
                   }
@@ -220,6 +247,17 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                       {{ comment.isPinned ? 'Unpin' : 'Pin' }} Comment
                     </button>
                     <button
+                      *ngIf="comment.authorName === currentUserName && !comment.isEdited"
+                      class="dropdown-item"
+                      (click)="enableEditMode(comment)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                      </svg>
+                      Edit
+                    </button>
+                    <button
                       *ngIf="comment.authorName === currentUserName"
                       class="dropdown-item delete"
                       (click)="deleteComment(comment.id)"
@@ -259,70 +297,76 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                 </div>
               </div>
 
-              <p class="comment-text">{{ comment.text }}</p>
+              <ng-container *ngIf="editingCommentId !== comment.id">
+                <p class="comment-text">{{ comment.text }}</p>
 
-              <div class="comment-actions">
-                <button
-                  class="btn-icon"
-                  [class.active]="comment.isLiked"
-                  (click)="toggleLike(comment.id)"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    *ngIf="comment.isLiked"
-                    stroke="none"
+                <div class="comment-actions">
+                  <button
+                    class="btn-icon"
+                    [class.active]="comment.isLiked"
+                    (click)="toggleLike(comment.id)"
                   >
-                    <path
-                      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                    ></path>
-                  </svg>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    *ngIf="!comment.isLiked"
-                    stroke="currentColor"
-                    stroke-width="2"
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      *ngIf="comment.isLiked"
+                      stroke="none"
+                    >
+                      <path
+                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                      ></path>
+                    </svg>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      *ngIf="!comment.isLiked"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                      ></path>
+                    </svg>
+                    <span>{{ comment.likes }}</span>
+                  </button>
+
+                  <button
+                    class="btn-text"
+                    (click)="openReplyBox(comment.id, comment.id)"
                   >
-                    <path
-                      d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                    ></path>
-                  </svg>
-                  <span>{{ comment.likes }}</span>
-                </button>
-                <button
-                  class="btn-icon"
-                  [class.active]="comment.isDisliked"
-                  (click)="toggleDislike(comment.id)"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    *ngIf="comment.isDisliked"
-                    stroke="none"
-                  >
-                    <path
-                      d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                    ></path>
-                  </svg>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    *ngIf="!comment.isDisliked"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                    ></path>
-                  </svg>
-                </button>
-                <button
-                  class="btn-text"
-                  (click)="openReplyBox(comment.id, comment.id)"
-                >
-                  Reply
-                </button>
+                    Reply
+                  </button>
+                </div>
+              </ng-container>
+
+              <!-- Edit Mode for Parent Comment -->
+              <div class="edit-box comment-input-area write-review-box" *ngIf="editingCommentId === comment.id" style="margin-top: 12px; padding: 0; background: transparent; border: none;">
+                <div class="input-wrapper">
+                  <div class="rating-selector" *ngIf="editRating !== undefined">
+                    <span class="rating-label">Tap to Rate:</span>
+                    <div class="stars">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <svg
+                          viewBox="0 0 24 24"
+                          [attr.fill]="star <= editRating ? 'currentColor' : 'none'"
+                          [attr.stroke]="star <= editRating ? 'none' : 'currentColor'"
+                          stroke-width="2"
+                          (click)="editRating = star"
+                          class="star-icon"
+                        >
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                        </svg>
+                      }
+                    </div>
+                  </div>
+                  <textarea [(ngModel)]="editCommentText" rows="1" style="min-height: 40px;"></textarea>
+                  <div class="input-footer">
+                    <div class="input-actions" style="margin-left: auto;">
+                      <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+                      <button class="btn-submit" [disabled]="!editCommentText.trim() || editRating === 0" (click)="submitEdit(comment.id)">Save</button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Reply Input Box (Under Parent) -->
@@ -380,18 +424,37 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
               >
                 @for (reply of (expandedReplies.has(comment.id) ? comment.replies : comment.replies.slice(0, 2)); track reply.id) {
                   <div class="comment-card reply-card">
-                    <img
-                      [src]="reply.authorAvatar"
-                      [alt]="reply.authorName"
-                      class="avatar avatar-sm"
-                    />
+                    <a [routerLink]="['/author', reply.authorId]" *ngIf="reply.authorId; else replyNoLinkAvatar">
+                      <div class="avatar-ring premium-container" [class.premium-ring]="reply.isPremium">
+                        <img
+                          [src]="reply.authorAvatar"
+                          [alt]="reply.authorName"
+                          class="avatar avatar-sm"
+                          (error)="onAvatarError($event, reply.authorName)"
+                        />
+                      </div>
+                    </a>
+                    <ng-template #replyNoLinkAvatar>
+                      <div class="avatar-ring premium-container" [class.premium-ring]="reply.isPremium">
+                        <img
+                          [src]="reply.authorAvatar"
+                          [alt]="reply.authorName"
+                          class="avatar avatar-sm"
+                          (error)="onAvatarError($event, reply.authorName)"
+                        />
+                      </div>
+                    </ng-template>
                     <div class="comment-content">
                       <div class="comment-header">
                         <div class="comment-header-left">
-                          <span class="author-name">{{
-                            reply.authorName
-                          }}</span>
-                          <span class="timestamp">{{ reply.timestamp }}</span>
+                          <div style="display: flex; align-items: center; gap: 4px;">
+                            <a [routerLink]="['/author', reply.authorId]" *ngIf="reply.authorId; else replyNoLinkName" class="author-name hover-underline" style="color: inherit; text-decoration: none;">{{ reply.authorName }}</a>
+                            <ng-template #replyNoLinkName>
+                              <span class="author-name">{{ reply.authorName }}</span>
+                            </ng-template>
+                            <span *ngIf="reply.isPremium" class="pro-badge">PRO</span>
+                          </div>
+                          <span class="timestamp">{{ reply.timestamp }} <span *ngIf="reply.isEdited" style="font-size: 11px; font-style: italic; opacity: 0.7;">(edited)</span></span>
                         </div>
 
                         <div class="comment-menu-wrapper">
@@ -414,6 +477,17 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                             class="comment-dropdown"
                             [class.open]="activeDropdownId === reply.id"
                           >
+                            <button
+                              *ngIf="reply.authorName === currentUserName && !reply.isEdited"
+                              class="dropdown-item"
+                              (click)="enableEditMode(reply)"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                              </svg>
+                              Edit
+                            </button>
                             <button
                               *ngIf="reply.authorName === currentUserName"
                               class="dropdown-item delete"
@@ -454,84 +528,73 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
                         </div>
                       </div>
 
-                      <p class="comment-text">
-                        <span
-                          class="mentioned-user"
-                          *ngIf="reply.text && reply.text.startsWith('@')"
-                          >{{ reply.text.split(' ')[0] }}</span
-                        >
-                        {{
-                          reply.text && reply.text.startsWith('@')
-                            ? reply.text.substring(reply.text.indexOf(' ') + 1)
-                            : reply.text
-                        }}
-                      </p>
+                      <ng-container *ngIf="editingCommentId !== reply.id">
+                        <p class="comment-text">
+                          <span
+                            class="mentioned-user"
+                            *ngIf="reply.text && reply.text.startsWith('@')"
+                            >{{ reply.text.split(' ')[0] }}</span
+                          >
+                          {{
+                            reply.text && reply.text.startsWith('@')
+                              ? reply.text.substring(reply.text.indexOf(' ') + 1)
+                              : reply.text
+                          }}
+                        </p>
 
-                      <!-- Reply actions -->
-                      <div class="comment-actions">
-                        <button
-                          class="btn-icon"
-                          [class.active]="reply.isLiked"
-                          (click)="toggleLike(reply.id)"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            *ngIf="reply.isLiked"
-                            stroke="none"
+                        <!-- Reply actions -->
+                        <div class="comment-actions">
+                          <button
+                            class="btn-icon"
+                            [class.active]="reply.isLiked"
+                            (click)="toggleLike(reply.id)"
                           >
-                            <path
-                              d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                            ></path>
-                          </svg>
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            *ngIf="!reply.isLiked"
-                            stroke="currentColor"
-                            stroke-width="2"
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              *ngIf="reply.isLiked"
+                              stroke="none"
+                            >
+                              <path
+                                d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                              ></path>
+                            </svg>
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              *ngIf="!reply.isLiked"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path
+                                d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                              ></path>
+                            </svg>
+                            <span>{{ reply.likes }}</span>
+                          </button>
+
+                          <button
+                            class="btn-text"
+                            (click)="
+                              openReplyBox(reply.id, comment.id, reply.authorName)
+                            "
                           >
-                            <path
-                              d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
-                            ></path>
-                          </svg>
-                          <span>{{ reply.likes }}</span>
-                        </button>
-                        <button
-                          class="btn-icon"
-                          [class.active]="reply.isDisliked"
-                          (click)="toggleDislike(reply.id)"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            *ngIf="reply.isDisliked"
-                            stroke="none"
-                          >
-                            <path
-                              d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                            ></path>
-                          </svg>
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            *ngIf="!reply.isDisliked"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <path
-                              d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                            ></path>
-                          </svg>
-                        </button>
-                        <button
-                          class="btn-text"
-                          (click)="
-                            openReplyBox(reply.id, comment.id, reply.authorName)
-                          "
-                        >
-                          Reply
-                        </button>
+                            Reply
+                          </button>
+                        </div>
+                      </ng-container>
+
+                      <!-- Edit Mode for Reply -->
+                      <div class="edit-box comment-input-area write-review-box" *ngIf="editingCommentId === reply.id" style="margin-top: 12px; padding: 0; background: transparent; border: none;">
+                        <div class="input-wrapper">
+                          <textarea [(ngModel)]="editCommentText" rows="1" style="min-height: 40px;"></textarea>
+                          <div class="input-footer">
+                            <div class="input-actions" style="margin-left: auto;">
+                              <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+                              <button class="btn-submit" [disabled]="!editCommentText.trim()" (click)="submitEdit(reply.id)">Save</button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <!-- Reply Input Box (Under Nested Reply) -->
@@ -634,6 +697,8 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
           </button>
         </div>
       }
+      </div>
+      </div>
     </div>
   `,
   styles: [
@@ -642,11 +707,19 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
         margin-top: 48px;
       }
 
-      /* Two Column Grid Styles */
-      .comments-reviews-grid {
+      .comments-section-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 32px;
+        gap: 40px;
+        align-items: start;
+      }
+      .ratings-column {
+        position: sticky;
+        top: 100px;
+      }
+      .reviews-column {
+        display: flex;
+        flex-direction: column;
       }
       .column-title {
         font-family: var(--display);
@@ -1180,6 +1253,13 @@ import { ConfirmService } from '../../../../core/services/confirm.service';
       }
 
       @media (max-width: 768px) {
+        .comments-section-grid {
+          grid-template-columns: 1fr;
+        }
+        .ratings-column {
+          position: relative;
+          top: 0;
+        }
         .ratings-dashboard {
           flex-direction: column;
           gap: 24px;
@@ -1323,25 +1403,26 @@ export class CommentListComponent {
 
   @Output() postComment = new EventEmitter<{ text: string; rating: number }>();
   @Output() likeComment = new EventEmitter<string>();
-  @Output() dislikeComment = new EventEmitter<string>();
+  @Output() pinCommentEvent = new EventEmitter<string>();
   @Output() postReply = new EventEmitter<{ parentId: string; text: string }>();
   @Output() loadMore = new EventEmitter<void>();
 
   expandedReplies = new Set<string>();
-
-  toggleReplies(commentId: string) {
-    if (this.expandedReplies.has(commentId)) {
-      this.expandedReplies.delete(commentId);
-    } else {
-      this.expandedReplies.add(commentId);
-    }
-  }
+  @Output() editCommentEvent = new EventEmitter<{
+    commentId: string;
+    text: string;
+    rating?: number;
+  }>();
 
   newCommentText = '';
   newRating = 0;
   isFocused = false;
   activeReplyId: string | null = null;
   replyText = '';
+  
+  editingCommentId: string | null = null;
+  editCommentText: string = '';
+  editRating?: number;
 
   activeDropdownId: string | null = null;
   quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
@@ -1351,6 +1432,14 @@ export class CommentListComponent {
     const target = event.target as HTMLElement;
     if (!target.closest('.comment-menu-wrapper')) {
       this.activeDropdownId = null;
+    }
+  }
+
+  toggleReplies(commentId: string) {
+    if (this.expandedReplies.has(commentId)) {
+      this.expandedReplies.delete(commentId);
+    } else {
+      this.expandedReplies.add(commentId);
     }
   }
 
@@ -1366,6 +1455,31 @@ export class CommentListComponent {
 
   addEmojiToReply(emoji: string) {
     this.replyText += emoji;
+  }
+
+  enableEditMode(comment: any) {
+    this.editingCommentId = comment.id;
+    this.editCommentText = comment.text;
+    this.editRating = comment.rating;
+    this.activeDropdownId = null;
+  }
+
+  cancelEdit() {
+    this.editingCommentId = null;
+    this.editCommentText = '';
+    this.editRating = undefined;
+  }
+
+  submitEdit(commentId: string) {
+    if (!this.editCommentText.trim()) return;
+    this.editCommentEvent.emit({
+      commentId,
+      text: this.editCommentText,
+      rating: this.editRating,
+    });
+    this.editingCommentId = null;
+    this.editCommentText = '';
+    this.editRating = undefined;
   }
 
   openReplyBox(
@@ -1405,10 +1519,7 @@ export class CommentListComponent {
   }
 
   pinComment(comment: any) {
-    comment.isPinned = !comment.isPinned;
-    if (comment.isPinned) {
-      alert('Comment pinned to top!');
-    }
+    this.pinCommentEvent.emit(comment.id);
     this.activeDropdownId = null;
   }
 
@@ -1453,9 +1564,7 @@ export class CommentListComponent {
     this.likeComment.emit(commentId);
   }
 
-  toggleDislike(commentId: string) {
-    this.dislikeComment.emit(commentId);
-  }
+
 
   submitReply(parentId: string) {
     if (this.replyText.trim()) {

@@ -279,12 +279,6 @@
   aspect-ratio: 1 / 1;
 }
 
-.avatar-ring {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 .user-profile-wrapper {
   position: relative;
@@ -911,15 +905,15 @@
   gap: 12px;
 }
 .avatar-ring {
-  padding: 2.5px;
-  border-radius: 50%;
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.25s ease;
 }
 
-.premium-ring {
-  background: linear-gradient(135deg, #4285f4, #a855f7, #ec4899, #ea4335);
-}
+
+
 

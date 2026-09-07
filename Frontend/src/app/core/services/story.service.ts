@@ -20,6 +20,7 @@ export interface StoryEpisode {
 
 export interface StoryComment {
   id: string;
+  authorId?: string;
   authorName: string;
   authorAvatar: string;
   timestamp: string;
@@ -28,6 +29,9 @@ export interface StoryComment {
   dislikes: number;
   isLiked: boolean;
   isDisliked: boolean;
+  isPremium?: boolean;
+  isPinned?: boolean;
+  isEdited?: boolean;
   rating?: number;
   replies?: StoryComment[];
 }
@@ -42,6 +46,7 @@ export interface StoryDetail {
     name: string;
     avatar: string;
     isFollowed: boolean;
+    isPremium?: boolean;
   };
   genres: string[];
   readingTime: string;
@@ -140,6 +145,7 @@ export class StoryService {
                 : `${baseUrl}${book.author.avatar.startsWith('/') ? '' : '/'}${book.author.avatar}`
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(book.author.username)}&background=random&color=fff&size=100&length=1`,
             isFollowed: false,
+            isPremium: book.author.isPremium || false,
           },
           genres: [book.genre],
           readingTime: '30 min read',
@@ -218,6 +224,7 @@ export class StoryService {
 
       const formattedComments = response.reviews.map((r: any) => ({
         id: r._id,
+        authorId: r.user?._id,
         authorName: r.user?.username || 'Unknown',
         authorAvatar: r.user?.avatar
           ? r.user.avatar.startsWith('http') ||
@@ -225,16 +232,20 @@ export class StoryService {
             ? r.user.avatar
             : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+        isPremium: r.user?.isPremium || false,
         timestamp: new Date(r.createdAt).toLocaleDateString(),
         text: r.comment || r.text,
         likes: r.likes?.length || 0,
         dislikes: r.dislikes?.length || 0,
         isLiked: currentUser ? r.likes?.includes(currentUser.id) : false,
         isDisliked: currentUser ? r.dislikes?.includes(currentUser.id) : false,
+        isPinned: r.isPinned || false,
+        isEdited: r.isEdited || false,
         rating: r.rating,
         replies: r.replies
           ? r.replies.map((reply: any) => ({
               id: reply._id,
+              authorId: reply.user?._id,
               authorName: reply.user?.username || 'Unknown',
               authorAvatar: reply.user?.avatar
                 ? reply.user.avatar.startsWith('http') ||
@@ -242,6 +253,7 @@ export class StoryService {
                   ? reply.user.avatar
                   : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`
                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+              isPremium: reply.user?.isPremium || false,
               timestamp: new Date(reply.createdAt).toLocaleDateString(),
               text: reply.comment || reply.text,
               likes: reply.likes?.length || 0,
@@ -252,6 +264,8 @@ export class StoryService {
               isDisliked: currentUser
                 ? reply.dislikes?.includes(currentUser.id)
                 : false,
+              isPinned: reply.isPinned || false,
+              isEdited: reply.isEdited || false,
             }))
           : [],
       }));
@@ -282,8 +296,9 @@ export class StoryService {
       next: (response) => {
         const currentUser = this.authService.user();
 
-        const newComments = response.reviews.map((r: any) => ({
+        const formattedComments = response.reviews.map((r: any) => ({
           id: r._id,
+          authorId: r.user?._id,
           authorName: r.user?.username || 'Unknown',
           authorAvatar: r.user?.avatar
             ? r.user.avatar.startsWith('http') ||
@@ -291,6 +306,7 @@ export class StoryService {
               ? r.user.avatar
               : `${environment.apiUrl.replace('/api', '')}${r.user.avatar.startsWith('/') ? '' : '/'}${r.user.avatar}`
             : `https://ui-avatars.com/api/?name=${encodeURIComponent(r.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+          isPremium: r.user?.isPremium || false,
           timestamp: new Date(r.createdAt).toLocaleDateString(),
           text: r.comment || r.text,
           likes: r.likes?.length || 0,
@@ -299,10 +315,13 @@ export class StoryService {
           isDisliked: currentUser
             ? r.dislikes?.includes(currentUser.id)
             : false,
+          isPinned: r.isPinned || false,
+          isEdited: r.isEdited || false,
           rating: r.rating,
           replies: r.replies
             ? r.replies.map((reply: any) => ({
                 id: reply._id,
+                authorId: reply.user?._id,
                 authorName: reply.user?.username || 'Unknown',
                 authorAvatar: reply.user?.avatar
                   ? reply.user.avatar.startsWith('http') ||
@@ -310,6 +329,7 @@ export class StoryService {
                     ? reply.user.avatar
                     : `${environment.apiUrl.replace('/api', '')}${reply.user.avatar.startsWith('/') ? '' : '/'}${reply.user.avatar}`
                   : `https://ui-avatars.com/api/?name=${encodeURIComponent(reply.user?.username || 'U')}&background=random&color=fff&size=100&length=1`,
+                isPremium: reply.user?.isPremium || false,
                 timestamp: new Date(reply.createdAt).toLocaleDateString(),
                 text: reply.comment || reply.text,
                 likes: reply.likes?.length || 0,
@@ -320,11 +340,13 @@ export class StoryService {
                 isDisliked: currentUser
                   ? reply.dislikes?.includes(currentUser.id)
                   : false,
+                isPinned: reply.isPinned || false,
+                isEdited: reply.isEdited || false,
               }))
             : [],
         }));
 
-        this.storyComments.update((comments) => [...comments, ...newComments]);
+        this.storyComments.update((comments) => [...comments, ...formattedComments]);
         this.commentsPage.set(response.currentPage);
         this.commentsTotalPages.set(response.totalPages);
         this.loadingMoreComments.set(false);
@@ -540,21 +562,16 @@ export class StoryService {
     this.bookService.toggleCommentLike(story.id, commentId).subscribe();
   }
 
-  toggleCommentDislike(commentId: string) {
+  toggleCommentPin(commentId: string) {
     const story = this.activeStory();
     if (!story) return;
 
     this.storyComments.update((comments) =>
       comments.map((c) => {
         if (c.id === commentId) {
-          const wasLiked = c.isLiked;
-          const wasDisliked = c.isDisliked;
           return {
             ...c,
-            isDisliked: !wasDisliked,
-            isLiked: false,
-            dislikes: c.dislikes + (wasDisliked ? -1 : 1),
-            likes: c.likes + (wasLiked ? -1 : 0),
+            isPinned: !c.isPinned,
           };
         }
         if (c.replies) {
@@ -562,14 +579,9 @@ export class StoryService {
             ...c,
             replies: c.replies.map((r: any) => {
               if (r.id === commentId) {
-                const wasLiked = r.isLiked;
-                const wasDisliked = r.isDisliked;
                 return {
                   ...r,
-                  isDisliked: !wasDisliked,
-                  isLiked: false,
-                  dislikes: r.dislikes + (wasDisliked ? -1 : 1),
-                  likes: r.likes + (wasLiked ? -1 : 0),
+                  isPinned: !r.isPinned,
                 };
               }
               return r;
@@ -580,7 +592,7 @@ export class StoryService {
       }),
     );
 
-    this.bookService.toggleCommentDislike(story.id, commentId).subscribe();
+    this.bookService.toggleCommentPin(story.id, commentId).subscribe();
   }
 
   replyToComment(commentId: string, text: string, user: any) {
@@ -615,5 +627,43 @@ export class StoryService {
     );
 
     this.bookService.replyToComment(story.id, commentId, text).subscribe();
+  }
+
+  editComment(commentId: string, text: string, rating?: number) {
+    const story = this.activeStory();
+    if (!story) return;
+
+    this.storyComments.update((comments) =>
+      comments.map((c) => {
+        if (c.id === commentId) {
+          return { ...c, text, rating: rating !== undefined ? rating : c.rating, isEdited: true };
+        }
+        if (c.replies) {
+          return {
+            ...c,
+            replies: c.replies.map((r: any) => {
+              if (r.id === commentId) {
+                return { ...r, text, isEdited: true };
+              }
+              return r;
+            }),
+          };
+        }
+        return c;
+      }),
+    );
+
+    this.bookService.editReview(story.id, commentId, text, rating).subscribe({
+      error: (err) => {
+        console.error('Failed to edit comment', err);
+        // Optionally revert on failure or show toast
+        this.confirmService.confirm(
+          'Notice',
+          err.error?.msg || 'Failed to edit comment.',
+          false,
+          'OK'
+        );
+      },
+    });
   }
 }

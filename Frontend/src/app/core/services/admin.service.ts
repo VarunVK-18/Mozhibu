@@ -49,6 +49,7 @@ export interface AdminUser {
   email: string;
   role: string;
   status: string;
+  suspendedUntil?: string | Date;
   createdAt: string;
 }
 
@@ -161,8 +162,8 @@ export class AdminService {
     return this.api.get('/admin/users');
   }
 
-  updateUserStatus(id: string, status: string): Observable<any> {
-    return this.api.put(`/admin/users/${id}/status`, { status });
+  updateUserStatus(id: string, status: string, duration?: string): Observable<any> {
+    return this.api.put(`/admin/users/${id}/status`, { status, duration });
   }
 
   deleteUser(id: string): Observable<any> {

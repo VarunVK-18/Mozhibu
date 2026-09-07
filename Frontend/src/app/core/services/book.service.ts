@@ -118,12 +118,21 @@ export class BookService {
     return this.api.post(`/books/${bookId}/reviews`, { content, rating });
   }
 
+  editReview(
+    bookId: string,
+    reviewId: string,
+    content: string,
+    rating?: number,
+  ): Observable<any> {
+    return this.api.put(`/books/${bookId}/reviews/${reviewId}`, { content, rating });
+  }
+
   toggleCommentLike(bookId: string, reviewId: string): Observable<any> {
     return this.api.post(`/books/${bookId}/reviews/${reviewId}/like`, {});
   }
 
-  toggleCommentDislike(bookId: string, reviewId: string): Observable<any> {
-    return this.api.post(`/books/${bookId}/reviews/${reviewId}/dislike`, {});
+  toggleCommentPin(bookId: string, reviewId: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/reviews/${reviewId}/pin`, {});
   }
 
   replyToComment(

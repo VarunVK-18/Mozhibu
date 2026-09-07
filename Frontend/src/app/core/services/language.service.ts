@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
+import { DEFAULT_EN_TRANSLATIONS } from '../i18n/default-translations';
 
 export type Lang =
   | 'en'
@@ -26,42 +27,42 @@ export interface LangOption {
 export class LanguageService {
   readonly languages: LangOption[] = [
     { code: 'en', native: 'English', label: 'EN' },
-    { code: 'ta', native: 'தமிழ்', label: 'தமிழ்' },
-    { code: 'hi', native: 'हिंदी', label: 'हिंदी' },
-    { code: 'te', native: 'తెలుగు', label: 'తెలుగు' },
-    { code: 'ml', native: 'മലയാളം', label: 'മലയാളം' },
-    { code: 'kn', native: 'ಕನ್ನಡ', label: 'ಕನ್ನಡ' },
-    { code: 'bn', native: 'বাংলা', label: 'বাংলা' },
-    { code: 'pa', native: 'ਪੰਜਾਬੀ', label: 'ਪੰਜਾਬੀ' },
-    { code: 'mr', native: 'मराठी', label: 'मराठी' },
-    { code: 'ur', native: 'اردو', label: 'اردو' },
-    { code: 'gu', native: 'ગુજરાતી', label: 'ગુજરાતી' },
-    { code: 'or', native: 'ଓଡ଼ିଆ', label: 'ଓଡ଼ିଆ' },
+    { code: 'ta', native: 'தமிழ்', label: 'Tamil' },
+    { code: 'hi', native: 'हिंदी', label: 'Hindi' },
+    { code: 'te', native: 'తెలుగు', label: 'Telugu' },
+    { code: 'ml', native: 'മലയാളം', label: 'Malayalam' },
+    { code: 'kn', native: 'ಕನ್ನಡ', label: 'Kannada' },
+    { code: 'bn', native: 'বাংলা', label: 'Bengali' },
+    { code: 'pa', native: 'ਪੰਜਾਬੀ', label: 'Punjabi' },
+    { code: 'mr', native: 'मराठी', label: 'Marathi' },
+    { code: 'ur', native: 'اردو', label: 'Urdu' },
+    { code: 'gu', native: 'ગુજરાતી', label: 'Gujarati' },
+    { code: 'or', native: 'ଓଡ଼ିଆ', label: 'Odia' },
   ];
 
   private _lang = signal<Lang>('en');
   readonly currentLang = this._lang.asReadonly();
 
-  private _translations = new BehaviorSubject<Record<string, any>>({});
+  // Initialize with synchronous English defaults so UI never flashes raw translation keys
+  private _translations = new BehaviorSubject<Record<string, any>>(DEFAULT_EN_TRANSLATIONS);
   readonly translations$ = this._translations.asObservable();
 
   constructor(private http: HttpClient) {
     let initialLang: Lang = 'en';
-    
+
     if (typeof localStorage !== 'undefined') {
       const savedLang = localStorage.getItem('preferredLang') as Lang;
-      if (savedLang) {
+      if (savedLang && this.languages.some((l) => l.code === savedLang)) {
         initialLang = savedLang;
       } else if (typeof navigator !== 'undefined') {
-        // Detect device/browser language (e.g., 'ta-IN' becomes 'ta')
         const browserLang = navigator.language.split('-')[0] as Lang;
-        const isSupported = this.languages.some(l => l.code === browserLang);
+        const isSupported = this.languages.some((l) => l.code === browserLang);
         if (isSupported) {
           initialLang = browserLang;
         }
       }
     }
-    
+
     this._lang.set(initialLang);
     this.loadTranslations(initialLang);
   }
@@ -78,21 +79,37 @@ export class LanguageService {
     return this.languages.find((l) => l.code === this._lang())!;
   }
 
-  translate(key: string): string {
-    let val: any = this._translations.getValue();
-    if (!val) return key;
+  private lookup(obj: any, key: string): string | null {
+    if (!obj || typeof obj !== 'object') return null;
 
-    // Fast path for exact match (supports sentences with dots)
-    if (val[key] !== undefined) {
-      return typeof val[key] === 'string' ? val[key] : key;
+    // Fast path for exact key match
+    if (obj[key] !== undefined && typeof obj[key] === 'string') {
+      return obj[key];
     }
 
+    // Dot-notation traversal
     const keys = key.split('.');
+    let cur = obj;
     for (const k of keys) {
-      val = val?.[k];
-      if (val === undefined) return key;
+      cur = cur?.[k];
+      if (cur === undefined) return null;
     }
-    return typeof val === 'string' ? val : key;
+    return typeof cur === 'string' ? cur : null;
+  }
+
+  translate(key: string): string {
+    if (!key) return '';
+
+    // 1. Try active translations dictionary
+    const current = this.lookup(this._translations.getValue(), key);
+    if (current !== null) return current;
+
+    // 2. Fall back to bundled English defaults
+    const fallback = this.lookup(DEFAULT_EN_TRANSLATIONS, key);
+    if (fallback !== null) return fallback;
+
+    // 3. Return key as last resort
+    return key;
   }
 
   translateRaw(key: string): any {
@@ -101,12 +118,33 @@ export class LanguageService {
     for (const k of keys) {
       val = val?.[k];
     }
+    if (val === undefined) {
+      val = DEFAULT_EN_TRANSLATIONS;
+      for (const k of keys) {
+        val = val?.[k];
+      }
+    }
     return val;
   }
 
   private loadTranslations(lang: Lang): void {
-    this.http
-      .get<Record<string, any>>(`assets/i18n/${lang}.json`)
-      .subscribe((data) => this._translations.next(data));
+    const url = `/assets/i18n/${lang}.json`;
+    this.http.get<Record<string, any>>(url).subscribe({
+      next: (data) => {
+        if (data && typeof data === 'object') {
+          if (lang === 'en') {
+            this._translations.next({ ...DEFAULT_EN_TRANSLATIONS, ...data });
+          } else {
+            this._translations.next(data);
+          }
+        }
+      },
+      error: (err) => {
+        console.warn(`[LanguageService] Failed to load ${url}, falling back to defaults`, err);
+        if (lang !== 'en') {
+          this._translations.next(DEFAULT_EN_TRANSLATIONS);
+        }
+      },
+    });
   }
 }

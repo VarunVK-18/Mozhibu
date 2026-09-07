@@ -8,6 +8,10 @@ export const adminGuard: CanActivateFn = (route, state) => {
 
   const user = authService.user();
 
+  if (user && user.status === 'suspended') {
+    return router.parseUrl('/account-suspended');
+  }
+
   if (user && user.role === 'superadmin') {
     return true;
   }

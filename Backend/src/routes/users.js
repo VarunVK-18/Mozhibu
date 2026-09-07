@@ -8,6 +8,7 @@ const User = require("../models/User");
 const Book = require("../models/Book");
 const ReadingProgress = require("../models/ReadingProgress");
 const { translateBooks } = require("../services/translationService");
+const { getActiveSubscription } = require("../middleware/premiumContent");
 
 const router = express.Router();
 if (!process.env.JWT_SECRET) {
@@ -78,7 +79,10 @@ router.get("/me", protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
-    res.json(user);
+    const activeSub = await getActiveSubscription(user.id);
+    const userObj = user.toObject();
+    userObj.isPremium = !!activeSub;
+    res.json(userObj);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server Error" });
@@ -239,7 +243,7 @@ router.get("/authors", async (req, res) => {
       role: { $in: ["writer", "superadmin"] },
       status: "active",
     })
-      .select("username avatar followersCount bio role")
+      .select("username avatar followersCount bio role isPremium")
       .sort({ followersCount: -1 });
     res.json(authors);
   } catch (err) {
@@ -255,7 +259,7 @@ router.get("/author/:id", async (req, res) => {
     const author = await User.findOne({
       _id: req.params.id,
       status: "active",
-    }).select("username avatar followersCount bio role createdAt");
+    }).select("username avatar followersCount bio role createdAt isPremium");
 
     if (!author) {
       return res.status(404).json({ msg: "User not found" });

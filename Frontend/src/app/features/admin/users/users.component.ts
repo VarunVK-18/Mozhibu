@@ -54,6 +54,11 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
                     <span class="status-badge" [ngClass]="user.status">{{
                       user.status
                     }}</span>
+                    @if (user.status === 'suspended' && user.suspendedUntil) {
+                      <div class="suspended-time-hint">Until {{ user.suspendedUntil | date: 'short' }}</div>
+                    } @else if (user.status === 'suspended') {
+                      <div class="suspended-time-hint">Permanent</div>
+                    }
                   </td>
                   <td class="date-cell">
                     {{ user.createdAt | date: 'mediumDate' }}
@@ -65,14 +70,14 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
                       ) {
                         <button
                           class="btn-reject"
-                          (click)="toggleStatus(user, 'suspended')"
+                          (click)="openSuspendModal(user)"
                         >
                           Suspend
                         </button>
                       } @else if (user.status === 'suspended') {
                         <button
                           class="btn-approve"
-                          (click)="toggleStatus(user, 'active')"
+                          (click)="reactivateUser(user)"
                         >
                           Reactivate
                         </button>
@@ -88,6 +93,46 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
               }
             </tbody>
           </table>
+        </div>
+      }
+
+      @if (showSuspendModal() && userToSuspend()) {
+        <div class="modal-backdrop" (click)="closeSuspendModal()">
+          <div class="suspend-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Suspend User</h3>
+              <button class="close-btn" (click)="closeSuspendModal()">✕</button>
+            </div>
+            <p class="modal-desc">
+              Choose the suspension duration for <strong>{{ userToSuspend()?.username }}</strong>:
+            </p>
+            <div class="duration-options">
+              <label class="duration-option" [class.selected]="suspendDuration === '24h'">
+                <input type="radio" name="duration" value="24h" [(ngModel)]="suspendDuration" />
+                <span>24 Hours</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '48h'">
+                <input type="radio" name="duration" value="48h" [(ngModel)]="suspendDuration" />
+                <span>48 Hours</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '1w'">
+                <input type="radio" name="duration" value="1w" [(ngModel)]="suspendDuration" />
+                <span>1 Week</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '1m'">
+                <input type="radio" name="duration" value="1m" [(ngModel)]="suspendDuration" />
+                <span>1 Month</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === 'permanent'">
+                <input type="radio" name="duration" value="permanent" [(ngModel)]="suspendDuration" />
+                <span>Permanent</span>
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button class="btn-cancel" (click)="closeSuspendModal()">Cancel</button>
+              <button class="btn-confirm-suspend" (click)="confirmSuspend()">Confirm Suspension</button>
+            </div>
+          </div>
         </div>
       }
     </div>
@@ -248,6 +293,104 @@ import { AdminService, AdminUser } from '../../../core/services/admin.service';
       .btn-delete:hover {
         background: #b91c1c;
       }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+      }
+      .suspend-modal {
+        background: var(--card, #ffffff);
+        color: var(--ink, #1e293b);
+        border-radius: 16px;
+        padding: 24px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--border-soft, #e2e8f0);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #94a3b8;
+      }
+      .modal-desc {
+        color: var(--ink-soft, #64748b);
+        font-size: 0.95rem;
+        margin-bottom: 18px;
+      }
+      .duration-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+      .duration-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-soft, #e2e8f0);
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .duration-option:hover {
+        background: var(--card-hover, #f8fafc);
+      }
+      .duration-option.selected {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+      .btn-cancel {
+        padding: 8px 16px;
+        border: 1px solid #cbd5e1;
+        background: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-confirm-suspend {
+        padding: 8px 18px;
+        border: none;
+        background: #ef4444;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-confirm-suspend:hover {
+        background: #dc2626;
+      }
+      .suspended-time-hint {
+        font-size: 0.75rem;
+        color: #dc2626;
+        margin-top: 4px;
+      }
     `,
   ],
 })
@@ -256,6 +399,40 @@ export class UsersComponent implements OnInit {
   users = signal<AdminUser[]>([]);
   searchQuery = signal('');
   loading = signal(true);
+
+  showSuspendModal = signal(false);
+  userToSuspend = signal<AdminUser | null>(null);
+  suspendDuration = '24h';
+
+  openSuspendModal(user: AdminUser) {
+    this.userToSuspend.set(user);
+    this.suspendDuration = '24h';
+    this.showSuspendModal.set(true);
+  }
+
+  closeSuspendModal() {
+    this.showSuspendModal.set(false);
+    this.userToSuspend.set(null);
+  }
+
+  confirmSuspend() {
+    const user = this.userToSuspend();
+    if (!user) return;
+    this.adminService
+      .updateUserStatus(user._id, 'suspended', this.suspendDuration)
+      .subscribe(() => {
+        this.closeSuspendModal();
+        this.loadUsers();
+      });
+  }
+
+  reactivateUser(user: AdminUser) {
+    if (confirm(`Are you sure you want to reactivate user "${user.username}"?`)) {
+      this.adminService.updateUserStatus(user._id, 'active').subscribe(() => {
+        this.loadUsers();
+      });
+    }
+  }
 
   filteredUsers = computed(() => {
     const q = this.searchQuery().toLowerCase();

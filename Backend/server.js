@@ -227,6 +227,48 @@ cron.schedule("0 0 * * *", async () => {
   }
 });
 
+// Every minute: Publish scheduled chapters
+cron.schedule("* * * * *", async () => {
+  try {
+    const Chapter = require("./src/models/Chapter");
+    const Book = require("./src/models/Book");
+    const Notification = require("./src/models/Notification");
+    const User = require("./src/models/User");
+
+    const now = new Date();
+    // Find chapters that are scheduled and due for publishing
+    const chaptersToPublish = await Chapter.find({
+      status: "scheduled",
+      scheduledAt: { $lte: now },
+    });
+
+    for (const chapter of chaptersToPublish) {
+      chapter.status = "published";
+      await chapter.save();
+
+      // Notify followers of the book's author
+      const book = await Book.findById(chapter.book);
+      if (book) {
+        const followers = await User.find({ following: book.author });
+        const notifications = followers.map((follower) => ({
+          recipient: follower._id,
+          sender: book.author,
+          type: "new_chapter",
+          title: "New Chapter Published",
+          message: `A new chapter for "${book.title}" is now available.`,
+          link: `/story/${book._id}/read/${chapter._id}`,
+        }));
+        if (notifications.length > 0) {
+          await Notification.insertMany(notifications);
+        }
+        console.log(`[Cron] Published scheduled chapter ${chapter._id} for book ${book._id}`);
+      }
+    }
+  } catch (err) {
+    console.error("[Cron] Scheduled chapter publish failed:", err.message);
+  }
+});
+
 module.exports = server;
 
 // triggered restart

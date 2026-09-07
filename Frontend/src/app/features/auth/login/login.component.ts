@@ -469,7 +469,6 @@ export class LoginComponent implements OnInit {
               err.error?.msg ||
               err.message ||
               'An error occurred during Google sign in.';
-            alert('Error from backend: ' + this.errorMessage);
           },
         });
       } else if (user) {

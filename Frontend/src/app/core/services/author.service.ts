@@ -11,6 +11,7 @@ export interface AuthorProfile {
     bio?: string;
     role: string;
     createdAt: string;
+    isPremium?: boolean;
   };
   books: any[];
 }

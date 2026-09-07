@@ -176,6 +176,9 @@ import { environment } from '../../../environments/environment';
           <div class="editor-footer-stats" [class.shifted]="showSettings()">
             <span>{{ wordCount }} words</span>
             <span>{{ charCount }} characters</span>
+            <span class="free-image-notice">
+              📷 Please use only <strong>free &amp; royalty-free</strong> images (e.g., <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>, <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer">Pexels</a>) to avoid copyright issues.
+            </span>
           </div>
         </main>
       </div>
@@ -538,23 +541,46 @@ import { environment } from '../../../environments/environment';
       /* Footer Stats */
       .editor-footer-stats {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 0;
+        left: 0;
+        right: 0;
         background: var(--surface);
-        border: 1px solid var(--border);
-        padding: 8px 16px;
-        border-radius: 100px;
+        border-top: 1px solid var(--border);
+        padding: 6px 24px;
         font-size: 12px;
         color: var(--text-secondary);
         display: flex;
+        align-items: center;
         gap: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
         pointer-events: none;
-        transition: transform 0.3s;
+        transition: padding-right 0.3s;
+        z-index: 100;
       }
+
       .editor-footer-stats.shifted {
-        transform: translateX(calc(-50% + 170px));
+        padding-right: 340px;
+      }
+
+      .free-image-notice {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--text-secondary);
+        opacity: 0.75;
+        pointer-events: all;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .free-image-notice a {
+        color: var(--forest, #3f6259);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .free-image-notice a:hover {
+        opacity: 0.8;
       }
 
       /* Modal (for cropper) */

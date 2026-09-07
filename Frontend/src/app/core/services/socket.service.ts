@@ -34,6 +34,10 @@ export class SocketService {
     this.socket.on('incoming_notification', () => {
       this.notificationReceived.next();
     });
+
+    this.socket.on('account_suspended', (data: any) => {
+      this.authService.markSuspended(data?.suspendedUntil);
+    });
   }
 
   disconnect() {

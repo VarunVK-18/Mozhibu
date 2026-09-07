@@ -23,12 +23,17 @@ const UserSchema = new mongoose.Schema(
       enum: ["active", "suspended", "deactivated"],
       default: "active",
     },
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
     authorStatus: {
       type: String,
       enum: ["none", "pending", "approved", "rejected"],
       default: "none",
     },
     followersCount: { type: Number, default: 0 },
+    isPremium: { type: Boolean, default: false },
     avatar: { type: String },
     bio: { type: String, default: "" },
     savedBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],

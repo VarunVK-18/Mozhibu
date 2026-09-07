@@ -6,6 +6,7 @@ import { FooterComponent } from './layout/footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { LoadingService } from './core/services/loading.service';
 import { ThemeService } from './core/services/theme.service';
+import { AuthService } from './core/services/auth.service';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
@@ -40,6 +41,7 @@ import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm
 })
 export class AppComponent {
   private router = inject(Router);
+  private authService = inject(AuthService);
   public loadingService = inject(LoadingService);
   private themeService = inject(ThemeService);
   isStandaloneRoute = false;
@@ -48,11 +50,23 @@ export class AppComponent {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
+        const url = event.urlAfterRedirects;
         this.isStandaloneRoute =
-          event.urlAfterRedirects.startsWith('/admin') ||
-          event.urlAfterRedirects.startsWith('/read') ||
-          event.urlAfterRedirects.startsWith('/login') ||
-          event.urlAfterRedirects.startsWith('/signup');
+          url.startsWith('/admin') ||
+          url.startsWith('/read') ||
+          url.startsWith('/login') ||
+          url.startsWith('/signup') ||
+          url.startsWith('/account-suspended');
+
+        if (this.authService.user()?.status === 'suspended') {
+          if (
+            !url.startsWith('/account-suspended') &&
+            !url.startsWith('/help') &&
+            !url.startsWith('/contact')
+          ) {
+            this.router.navigate(['/account-suspended']);
+          }
+        }
       });
   }
 }

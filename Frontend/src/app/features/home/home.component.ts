@@ -102,14 +102,6 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <div class="logged-in-container">
           <app-continue-reading></app-continue-reading>
 
-          <app-story-section
-            [title]="'home.recommended' | translate"
-            [stories]="recommendedStories"
-            [isLoading]="isStoriesLoading"
-            viewAllLink="/categories"
-            (loadMore)="loadMoreBooks('popular', 'popular')"
-          ></app-story-section>
-
           <!-- Announcements -->
           <section class="announcement-section">
             <div class="section-header">
@@ -121,6 +113,46 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                   *ngFor="let ann of announcements"
                   [announcement]="ann"
                 ></app-announcement-card>
+              </div>
+            </div>
+          </section>
+
+          <app-story-section
+            [title]="'home.recommended' | translate"
+            [stories]="recommendedStories"
+            [isLoading]="isStoriesLoading"
+            viewAllLink="/categories"
+            (loadMore)="loadMoreBooks('popular', 'popular')"
+          ></app-story-section>
+
+          <!-- Authors section -->
+          <section class="user-section">
+            <div class="section-header">
+              <h2 class="section-title">{{ "home.authors" | translate }}</h2>
+              <a routerLink="/community" class="view-all">View All</a>
+            </div>
+            <div class="scroll-container">
+              <div class="users-track">
+                <app-user-card
+                  *ngFor="let user of authorUsers"
+                  [user]="user"
+                ></app-user-card>
+              </div>
+            </div>
+          </section>
+
+          <!-- Following Users -->
+          <section class="user-section">
+            <div class="section-header">
+              <h2 class="section-title">{{ "home.following" | translate }}</h2>
+              <a routerLink="/community" class="view-all">View All</a>
+            </div>
+            <div class="scroll-container">
+              <div class="users-track">
+                <app-user-card
+                  *ngFor="let user of followingUsers"
+                  [user]="user"
+                ></app-user-card>
               </div>
             </div>
           </section>
@@ -145,37 +177,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
             (loadMore)="loadMoreBooks('trending', 'trending')"
           ></app-story-section>
 
-          <!-- Following Users -->
-          <section class="user-section">
-            <div class="section-header">
-              <h2 class="section-title">{{ "home.following" | translate }}</h2>
-              <a routerLink="/community" class="view-all">View All</a>
-            </div>
-            <div class="scroll-container">
-              <div class="users-track">
-                <app-user-card
-                  *ngFor="let user of followingUsers"
-                  [user]="user"
-                ></app-user-card>
-              </div>
-            </div>
-          </section>
 
-          <!-- Authors section -->
-          <section class="user-section">
-            <div class="section-header">
-              <h2 class="section-title">{{ "home.authors" | translate }}</h2>
-              <a routerLink="/community" class="view-all">View All</a>
-            </div>
-            <div class="scroll-container">
-              <div class="users-track">
-                <app-user-card
-                  *ngFor="let user of authorUsers"
-                  [user]="user"
-                ></app-user-card>
-              </div>
-            </div>
-          </section>
 
           <app-competition-banner></app-competition-banner>
 

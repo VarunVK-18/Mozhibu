@@ -256,7 +256,7 @@ router.get("/users", async (req, res) => {
 // @desc Suspend or reactivate user
 router.put("/users/:id/status", async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, duration } = req.body;
     if (!["active", "suspended"].includes(status)) {
       return res.status(400).json({ msg: "Invalid status" });
     }
@@ -265,8 +265,46 @@ router.put("/users/:id/status", async (req, res) => {
     if (!user) return res.status(404).json({ msg: "User not found" });
 
     user.status = status;
+
+    if (status === "suspended") {
+      const now = Date.now();
+      if (duration === "24h" || duration === "24 hrs") {
+        user.suspendedUntil = new Date(now + 24 * 60 * 60 * 1000);
+      } else if (duration === "48h" || duration === "48 hrs") {
+        user.suspendedUntil = new Date(now + 48 * 60 * 60 * 1000);
+      } else if (duration === "1w" || duration === "1 week") {
+        user.suspendedUntil = new Date(now + 7 * 24 * 60 * 60 * 1000);
+      } else if (duration === "1m" || duration === "1 month") {
+        user.suspendedUntil = new Date(now + 30 * 24 * 60 * 60 * 1000);
+      } else {
+        // permanent
+        user.suspendedUntil = null;
+      }
+    } else {
+      user.suspendedUntil = null;
+    }
+
     await user.save();
-    res.json({ id: user.id, status: user.status });
+
+    if (status === "suspended") {
+      const io = req.app.get("io");
+      const userSockets = req.app.get("userSockets");
+      if (io && userSockets) {
+        const socketId = userSockets.get(user._id.toString());
+        if (socketId) {
+          io.to(socketId).emit("account_suspended", {
+            status: "suspended",
+            suspendedUntil: user.suspendedUntil,
+          });
+        }
+      }
+    }
+
+    res.json({
+      id: user.id,
+      status: user.status,
+      suspendedUntil: user.suspendedUntil,
+    });
   } catch (err) {
     res.status(500).json({ msg: "Server Error" });
   }

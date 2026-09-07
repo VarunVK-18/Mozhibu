@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const { protect } = require("../middleware/auth");
+const { getActiveSubscription } = require("../middleware/premiumContent");
 
 const router = express.Router();
 
@@ -17,6 +18,72 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
+
+function formatRemainingTime(ms) {
+  if (ms <= 0) return "a moment";
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 1) {
+    const remHours = hours % 24;
+    return remHours > 0 ? `${days} days ${remHours} hours` : `${days} days`;
+  }
+  if (days === 1) {
+    const remHours = hours % 24;
+    return remHours > 0 ? `1 day ${remHours} hours` : `1 day`;
+  }
+  if (hours > 1) {
+    return `${hours} hours`;
+  }
+  if (hours === 1) {
+    const remMinutes = minutes % 60;
+    return remMinutes > 0 ? `1 hour ${remMinutes} minutes` : `1 hour`;
+  }
+  if (minutes > 1) {
+    return `${minutes} minutes`;
+  }
+  return "1 minute";
+}
+
+function getCookieOptions(req) {
+  const origin = req.get("origin") || "";
+  const host = req.get("host") || "";
+  const isLocal = host.includes("localhost") || origin.includes("localhost");
+  const isProd = process.env.NODE_ENV === "production" && !isLocal;
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 5 * 24 * 60 * 60 * 1000,
+  };
+}
+
+async function checkUserSuspension(user) {
+  if (user.status === "suspended") {
+    if (user.suspendedUntil && new Date() >= user.suspendedUntil) {
+      user.status = "active";
+      user.suspendedUntil = null;
+      await user.save();
+      return { isSuspended: false };
+    }
+    const remainingMs = user.suspendedUntil
+      ? user.suspendedUntil.getTime() - Date.now()
+      : null;
+    const remainingText = remainingMs ? formatRemainingTime(remainingMs) : null;
+    const msg = remainingText
+      ? `Your account has been suspended. Please try again after ${remainingText}.`
+      : `Your account has been permanently suspended. Please contact support.`;
+    return {
+      isSuspended: true,
+      msg,
+      suspendedUntil: user.suspendedUntil,
+      remaining: remainingText,
+    };
+  }
+  return { isSuspended: false };
+}
 
 // @route POST /api/auth/register
 router.post("/register", async (req, res) => {
@@ -71,15 +138,12 @@ router.post("/register", async (req, res) => {
 
     await user.save();
 
+    const activeSub = await getActiveSubscription(user.id);
+    const isPremium = !!activeSub;
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 5 * 24 * 60 * 60 * 1000,
-      }).json({
+      res.cookie("token", token, getCookieOptions(req)).json({
         token,
         user: {
           id: user.id,
@@ -89,6 +153,7 @@ router.post("/register", async (req, res) => {
           role: user.role,
           authorStatus: user.authorStatus,
           avatar: user.avatar,
+          isPremium,
         },
       });
     });
@@ -113,12 +178,15 @@ router.post("/login", async (req, res) => {
     }
 
     // Check status
-    if (user.status === "suspended") {
-      return res
-        .status(403)
-        .json({
-          msg: "Your account has been suspended. Please contact support.",
-        });
+    const suspensionCheck = await checkUserSuspension(user);
+    if (suspensionCheck.isSuspended) {
+      return res.status(403).json({
+        code: "ACCOUNT_SUSPENDED",
+        status: "suspended",
+        msg: suspensionCheck.msg,
+        remaining: suspensionCheck.remaining,
+        suspendedUntil: suspensionCheck.suspendedUntil,
+      });
     }
 
     if (user.status === "deactivated") {
@@ -140,15 +208,12 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ msg: "Wrong password" });
     }
 
+    const activeSub = await getActiveSubscription(user.id);
+    const isPremium = !!activeSub;
     const payload = { user: { id: user.id, role: user.role } };
     jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 5 * 24 * 60 * 60 * 1000,
-      }).json({
+      res.cookie("token", token, getCookieOptions(req)).json({
         token,
         user: {
           id: user.id,
@@ -158,6 +223,7 @@ router.post("/login", async (req, res) => {
           role: user.role,
           authorStatus: user.authorStatus,
           avatar: user.avatar,
+          isPremium,
         },
       });
     });
@@ -171,11 +237,9 @@ router.post("/login", async (req, res) => {
 // @desc    Logout user and clear cookie
 // @access  Public
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  });
+  const opts = getCookieOptions(req);
+  delete opts.maxAge;
+  res.clearCookie("token", opts);
   res.json({ msg: "Logged out successfully" });
 });
 
@@ -200,12 +264,15 @@ router.post("/google", async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      if (user.status === "suspended") {
-        return res
-          .status(403)
-          .json({
-            msg: "Your account has been suspended. Please contact support.",
-          });
+      const suspensionCheck = await checkUserSuspension(user);
+      if (suspensionCheck.isSuspended) {
+        return res.status(403).json({
+          code: "ACCOUNT_SUSPENDED",
+          status: "suspended",
+          msg: suspensionCheck.msg,
+          remaining: suspensionCheck.remaining,
+          suspendedUntil: suspensionCheck.suspendedUntil,
+        });
       }
       if (user.status === "deactivated") {
         user.status = "active";
@@ -219,6 +286,8 @@ router.post("/google", async (req, res) => {
         await user.save();
       }
 
+      const activeSub = await getActiveSubscription(user.id);
+      const isPremium = !!activeSub;
       const payload = { user: { id: user.id, role: user.role } };
       return jwt.sign(
         payload,
@@ -231,12 +300,7 @@ router.post("/google", async (req, res) => {
             user.preferredLanguage &&
             user.mobile !== "Not Provided"
           );
-          res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            maxAge: 5 * 24 * 60 * 60 * 1000,
-          }).json({
+          res.cookie("token", token, getCookieOptions(req)).json({
             token,
             isProfileComplete,
             user: {
@@ -247,6 +311,7 @@ router.post("/google", async (req, res) => {
               role: user.role,
               authorStatus: user.authorStatus,
               avatar: user.avatar,
+              isPremium,
             },
           });
         },
@@ -284,12 +349,7 @@ router.post("/google", async (req, res) => {
     const payload = { user: { id: user.id, role: user.role } };
     return jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
       if (err) throw err;
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        maxAge: 5 * 24 * 60 * 60 * 1000,
-      }).json({
+      res.cookie("token", token, getCookieOptions(req)).json({
         token,
         isProfileComplete: false,
         user: {
@@ -300,6 +360,7 @@ router.post("/google", async (req, res) => {
           role: user.role,
           authorStatus: user.authorStatus,
           avatar: user.avatar,
+          isPremium: false,
         },
       });
     });

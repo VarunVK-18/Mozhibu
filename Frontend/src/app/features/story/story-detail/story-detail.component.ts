@@ -139,9 +139,10 @@ import { OfflineService } from '../../../core/services/offline.service';
             [loadingMore]="storyService.loadingMoreComments()"
             (postComment)="onPostComment($event)"
             (likeComment)="onLikeComment($event)"
-            (dislikeComment)="onDislikeComment($event)"
+            (pinCommentEvent)="onPinComment($event)"
             (postReply)="onPostReply($event)"
             (loadMore)="onLoadMoreComments()"
+            (editCommentEvent)="onEditComment($event)"
           ></app-comment-list>
 
           <!-- Related Stories -->
@@ -360,7 +361,7 @@ export class StoryDetailComponent implements OnInit {
   currentUser = this.authService.user;
 
   synopsisExpanded = signal(false);
-  isPremiumSubscriber = signal(false);
+  isPremiumSubscriber = signal(!!this.authService.user()?.isPremium);
   relatedStories = signal<any[]>([]);
   showDownloadModal = signal(false);
   showAgeWarning = signal(false);
@@ -382,6 +383,8 @@ export class StoryDetailComponent implements OnInit {
         next: (sub) => {
           if (sub && sub.active) {
             this.isPremiumSubscriber.set(true);
+          } else {
+            this.isPremiumSubscriber.set(false);
           }
         },
         error: () => {},
@@ -556,9 +559,9 @@ export class StoryDetailComponent implements OnInit {
     }
   }
 
-  onDislikeComment(commentId: string) {
+  onPinComment(commentId: string) {
     if (this.requireAuth()) {
-      this.storyService.toggleCommentDislike(commentId);
+      this.storyService.toggleCommentPin(commentId);
     }
   }
 
@@ -580,5 +583,11 @@ export class StoryDetailComponent implements OnInit {
 
   onLoadMoreComments() {
     this.storyService.loadMoreComments();
+  }
+
+  onEditComment(event: { commentId: string; text: string; rating?: number }) {
+    if (this.requireAuth()) {
+      this.storyService.editComment(event.commentId, event.text, event.rating);
+    }
   }
 }

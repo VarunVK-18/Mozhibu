@@ -1,7 +1,6 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
-const app = require('../src/server'); // We need to export app from server.js for supertest!
 
 // Since server.js might not export app, we will just test the routes directly if needed,
 // but let's assume we can mock or start a quick express server.

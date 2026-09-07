@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import {
   AdminService,
@@ -9,7 +10,7 @@ import {
 @Component({
   selector: 'app-admin-author-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="admin-page">
       <header class="page-header">
@@ -44,7 +45,7 @@ import {
                 <button
                   *ngIf="authorDetail()!.author.status === 'active'"
                   class="btn-suspend"
-                  (click)="suspendAuthor()"
+                  (click)="openSuspendModal()"
                 >
                   Suspend
                 </button>
@@ -147,6 +148,46 @@ import {
           </div>
         </div>
       }
+
+      @if (showSuspendModal()) {
+        <div class="modal-backdrop" (click)="closeSuspendModal()">
+          <div class="suspend-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>Suspend Author</h3>
+              <button class="close-btn" (click)="closeSuspendModal()">✕</button>
+            </div>
+            <p class="modal-desc">
+              Choose the suspension duration for <strong>{{ authorDetail()?.author?.username }}</strong>:
+            </p>
+            <div class="duration-options">
+              <label class="duration-option" [class.selected]="suspendDuration === '24h'">
+                <input type="radio" name="authorDuration" value="24h" [(ngModel)]="suspendDuration" />
+                <span>24 Hours</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '48h'">
+                <input type="radio" name="authorDuration" value="48h" [(ngModel)]="suspendDuration" />
+                <span>48 Hours</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '1w'">
+                <input type="radio" name="authorDuration" value="1w" [(ngModel)]="suspendDuration" />
+                <span>1 Week</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === '1m'">
+                <input type="radio" name="authorDuration" value="1m" [(ngModel)]="suspendDuration" />
+                <span>1 Month</span>
+              </label>
+              <label class="duration-option" [class.selected]="suspendDuration === 'permanent'">
+                <input type="radio" name="authorDuration" value="permanent" [(ngModel)]="suspendDuration" />
+                <span>Permanent</span>
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button class="btn-cancel" (click)="closeSuspendModal()">Cancel</button>
+              <button class="btn-confirm-suspend" (click)="confirmSuspend()">Confirm Suspension</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -188,6 +229,10 @@ import {
       }
 
       /* Sidebar */
+      .profile-sidebar {
+        position: sticky;
+        top: 24px;
+      }
       .profile-card {
         background: var(--card);
         border: 1px solid var(--border-soft);
@@ -441,6 +486,99 @@ import {
         color: var(--ink-soft);
         font-weight: 500;
       }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+      }
+      .suspend-modal {
+        background: var(--card, #ffffff);
+        color: var(--ink, #1e293b);
+        border-radius: 16px;
+        padding: 24px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--border-soft, #e2e8f0);
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #94a3b8;
+      }
+      .modal-desc {
+        color: var(--ink-soft, #64748b);
+        font-size: 0.95rem;
+        margin-bottom: 18px;
+      }
+      .duration-options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+      .duration-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-soft, #e2e8f0);
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .duration-option:hover {
+        background: var(--card-hover, #f8fafc);
+      }
+      .duration-option.selected {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+      .btn-cancel {
+        padding: 8px 16px;
+        border: 1px solid #cbd5e1;
+        background: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-confirm-suspend {
+        padding: 8px 18px;
+        border: none;
+        background: #ef4444;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-confirm-suspend:hover {
+        background: #dc2626;
+      }
     `,
   ],
 })
@@ -470,20 +608,27 @@ export class AuthorDetailComponent implements OnInit {
     }
   }
 
-  suspendAuthor() {
+  showSuspendModal = signal(false);
+  suspendDuration = '24h';
+
+  openSuspendModal() {
+    this.suspendDuration = '24h';
+    this.showSuspendModal.set(true);
+  }
+
+  closeSuspendModal() {
+    this.showSuspendModal.set(false);
+  }
+
+  confirmSuspend() {
     const author = this.authorDetail()?.author;
     if (!author) return;
-    if (
-      confirm(
-        `Are you sure you want to suspend author "${author.username}"? Their published contents and profile will disappear from public views.`,
-      )
-    ) {
-      this.adminService
-        .updateUserStatus(author._id, 'suspended')
-        .subscribe(() => {
-          this.loadAuthorDetails();
-        });
-    }
+    this.adminService
+      .updateUserStatus(author._id, 'suspended', this.suspendDuration)
+      .subscribe(() => {
+        this.closeSuspendModal();
+        this.loadAuthorDetails();
+      });
   }
 
   reactivateAuthor() {
