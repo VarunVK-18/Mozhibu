@@ -615,7 +615,7 @@ export class SignupComponent implements OnInit {
         '',
         [
           Validators.required,
-          Validators.pattern(/^[A-Za-z0-9_]{3,30}$/),
+          Validators.pattern(/^(?![0-9]+$)[A-Za-z0-9_]{3,30}$/),
         ],
       ],
       mobile: [
@@ -638,7 +638,7 @@ export class SignupComponent implements OnInit {
         '',
         [
           Validators.required,
-          Validators.pattern(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9\s])[^\s]{8,16}$/),
+          Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[\S]{8,16}$/),
         ],
       ],
       confirmPassword: ['', Validators.required],

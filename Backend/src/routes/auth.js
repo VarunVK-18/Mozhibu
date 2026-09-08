@@ -108,13 +108,25 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ msg: "name and email already taken" });
     }
 
+    // Username validation
+    const usernameRegex = /^(?![0-9]+$)[A-Za-z0-9_]{3,30}$/;
+    if (!username || !usernameRegex.test(username)) {
+      return res.status(400).json({ msg: "Username must be 3-30 characters long, alphanumeric with underscores, and cannot be only numbers." });
+    }
+
+    // Mobile validation
+    const mobileRegex = /^[6-9][0-9]{9}$/;
+    if (!mobile || !mobileRegex.test(mobile)) {
+      return res.status(400).json({ msg: "Mobile number must be exactly 10 digits and start with 6-9." });
+    }
+
     if (!authProvider || authProvider === "normal") {
-      const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/;
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[\S]{8,16}$/;
       if (!password || !passwordRegex.test(password)) {
         return res
           .status(400)
           .json({
-            msg: "Password must be 8-16 characters long, contain at least one uppercase letter and one number, and no emojis.",
+            msg: "Password must be 8-16 characters long, contain at least one uppercase letter, one lowercase letter, one number, one special character, and no spaces.",
           });
       }
     }
@@ -486,12 +498,12 @@ router.post("/reset-password", async (req, res) => {
     }
 
     // Validate new password
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[\S]{8,16}$/;
     if (!password || !passwordRegex.test(password)) {
       return res
         .status(400)
         .json({
-          msg: "Password must be 8-16 characters long, contain at least one uppercase letter and one number, and no emojis.",
+          msg: "Password must be 8-16 characters long, contain at least one uppercase letter, one lowercase letter, one number, one special character, and no spaces.",
         });
     }
 
@@ -536,10 +548,10 @@ router.put("/change-password", protect, async (req, res) => {
     }
 
     // Validate new password
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)[\x20-\x7E]{8,16}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[\S]{8,16}$/;
     if (!newPassword || !passwordRegex.test(newPassword)) {
       return res.status(400).json({
-        msg: "Password must be 8-16 characters long, contain at least one uppercase letter and one number, and no emojis.",
+        msg: "Password must be 8-16 characters long, contain at least one uppercase letter, one lowercase letter, one number, one special character, and no spaces.",
       });
     }
 
