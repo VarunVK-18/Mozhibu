@@ -114,12 +114,14 @@ import { OfflineService } from '../../../core/services/offline.service';
             <p [class.expanded]="synopsisExpanded()">
               {{ story()!.synopsis }}
             </p>
-            <button
-              class="btn-read-more"
-              (click)="synopsisExpanded.set(!synopsisExpanded())"
-            >
-              {{ synopsisExpanded() ? ('storyDetail.readLess' | translate) : ('storyDetail.readMore' | translate) }}
-            </button>
+            @if (story()?.synopsis && story()!.synopsis.length > 250) {
+              <button
+                class="btn-read-more"
+                (click)="synopsisExpanded.set(!synopsisExpanded())"
+              >
+                {{ synopsisExpanded() ? ('storyDetail.readLess' | translate) : ('storyDetail.readMore' | translate) }}
+              </button>
+            }
           </div>
 
           <app-chapter-list

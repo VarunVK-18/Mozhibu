@@ -680,10 +680,17 @@ export class SubscriptionPlansComponent implements OnInit {
             },
             theme: { color: '#6366f1' },
             modal: {
-              ondismiss: () => this.checkoutLoading.set(false),
+              ondismiss: () => {
+                this.checkoutLoading.set(false);
+                alert('Checkout cancelled');
+              },
             },
           };
           const rzp = new Razorpay(options);
+          rzp.on('payment.failed', (response: any) => {
+            this.checkoutLoading.set(false);
+            alert('Payment failed: ' + (response.error?.description || 'Unknown error'));
+          });
           rzp.open();
         },
         error: (err) => {

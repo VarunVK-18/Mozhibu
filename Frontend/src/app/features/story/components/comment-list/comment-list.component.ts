@@ -682,6 +682,13 @@ import { RouterModule } from '@angular/router';
                 context: { $implicit: comment }
               "
             ></ng-container>
+          } @empty {
+            <div class="no-comments-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="empty-icon">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              <p>No comments yet. Be the first to share your thoughts!</p>
+            </div>
           }
         </div>
       </div>
@@ -1288,6 +1295,32 @@ import { RouterModule } from '@angular/router';
         .big-number {
           font-size: 36px;
         }
+      }
+
+      .no-comments-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--ink-soft);
+        background: var(--surface-soft, #f8f9fa);
+        border-radius: var(--radius-m, 12px);
+        margin-top: 16px;
+        border: 1px dashed var(--border-soft, #e2e8f0);
+      }
+      .no-comments-state .empty-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+        color: var(--ink-soft);
+      }
+      .no-comments-state p {
+        font-size: 15px;
+        margin: 0;
+        font-weight: 500;
       }
     `,
   ],

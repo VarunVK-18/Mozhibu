@@ -158,6 +158,16 @@ import { ThemeService } from '../../../core/services/theme.service';
             </div>
 
             <div class="info-group">
+              <label>Date of Birth</label>
+              <input
+                type="date"
+                [(ngModel)]="dobDate"
+                class="form-control"
+                [max]="maxDobDate"
+              />
+            </div>
+
+            <div class="info-group">
               <label>Bio</label>
               <textarea
                 [(ngModel)]="bioText"
@@ -883,6 +893,8 @@ export class SettingsComponent implements OnInit {
   uploadError = signal<string | null>(null);
 
   bioText = signal<string>('');
+  dobDate = signal('');
+  maxDobDate = new Date().toISOString().split('T')[0];
   savingProfile = signal(false);
   profileUpdateError = signal<string | null>(null);
   profileUpdateSuccess = signal(false);
@@ -904,6 +916,11 @@ export class SettingsComponent implements OnInit {
       this.router.navigate(['/login']);
     } else {
       this.bioText.set(this.auth.user()?.bio || '');
+      if (this.auth.user()?.dob) {
+        // Format to YYYY-MM-DD for the date input
+        const d = new Date(this.auth.user()!.dob as string);
+        this.dobDate.set(d.toISOString().split('T')[0]);
+      }
     }
 
     this.route.queryParams.subscribe((params) => {
@@ -946,7 +963,12 @@ export class SettingsComponent implements OnInit {
     this.profileUpdateError.set(null);
     this.profileUpdateSuccess.set(false);
 
-    this.auth.updateProfile({ bio: this.bioText() }).subscribe({
+    const payload: any = { bio: this.bioText() };
+    if (this.dobDate()) {
+      payload.dob = this.dobDate();
+    }
+
+    this.auth.updateProfile(payload).subscribe({
       next: () => {
         this.savingProfile.set(false);
         this.profileUpdateSuccess.set(true);

@@ -113,6 +113,30 @@ router.post("/purchase", protect, async (req, res) => {
       planId: plan._id.toString(),
     });
 
+    // Create a pending subscription immediately so the webhook can find it
+    // if the user closes the browser before hitting /verify
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + plan.durationDays);
+
+    const pendingSubscription = new UserSubscription({
+      user: req.user.id,
+      plan: plan._id,
+      startDate,
+      endDate,
+      status: "pending",
+      razorpayOrderId: order.id,
+      amountPaidInPaise: finalAmountInPaise,
+      couponApplied: appliedCoupon,
+      planSnapshot: {
+        name: plan.name,
+        priceInPaise: plan.priceInPaise,
+        currency: plan.currency,
+        structuredBenefits: plan.structuredBenefits,
+      },
+    });
+    await pendingSubscription.save();
+
     res.json({
       orderId: order.id,
       amount: finalAmountInPaise,
@@ -178,28 +202,21 @@ router.post("/verify", protect, async (req, res) => {
 
     // Expire any existing subscription
     await UserSubscription.updateMany(
-      { user: req.user.id, status: "active" },
+      { user: req.user.id, status: "active", razorpayOrderId: { $ne: razorpayOrderId } },
       { $set: { status: "expired" } },
     );
 
-    const subscription = new UserSubscription({
-      user: req.user.id,
-      plan: plan._id,
-      startDate,
-      endDate,
-      status: "active",
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-      amountPaidInPaise: finalAmount,
-      couponApplied: appliedCoupon,
-      planSnapshot: {
-        name: plan.name,
-        priceInPaise: plan.priceInPaise,
-        currency: plan.currency,
-        structuredBenefits: plan.structuredBenefits,
-      },
-    });
+    // Find the pending subscription created in /purchase
+    const subscription = await UserSubscription.findOne({ razorpayOrderId });
+    
+    if (!subscription) {
+      return res.status(404).json({ msg: "Pending subscription order not found" });
+    }
+
+    subscription.status = "active";
+    subscription.razorpayPaymentId = razorpayPaymentId;
+    subscription.razorpaySignature = razorpaySignature;
+    
     await subscription.save();
 
     res.json({
@@ -239,14 +256,18 @@ router.post(
         // Payment confirmed by Razorpay servers — subscription should already be active
         // from the verify endpoint, but this is a safety net
         const paymentId = event.payload?.payment?.entity?.id;
+        const orderId = event.payload?.payment?.entity?.order_id;
+        
         const existing = await UserSubscription.findOne({
-          razorpayPaymentId: paymentId,
+          razorpayOrderId: orderId,
         });
+        
         if (existing && existing.status !== "active") {
           existing.status = "active";
+          existing.razorpayPaymentId = paymentId;
           await existing.save();
           console.log(
-            `[Webhook] Activated subscription via webhook for payment ${paymentId}`,
+            `[Webhook] Activated subscription via webhook for order ${orderId}`,
           );
         }
       }

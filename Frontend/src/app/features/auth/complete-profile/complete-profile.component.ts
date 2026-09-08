@@ -40,14 +40,32 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Mobile</label>
-            <input
-              type="text"
-              formControlName="mobile"
-              class="form-control"
-              placeholder="+1 234 567 8900"
-            />
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mobile Number <span class="required">*</span></label>
+              <input
+                type="tel"
+                formControlName="mobile"
+                class="form-control"
+                placeholder="9876543210"
+                maxlength="10"
+              />
+              <div *ngIf="profileForm.get('mobile')?.touched && profileForm.get('mobile')?.invalid" class="field-error">
+                Enter a valid 10-digit mobile number starting with 6–9.
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth <span class="required">*</span></label>
+              <input
+                type="date"
+                formControlName="dob"
+                class="form-control"
+                [max]="maxDobDate"
+              />
+              <div *ngIf="profileForm.get('dob')?.touched && profileForm.get('dob')?.invalid" class="field-error">
+                Please enter your date of birth.
+              </div>
+            </div>
           </div>
 
           <div class="form-row">
@@ -161,6 +179,14 @@ import { AuthService } from '../../../core/services/auth.service';
         grid-template-columns: 1fr 1fr;
         gap: 16px;
       }
+      .required {
+        color: var(--rose, #e53e3e);
+      }
+      .field-error {
+        font-size: 12px;
+        color: var(--rose, #e53e3e);
+        margin-top: 4px;
+      }
       .form-group {
         margin-bottom: 16px;
       }
@@ -204,8 +230,12 @@ export class CompleteProfileComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
+  // Max DOB is today (user must have been born before today)
+  maxDobDate = new Date().toISOString().split('T')[0];
+
   profileForm: FormGroup = this.fb.group({
-    mobile: ['', Validators.required],
+    mobile: ['', [Validators.required, Validators.pattern(/^[6-9][0-9]{9}$/)]],
+    dob: ['', Validators.required],
     preferredLanguage: ['', Validators.required],
     favoriteGenres: [''],
     role: ['reader', Validators.required],
@@ -242,6 +272,7 @@ export class CompleteProfileComponent implements OnInit {
       email: this.googleData.email,
       name: this.googleData.name,
       picture: this.googleData.picture,
+      dob: this.profileForm.value.dob,
     };
 
     if (typeof formData.favoriteGenres === 'string') {

@@ -238,6 +238,7 @@ export class AuthService {
   updateProfile(data: {
     bio?: string;
     avatar?: string | null;
+    dob?: string;
   }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {

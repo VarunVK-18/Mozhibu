@@ -473,7 +473,7 @@ router.post(
 // @desc Update user profile (bio)
 router.put("/me/profile", protect, async (req, res) => {
   try {
-    const { bio } = req.body;
+    const { bio, dob } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -482,6 +482,9 @@ router.put("/me/profile", protect, async (req, res) => {
 
     if (bio !== undefined) {
       user.bio = bio;
+    }
+    if (dob !== undefined) {
+      user.dob = dob;
     }
     if (req.body.avatar === null || req.body.avatar === "") {
       user.avatar = "";
@@ -498,6 +501,7 @@ router.put("/me/profile", protect, async (req, res) => {
         role: user.role,
         avatar: user.avatar,
         bio: user.bio,
+        dob: user.dob,
       },
     });
   } catch (err) {

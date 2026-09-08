@@ -106,6 +106,13 @@ export class StoryService {
   private confirmService = inject(ConfirmService);
 
   loadStory(id: string, resume: boolean = false) {
+    // Immediately clear stale data so the UI never shows previous book's content
+    this.activeStory.set(null);
+    this.storyEpisodes.set([]);
+    this.storyComments.set([]);
+    this.commentsPage.set(1);
+    this.commentsTotalPages.set(1);
+
     const baseUrl = environment.apiUrl.replace('/api', '');
     this.bookService.getBookById(id).subscribe({
       next: (book: any) => {

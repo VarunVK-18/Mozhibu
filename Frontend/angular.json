@@ -48,6 +48,7 @@
                 }
               ],
               "outputHashing": "all",
+              "namedChunks": false,
               "serviceWorker": "ngsw-config.json"
             },
             "development": {

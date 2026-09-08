@@ -78,6 +78,12 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
           <div class="skeleton-line" style="width: 90%"></div>
           <div class="skeleton-line" style="width: 100%"></div>
         </div>
+
+        @if (showScrollWarning()) {
+          <div class="scroll-warning-toast">
+            Auto-scroll is disabled. The chapter content is too short to scroll.
+          </div>
+        }
       </main>
 
       <!-- Bottom Toolbar -->
@@ -198,6 +204,27 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
       padding: 0 24px;
       z-index: 50;
       transition: transform 0.3s ease;
+    }
+
+    .scroll-warning-toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ef4444;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translate(-50%, -20px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
     }
     
     .reader-header.hidden {
@@ -477,6 +504,8 @@ export class ReaderComponent implements OnInit, OnDestroy {
   storyId: string = '';
   chapterContent = signal<SafeHtml>('');
   isTranslating = signal(false);
+
+  showScrollWarning = signal(false);
   requiresSubscription = signal(false);
   currentHtml = '';
 
@@ -649,6 +678,15 @@ export class ReaderComponent implements OnInit, OnDestroy {
 
   // --- Auto-Scroll Logic ---
   toggleAutoScroll(): void {
+    const scrollHeight = this.document.documentElement.scrollHeight || this.document.body.scrollHeight;
+    const clientHeight = this.document.documentElement.clientHeight || window.innerHeight;
+
+    if (scrollHeight <= clientHeight + 50) {
+      this.showScrollWarning.set(true);
+      setTimeout(() => this.showScrollWarning.set(false), 3000);
+      return;
+    }
+
     const isScrolling = this.isAutoScrolling();
     if (isScrolling) {
       this.isAutoScrolling.set(false);
