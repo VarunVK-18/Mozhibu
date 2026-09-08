@@ -9,6 +9,8 @@ import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
 
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -44,6 +46,7 @@ export class AppComponent {
   private authService = inject(AuthService);
   public loadingService = inject(LoadingService);
   private themeService = inject(ThemeService);
+  private swUpdate = inject(SwUpdate);
   isStandaloneRoute = false;
 
   constructor() {
@@ -68,5 +71,19 @@ export class AppComponent {
           }
         }
       });
+
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates
+        .pipe(
+          filter(
+            (evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY',
+          ),
+        )
+        .subscribe(() => {
+          if (confirm('A new update is available! Reload to apply?')) {
+            window.location.reload();
+          }
+        });
+    }
   }
 }

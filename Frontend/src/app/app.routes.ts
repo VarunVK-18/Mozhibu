@@ -383,20 +383,20 @@ export const routes: Routes = [
             <th>Type of Information</th>
             <th>Includes</th>
           </tr>
-          <tr><td>Registration/Log in Data</td><td></td></tr>
-          <tr><td>Usage Data</td><td></td></tr>
-          <tr><td>Device Data</td><td></td></tr>
-          <tr><td>Contact List/ Friends List</td><td></td></tr>
-          <tr><td>Payment Data</td><td></td></tr>
-          <tr><td>Customer support</td><td></td></tr>
+          <tr><td>Registration/Log in Data</td><td>Name (e.g., Evelyn Carter), Email (e.g., evelyn.c@example.com), Username, Date of Birth, Password, Profile Picture</td></tr>
+          <tr><td>Usage Data</td><td>Pages visited, time spent on chapters, reading progress, likes and bookmarks</td></tr>
+          <tr><td>Device Data</td><td>Device model (e.g., Pixel 8, iPhone 15 Pro), IP address (e.g., 192.168.1.100), Operating System version, Browser type</td></tr>
+          <tr><td>Contact List/ Friends List</td><td>Saved contacts, followers, and following lists (e.g., Marcus Thorne, Liam Brooks)</td></tr>
+          <tr><td>Payment Data</td><td>Billing address, transaction history, last 4 digits of saved cards</td></tr>
+          <tr><td>Customer support</td><td>Chat transcripts, support ticket history, uploaded screenshots</td></tr>
         </table>
 
         <p><strong>What does Company use the collected User Information for?</strong></p>
         <p>Company uses the User Information to:</p>
         <ol>
-          <li></li>
-          <li></li>
-          <li></li>
+          <li>Provide, maintain, and improve the Services.</li>
+          <li>Personalize content, recommendations, and advertisements.</li>
+          <li>Communicate with you regarding updates, security alerts, and support.</li>
         </ol>
 
         <p><strong>Can any third party access the User Information?</strong></p>

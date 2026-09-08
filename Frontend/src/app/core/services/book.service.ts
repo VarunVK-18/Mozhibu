@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { Observable, from, throwError, of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap, shareReplay } from 'rxjs/operators';
 import { AdminBook } from './admin.service';
 import { environment } from '../../../environments/environment';
 import { OfflineService } from './offline.service';
@@ -12,6 +12,7 @@ import { OfflineService } from './offline.service';
 export class BookService {
   private api = inject(ApiService);
   private offlineService = inject(OfflineService);
+  private booksCache = new Map<string, Observable<any>>();
 
   private fixCoverUrl(book: any): any {
     if (!book || !book.cover) return book;
@@ -73,12 +74,21 @@ export class BookService {
     if (isAudio) params.push(`isAudio=true`);
 
     const qs = `?${params.join('&')}`;
-    return this.api.get<any>(`/books${qs}`).pipe(
+
+    if (this.booksCache.has(qs)) {
+      return this.booksCache.get(qs)!;
+    }
+
+    const request = this.api.get<any>(`/books${qs}`).pipe(
       map((res) => ({
         ...res,
         books: res.books.map((b: any) => this.fixCoverUrl(b)),
       })),
+      shareReplay(1)
     );
+
+    this.booksCache.set(qs, request);
+    return request;
   }
 
   getChapters(bookId: string): Observable<any[]> {
