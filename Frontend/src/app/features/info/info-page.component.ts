@@ -122,35 +122,35 @@ import { ActivatedRoute } from '@angular/router';
         margin-bottom: 16px;
       }
 
-      .info-content table {
+      ::ng-deep .info-content table {
         width: 100%;
         border-collapse: collapse;
         margin: 24px 0;
       }
-      .info-content th, .info-content td {
+      ::ng-deep .info-content th, ::ng-deep .info-content td {
         border: 1px solid var(--border-soft);
         padding: 12px 16px;
         text-align: left;
       }
-      .info-content th {
+      ::ng-deep .info-content th {
         background: var(--surface);
         font-weight: 600;
         color: var(--ink);
       }
-      .info-content td {
+      ::ng-deep .info-content td {
         color: var(--ink-soft);
       }
-      .info-content ol, .info-content ul {
+      ::ng-deep .info-content ol, ::ng-deep .info-content ul {
         margin-bottom: 24px;
         padding-left: 24px;
         color: var(--ink-soft);
       }
-      .info-content p {
+      ::ng-deep .info-content p {
         margin-bottom: 16px;
         color: var(--ink-soft);
         line-height: 1.6;
       }
-      .info-content strong {
+      ::ng-deep .info-content strong {
         color: var(--ink);
       }
       @media (max-width: 768px) {

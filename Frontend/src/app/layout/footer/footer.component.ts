@@ -104,7 +104,8 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
       </div>
 
       <div class="footer-bottom">
-        <p>{{ "footer.copyright" | translate }}</p>
+        <p class="copyright">{{ "footer.copyright" | translate }}</p>
+        <p class="crafted-by">Crafted by Softrate ❤️</p>
       </div>
     </footer>
   `,
@@ -190,9 +191,19 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         max-width: 1240px;
         margin: 0 auto;
         padding-top: 32px;
-        text-align: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         font-size: 13px;
         color: #64748b;
+      }
+      .crafted-by {
+        font-weight: 500;
+        color: #94a3b8;
+        text-align: right;
+      }
+      .copyright {
+        text-align: left;
       }
       @media (max-width: 900px) {
         .footer-container {
@@ -202,6 +213,14 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         .footer-links-group {
           flex-wrap: wrap;
           gap: 48px;
+        }
+        .footer-bottom {
+          flex-direction: column;
+          gap: 16px;
+          text-align: center;
+        }
+        .copyright {
+          text-align: center;
         }
       }
     `,

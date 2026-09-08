@@ -120,7 +120,7 @@ export const DEFAULT_EN_TRANSLATIONS: Record<string, any> = {
       cookies: "Cookie Policy",
       copyright: "Copyright"
     },
-    copyright: "© 2026 Mozhibu Inc. All rights reserved."
+    copyright: "© 2026 Wise King Enterprises Private Limited. All rights reserved."
   },
   libraryPage: {
     title: "Your Library",

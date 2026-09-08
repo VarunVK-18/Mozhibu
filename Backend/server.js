@@ -29,6 +29,11 @@ const corsOptions = {
       return callback(null, true);
     }
     
+    // Dynamically allow any localhost port during development
+    if (origin.startsWith('http://localhost:')) {
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
