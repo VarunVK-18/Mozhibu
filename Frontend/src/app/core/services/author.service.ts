@@ -29,4 +29,16 @@ export class AuthorService {
   followAuthor(id: string): Observable<any> {
     return this.api.post(`/users/follow/${id}`, {});
   }
+
+  getAuthorFollowers(id: string): Observable<any[]> {
+    return this.api.get(`/users/author/${id}/followers`);
+  }
+
+  getAuthorFollowing(id: string): Observable<any[]> {
+    return this.api.get(`/users/author/${id}/following`);
+  }
+
+  getAuthorReviews(id: string): Observable<any[]> {
+    return this.api.get(`/users/author/${id}/reviews`);
+  }
 }

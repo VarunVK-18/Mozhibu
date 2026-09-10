@@ -140,6 +140,7 @@ const userRoutes = require("./src/routes/users");
 const notificationRoutes = require("./src/routes/notifications");
 const competitionRoutes = require("./src/routes/competitions");
 const searchRoutes = require("./src/routes/search");
+const feedbackRoutes = require("./src/routes/feedback");
 
 const subscriptionRoutes = require("./src/routes/subscriptions");
 const revenueRoutes = require("./src/routes/revenue");
@@ -148,6 +149,7 @@ const earningsRoutes = require("./src/routes/earnings");
 app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/competitions", competitionRoutes);
 app.use("/api/notifications", notificationRoutes);

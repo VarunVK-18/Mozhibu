@@ -195,7 +195,7 @@ import { environment } from '../../../environments/environment';
             >
               @for (item of results; track item._id) {
                 @if (activeTab === 'authors') {
-                  <div class="author-card" [routerLink]="['/author', item._id]">
+                  <div class="author-card" [class.pro-card]="item.isPremium" [routerLink]="['/author', item._id]">
                     <div class="avatar-ring premium-container" [class.premium-ring]="item.isPremium">
                       <img
                         [src]="getAvatarUrl(item.avatar, item.username)"
@@ -241,7 +241,7 @@ import { environment } from '../../../environments/environment';
                         </div>
                       }
                       @if (item.isMature) {
-                        <div class="mature-badge" style="background: rgba(220,38,38,0.9); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">18+</div>
+                        <div class="mature-badge" style="background: rgba(220,38,38,0.9); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);">Erotic</div>
                       }
                       </div>
                       @if (item.completionStatus === 'completed') {
@@ -700,12 +700,36 @@ import { environment } from '../../../environments/environment';
         border: 1px solid var(--border-soft);
         border-radius: 12px;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .author-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.25s;
+        border-radius: 12px;
+        pointer-events: none;
       }
 
       .author-card:hover {
         border-color: var(--forest);
-        box-shadow: 0 8px 24px rgba(63, 98, 89, 0.08);
+        box-shadow: 0 8px 24px rgba(63, 98, 89, 0.1);
+        transform: translateY(-4px);
+      }
+
+      /* PRO author card — gold glow */
+      .author-card.pro-card {
+        border-color: rgba(229, 160, 0, 0.35);
+        background: linear-gradient(160deg, var(--card) 70%, rgba(245, 197, 24, 0.06) 100%);
+      }
+
+      .author-card.pro-card:hover {
+        border-color: rgba(229, 160, 0, 0.7);
+        box-shadow: 0 8px 28px rgba(229, 160, 0, 0.18);
         transform: translateY(-4px);
       }
 
@@ -714,9 +738,39 @@ import { environment } from '../../../environments/environment';
         height: 80px;
         border-radius: 50%;
         object-fit: cover;
-        margin-bottom: 16px;
         border: 2px solid var(--surface);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        display: block;
+      }
+
+      /* Avatar ring wrapper */
+      .avatar-ring {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        padding: 3px;
+        background: var(--surface);
+        margin-bottom: 16px;
+        flex-shrink: 0;
+      }
+
+      .avatar-ring img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* PRO golden ring */
+      .avatar-ring.premium-ring {
+        padding: 3px;
+        background: linear-gradient(135deg, #f5c518, #e8a000, #ffdd57, #c97b00);
+        box-shadow: 0 0 0 2px rgba(245, 197, 24, 0.3), 0 4px 14px rgba(229,160,0,0.3);
+      }
+
+      .avatar-ring.premium-ring img {
+        border: 2px solid var(--card);
       }
 
       .author-name {

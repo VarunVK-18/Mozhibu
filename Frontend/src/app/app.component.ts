@@ -8,6 +8,7 @@ import { LoadingService } from './core/services/loading.service';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
+import { OnboardingComponent } from './features/auth/onboarding/onboarding.component';
 
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
@@ -20,6 +21,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
     FooterComponent,
     CommonModule,
     ConfirmModalComponent,
+    OnboardingComponent,
   ],
   template: `
     @if (!isStandaloneRoute) {
@@ -32,36 +34,54 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
       <app-footer></app-footer>
     }
     <app-confirm-modal></app-confirm-modal>
+    @if (authService.user() && !authService.user()?.penName && !currentUrl.startsWith('/settings')) {
+      <app-onboarding></app-onboarding>
+    }
   `,
   styles: [
     `
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
       main {
-        min-height: calc(100vh - 73px);
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+      }
+      app-header, app-footer {
+        flex-shrink: 0;
       }
     `,
   ],
 })
 export class AppComponent {
   private router = inject(Router);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   public loadingService = inject(LoadingService);
   private themeService = inject(ThemeService);
   private swUpdate = inject(SwUpdate);
   isStandaloneRoute = false;
+  currentUrl = '';
 
   constructor() {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
         const url = event.urlAfterRedirects;
+        this.currentUrl = url;
         this.isStandaloneRoute =
           url.startsWith('/admin') ||
           url.startsWith('/read') ||
           url.startsWith('/login') ||
           url.startsWith('/signup') ||
-          url.startsWith('/account-suspended');
+          url.startsWith('/account-suspended') ||
+          url.startsWith('/onboarding');
 
-        if (this.authService.user()?.status === 'suspended') {
+        const user = this.authService.user();
+
+        if (user?.status === 'suspended') {
           if (
             !url.startsWith('/account-suspended') &&
             !url.startsWith('/help') &&
@@ -70,6 +90,9 @@ export class AppComponent {
             this.router.navigate(['/account-suspended']);
           }
         }
+
+        // Force scroll to top on every route change
+        window.scrollTo(0, 0);
       });
 
     if (this.swUpdate.isEnabled) {

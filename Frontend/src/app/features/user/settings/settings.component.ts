@@ -10,6 +10,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmService } from '../../../core/services/confirm.service';
 import { ThemeService } from '../../../core/services/theme.service';
 
+import { Subject, of } from 'rxjs';
+import { debounceTime, switchMap, catchError } from 'rxjs/operators';
+
 @Component({
   selector: 'app-settings',
   standalone: true,
@@ -36,6 +39,13 @@ import { ThemeService } from '../../../core/services/theme.service';
             (click)="setTab('account')"
           >
             Account Settings
+          </button>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'monetization'"
+            (click)="setTab('monetization')"
+          >
+            Monetization
           </button>
         </div>
 
@@ -141,6 +151,58 @@ import { ThemeService } from '../../../core/services/theme.service';
             <div class="info-group">
               <label>Username</label>
               <div class="value">{{ auth.user()?.username }}</div>
+            </div>
+
+            <!-- Pen Name Field -->
+            <div class="info-group">
+              <label>Pen Name (Public Nickname)</label>
+              <div class="input-with-validation" style="position: relative;">
+                <input
+                  type="text"
+                  [ngModel]="penNameText()"
+                  (ngModelChange)="penNameText.set($event); onPenNameChange($event)"
+                  class="form-control"
+                  placeholder="Pen Name"
+                />
+                
+                <div class="validation-status" *ngIf="checkingPenName()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: var(--text-secondary);">
+                  <div class="spinner" style="display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: currentColor; animation: spin 1s linear infinite;"></div> Checking...
+                </div>
+                
+                <div class="validation-status available" *ngIf="penNameAvailable() === true && !checkingPenName() && penNameText() !== originalPenName()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 2px 6px; border-radius: 4px;">
+                  <i class="fa fa-check-circle"></i> Available!
+                </div>
+                
+                <div class="validation-status taken" *ngIf="penNameAvailable() === false && !checkingPenName() && penNameText() !== originalPenName()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 2px 6px; border-radius: 4px;">
+                  <i class="fa fa-times-circle"></i> Already taken
+                </div>
+              </div>
+              <div *ngIf="penNameError()" style="margin-top: 6px; font-size: 0.82rem; color: #ef4444; display: flex; align-items: center; gap: 6px;">
+                <i class="fa fa-exclamation-circle"></i> {{ penNameError() }}
+              </div>
+              <div *ngIf="penNameSuggestions().length > 0" style="margin-top: 8px;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Try instead: </span>
+                <span
+                  *ngFor="let s of penNameSuggestions()"
+                  (click)="selectSuggestion(s)"
+                  style="display: inline-block; margin: 3px 4px; padding: 3px 10px; background: rgba(var(--primary-rgb), 0.1); color: var(--primary); border: 1px solid rgba(var(--primary-rgb), 0.25); border-radius: 20px; font-size: 0.82rem; cursor: pointer; transition: background 0.15s;"
+                  onmouseenter="this.style.background='rgba(var(--primary-rgb), 0.2)'"
+                  onmouseleave="this.style.background='rgba(var(--primary-rgb), 0.1)'"
+                >{{ s }}</span>
+              </div>
+              <p class="field-hint" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Lowercase letters, numbers and _ only. No capitals or spaces.</p>
+            </div>
+            
+            <!-- Legal Name Field -->
+            <div class="info-group">
+              <label>Authorized Legal Name <span class="private-badge" style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; margin-left: 8px;"><i class="fa fa-lock"></i> Private</span></label>
+              <input
+                type="text"
+                [(ngModel)]="legalNameText"
+                class="form-control"
+                placeholder="Authorized Legal Name"
+              />
+              <p class="field-hint" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">As per your ID card. This is required for monetization and payouts. Kept strictly confidential.</p>
             </div>
             <div class="info-group">
               <label>Email Address</label>
@@ -337,6 +399,185 @@ import { ThemeService } from '../../../core/services/theme.service';
             </div>
           </div>
         </div>
+
+        <!-- Monetization Settings -->
+        <div class="settings-group" *ngIf="activeTab() === 'monetization'">
+          <div class="settings-card">
+            <h3>Monetization & Payouts</h3>
+            <p>Manage your earnings, payouts, and secure bank details.</p>
+
+            <!-- Loading State -->
+            <div *ngIf="earningsLoading()" style="padding: 32px; text-align: center;">
+              <div class="spinner" style="margin: 0 auto; border-top-color: var(--forest);"></div>
+              <p style="margin-top: 16px; color: var(--ink-soft);">Loading earnings data...</p>
+            </div>
+
+            <!-- Earnings Dashboard -->
+            <div *ngIf="!earningsLoading() && earningsSummary()" class="earnings-dashboard" style="margin-top: 24px;">
+              <!-- Overview Cards -->
+              <div class="earnings-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                <div class="earning-card" style="background: var(--paper-warm); padding: 20px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                  <div style="font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Pending Balance</div>
+                  <div style="font-size: 28px; font-family: var(--display); color: var(--ink); font-weight: 600;">{{ earningsSummary()?.totalPendingDisplay }}</div>
+                  <div style="font-size: 12px; color: var(--forest); margin-top: 4px;">Available for withdrawal</div>
+                </div>
+                <div class="earning-card" style="background: var(--paper-warm); padding: 20px; border-radius: 12px; border: 1px solid var(--border-soft);">
+                  <div style="font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Requested Payouts</div>
+                  <div style="font-size: 28px; font-family: var(--display); color: var(--ink); font-weight: 600;">{{ earningsSummary()?.totalRequestedDisplay }}</div>
+                  <div style="font-size: 12px; color: #d97706; margin-top: 4px;">Processing by admin</div>
+                </div>
+                <div class="earning-card" style="background: var(--forest-tint); padding: 20px; border-radius: 12px; border: 1px solid var(--forest);">
+                  <div style="font-size: 13px; color: var(--forest-deep); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Total Paid</div>
+                  <div style="font-size: 28px; font-family: var(--display); color: var(--forest-deep); font-weight: 600;">{{ earningsSummary()?.totalPaidDisplay }}</div>
+                  <div style="font-size: 12px; color: var(--forest-deep); margin-top: 4px; opacity: 0.8;">Lifetime earnings</div>
+                </div>
+              </div>
+
+              <!-- Withdrawal Action -->
+              <div class="withdrawal-section" style="background: var(--paper); border: 1px solid var(--border-soft); border-radius: 12px; padding: 24px; margin-bottom: 40px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+                  <div style="flex: 1; min-width: 250px;">
+                    <h4 style="font-family: var(--display); font-size: 16px; margin-bottom: 8px;">Request Withdrawal</h4>
+                    <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 16px;">
+                      You can request a withdrawal once your pending balance reaches the minimum threshold of ₹{{ earningsSummary()?.minPayoutInPaise / 100 }}.
+                    </p>
+                    
+                    <!-- Progress Bar -->
+                    <div style="height: 8px; background: var(--border-soft); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                      <div style="height: 100%; background: var(--forest); transition: width 0.3s;" 
+                           [style.width.%]="(earningsSummary()?.totalPendingInPaise / earningsSummary()?.minPayoutInPaise) * 100 > 100 ? 100 : (earningsSummary()?.totalPendingInPaise / earningsSummary()?.minPayoutInPaise) * 100">
+                      </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--ink-soft); text-align: right;">
+                      {{ earningsSummary()?.totalPendingInPaise >= earningsSummary()?.minPayoutInPaise ? 'Threshold met!' : '₹' + (earningsSummary()?.totalPendingInPaise / 100).toFixed(2) + ' / ₹' + (earningsSummary()?.minPayoutInPaise / 100) }}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <button class="btn btn-primary" 
+                            style="padding: 12px 24px;"
+                            [disabled]="earningsSummary()?.totalPendingInPaise < earningsSummary()?.minPayoutInPaise || withdrawLoading()"
+                            (click)="requestWithdrawal()">
+                      <div *ngIf="withdrawLoading()" class="btn-loader"></div>
+                      {{ withdrawLoading() ? 'Requesting...' : 'Withdraw Funds' }}
+                    </button>
+                  </div>
+                </div>
+                
+                <div *ngIf="withdrawError()" class="error-text" style="margin-top: 16px; padding: 12px; background: var(--rose-tint); border-radius: 6px;">
+                  {{ withdrawError() }}
+                </div>
+                <div *ngIf="withdrawSuccess()" class="success-text" style="margin-top: 16px; padding: 12px; background: #dcfce7; color: #15803d; border-radius: 6px;">
+                  Withdrawal requested successfully! Our team will process it shortly.
+                </div>
+              </div>
+
+              <!-- Transaction History -->
+              <h4 style="font-family: var(--display); font-size: 18px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-soft);">Transaction History</h4>
+              
+              <div *ngIf="earningsHistory().length === 0" style="padding: 32px 0; text-align: center; color: var(--ink-soft);">
+                No earnings history yet. Keep writing and publishing!
+              </div>
+              
+              <div *ngIf="earningsHistory().length > 0" class="history-table-container" style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border-soft); color: var(--ink-soft);">
+                      <th style="padding: 12px 8px; font-weight: 500;">Period</th>
+                      <th style="padding: 12px 8px; font-weight: 500;">Source</th>
+                      <th style="padding: 12px 8px; font-weight: 500;">Reads / Score</th>
+                      <th style="padding: 12px 8px; font-weight: 500;">Amount</th>
+                      <th style="padding: 12px 8px; font-weight: 500;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let record of earningsHistory()" style="border-bottom: 1px solid var(--border-soft);">
+                      <td style="padding: 16px 8px;">{{ record.month }}/{{ record.year }}</td>
+                      <td style="padding: 16px 8px;">
+                        <span class="source-badge" [ngClass]="record.source || 'author'">
+                          {{ record.source === 'reader' ? '📖 Reading' : '✍️ Writing' }}
+                        </span>
+                      </td>
+                      <td style="padding: 16px 8px; color: var(--ink-soft);">{{ record.qualifiedReads || record.engagementScore || 0 }}</td>
+                      <td style="padding: 16px 8px; font-weight: 600;">{{ record.earningsDisplay }}</td>
+                      <td style="padding: 16px 8px;">
+                        <span class="status-badge" [ngClass]="record.status">
+                          {{ record.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div style="margin: 40px 0; border-top: 1px solid var(--border-soft);"></div>
+            <h4 style="font-family: var(--display); font-size: 18px; margin-bottom: 16px;">Bank Details</h4>
+            <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">Provide your bank details below where your earnings will be transferred.</p>
+            
+            <div class="info-group" style="margin-top: 16px;">
+              <label>Account Holder Name</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="monetizationAccountName()"
+                (ngModelChange)="monetizationAccountName.set($event)"
+                placeholder="Name as it appears on your bank account"
+              />
+            </div>
+            <div class="info-group">
+              <label>Bank Name</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="monetizationBankName()"
+                (ngModelChange)="monetizationBankName.set($event)"
+                placeholder="e.g., State Bank of India"
+              />
+            </div>
+            <div class="info-group">
+              <label>Account Number</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="monetizationAccountNumber()"
+                (ngModelChange)="monetizationAccountNumber.set($event)"
+                placeholder="Your secure account number"
+              />
+              <p style="font-size: 11px; color: var(--ink-soft); margin-top: 4px;">* Encrypted and masked for your security</p>
+            </div>
+            <div class="info-group">
+              <label>IFSC Code</label>
+              <input
+                type="text"
+                class="form-control"
+                [ngModel]="monetizationIfscCode()"
+                (ngModelChange)="monetizationIfscCode.set($event)"
+                placeholder="Bank branch IFSC code"
+                style="text-transform: uppercase;"
+              />
+            </div>
+
+            <div *ngIf="monetizationError()" class="error-text">
+              {{ monetizationError() }}
+            </div>
+            <div *ngIf="monetizationSuccess()" class="success-text">
+              Monetization details securely saved!
+            </div>
+
+            <div class="settings-actions">
+              <button
+                class="btn btn-primary"
+                (click)="saveMonetization()"
+                [disabled]="monetizationSaving()"
+              >
+                <div *ngIf="monetizationSaving()" class="btn-loader"></div>
+                {{ monetizationSaving() ? 'Saving Securely...' : 'Save Monetization Settings' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   `,
@@ -363,6 +604,31 @@ import { ThemeService } from '../../../core/services/theme.service';
       .page-header p {
         color: var(--ink-soft);
         font-size: 15px;
+      }
+      
+      .status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .status-badge.pending {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .status-badge.requested {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .status-badge.paid {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .status-badge.rolled_over {
+        background: #f3e8ff;
+        color: #7e22ce;
       }
       
       .custom-tooltip:hover::after {
@@ -526,6 +792,28 @@ import { ThemeService } from '../../../core/services/theme.service';
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
+      .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .status-badge.pending { background: #f1f5f9; color: #475569; }
+      .status-badge.requested { background: #fef3c7; color: #b45309; }
+      .status-badge.paid { background: #dcfce7; color: #15803d; }
+      .status-badge.rolled_over { background: #f3e8ff; color: #7e22ce; }
+
+      .source-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .source-badge.reader { background: #eff6ff; color: #1d4ed8; }
+      .source-badge.author { background: #f0fdf4; color: #15803d; }
       .avatar-actions {
         margin-top: 8px;
       }
@@ -866,12 +1154,11 @@ import { ThemeService } from '../../../core/services/theme.service';
         .upgrade-btn {
           padding: 12px 16px;
           font-size: 14px;
-          width: 100%;
-          white-space: normal;
-          height: auto;
-        }
+        white-space: normal;
+        height: auto;
       }
-    `,
+    }
+    `
   ],
 })
 export class SettingsComponent implements OnInit {
@@ -883,7 +1170,7 @@ export class SettingsComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
 
-  activeTab = signal<'profile' | 'account'>('profile');
+  activeTab = signal<'profile' | 'account' | 'monetization'>('profile');
 
   loading = signal(false);
   deactivating = signal(false);
@@ -893,11 +1180,20 @@ export class SettingsComponent implements OnInit {
   uploadError = signal<string | null>(null);
 
   bioText = signal<string>('');
+  penNameText = signal<string>('');
+  originalPenName = signal<string>('');
+  legalNameText = signal<string>('');
   dobDate = signal('');
   maxDobDate = new Date().toISOString().split('T')[0];
   savingProfile = signal(false);
   profileUpdateError = signal<string | null>(null);
   profileUpdateSuccess = signal(false);
+
+  checkingPenName = signal<boolean>(false);
+  penNameAvailable = signal<boolean | null>(null);
+  penNameError = signal<string | null>(null);
+  penNameSuggestions = signal<string[]>([]);
+  private penNameSubject = new Subject<string>();
 
   oldPassword = signal('');
   newPassword = signal('');
@@ -910,30 +1206,101 @@ export class SettingsComponent implements OnInit {
   passwordChangeSuccess = signal<string | null>(null);
   showForgotPassword = signal(false);
 
+  monetizationAccountName = signal('');
+  monetizationBankName = signal('');
+  monetizationAccountNumber = signal('');
+  monetizationIfscCode = signal('');
+  monetizationSaving = signal(false);
+  monetizationError = signal<string | null>(null);
+  monetizationSuccess = signal(false);
+
+  earningsSummary = signal<any>(null);
+  earningsHistory = signal<any[]>([]);
+  earningsLoading = signal(true);
+  withdrawLoading = signal(false);
+  withdrawSuccess = signal(false);
+  withdrawError = signal<string | null>(null);
+
   ngOnInit() {
     // If not logged in, redirect to login
     if (!this.auth.user()) {
       this.router.navigate(['/login']);
     } else {
       this.bioText.set(this.auth.user()?.bio || '');
+      this.penNameText.set(this.auth.user()?.penName || '');
+      this.originalPenName.set(this.auth.user()?.penName || '');
+      this.legalNameText.set(this.auth.user()?.legalName || '');
       if (this.auth.user()?.dob) {
         // Format to YYYY-MM-DD for the date input
         const d = new Date(this.auth.user()!.dob as string);
         this.dobDate.set(d.toISOString().split('T')[0]);
       }
+      if (this.auth.user()?.monetization) {
+        const mon = this.auth.user()!.monetization!;
+        this.monetizationAccountName.set(mon.accountName || '');
+        this.monetizationBankName.set(mon.bankName || '');
+        this.monetizationAccountNumber.set(mon.accountNumber || '');
+        this.monetizationIfscCode.set(mon.ifscCode || '');
+      }
     }
+
+    this.penNameSubject.pipe(
+      debounceTime(400),
+      switchMap((name) => {
+        if (!name || name === this.originalPenName() || name.length < 3) {
+          this.checkingPenName.set(false);
+          this.penNameAvailable.set(null);
+          return of(null);
+        }
+        this.checkingPenName.set(true);
+        const userId = this.auth.user()?.id || '';
+        return this.api.get<{ available: boolean }>(`/auth/check-penname?name=${name}&excludeUserId=${userId}`).pipe(
+          catchError(() => of({ available: false }))
+        );
+      })
+    ).subscribe((res) => {
+      this.checkingPenName.set(false);
+      if (res !== null) {
+        this.penNameAvailable.set(res.available);
+        if (!res.available) {
+          this.generatePenNameSuggestions(this.penNameText());
+        } else {
+          this.penNameSuggestions.set([]);
+        }
+      }
+    });
 
     this.route.queryParams.subscribe((params) => {
       if (params['tab'] === 'account') {
         this.activeTab.set('account');
+      } else if (params['tab'] === 'monetization') {
+        this.activeTab.set('monetization');
+        this.loadEarnings();
       } else {
         this.activeTab.set('profile');
       }
     });
   }
 
-  setTab(tab: 'profile' | 'account') {
+  loadEarnings() {
+    this.earningsLoading.set(true);
+    this.auth.getEarnings().subscribe({
+      next: (res) => {
+        this.earningsSummary.set(res.summary);
+        this.earningsHistory.set(res.earnings || []);
+        this.earningsLoading.set(false);
+      },
+      error: () => {
+        this.earningsLoading.set(false);
+      }
+    });
+  }
+
+  setTab(tab: 'profile' | 'account' | 'monetization') {
     this.activeTab.set(tab);
+    if (tab === 'monetization' && !this.earningsSummary()) {
+      this.loadEarnings();
+    }
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: tab },
@@ -958,14 +1325,78 @@ export class SettingsComponent implements OnInit {
     });
   }
 
+  onPenNameChange(name: string) {
+    this.penNameError.set(null);
+    this.penNameAvailable.set(null);
+    this.checkingPenName.set(false);
+
+    // If unchanged, reset silently
+    if (name === this.originalPenName()) return;
+
+    // Rule: no capital letters
+    if (/[A-Z]/.test(name)) {
+      this.penNameError.set('No capital letters allowed. Use lowercase only (e.g. varun or varun18).');
+      return;
+    }
+
+    // Rule: no special characters, symbols, spaces, emojis — only lowercase letters, numbers and underscore
+    if (/[^a-z0-9_]/.test(name)) {
+      this.penNameError.set('Only lowercase letters, numbers, and underscore (_) are allowed. No spaces or other symbols.');
+      return;
+    }
+
+    // Rule: cannot be only numbers — must have at least one letter
+    if (/^[0-9_]+$/.test(name)) {
+      this.penNameError.set('Pen name must have at least one letter (e.g. varun or varun_18).');
+      return;
+    }
+
+    if (name.length >= 3) {
+      this.checkingPenName.set(true);
+      this.penNameSuggestions.set([]);
+      this.penNameSubject.next(name);
+    }
+  }
+
+  generatePenNameSuggestions(base: string) {
+    const year = new Date().getFullYear().toString().slice(-2); // e.g. "26"
+    const rand2 = Math.floor(Math.random() * 90 + 10).toString(); // e.g. "42"
+    const rand3 = Math.floor(Math.random() * 900 + 100).toString(); // e.g. "183"
+    const candidates = [
+      `${base}${rand2}`,
+      `${base}_${rand2}`,
+      `${base}${rand3}`,
+      `${base}_${year}`,
+      `${base}${year}`,
+    ];
+    // Deduplicate and limit to 4
+    this.penNameSuggestions.set([...new Set(candidates)].slice(0, 4));
+  }
+
+  selectSuggestion(name: string) {
+    this.penNameText.set(name);
+    this.onPenNameChange(name);
+  }
+
   saveProfile() {
     this.savingProfile.set(true);
     this.profileUpdateError.set(null);
     this.profileUpdateSuccess.set(false);
 
-    const payload: any = { bio: this.bioText() };
-    if (this.dobDate()) {
-      payload.dob = this.dobDate();
+    const payload: any = {
+      bio: this.bioText(),
+      dob: this.dobDate() ? new Date(this.dobDate()) : undefined,
+      penName: this.penNameText(),
+      legalName: this.legalNameText(),
+    };
+    if (this.penNameText() && this.penNameText() !== this.originalPenName()) {
+      // Basic client-side check, backend will strictly validate uniqueness
+      if (this.penNameAvailable() === false) {
+        this.profileUpdateError.set("The chosen pen name is already taken.");
+        this.savingProfile.set(false);
+        return;
+      }
+      payload.penName = this.penNameText();
     }
 
     this.auth.updateProfile(payload).subscribe({
@@ -980,6 +1411,61 @@ export class SettingsComponent implements OnInit {
           err.error?.msg || 'Failed to update profile.',
         );
       },
+    });
+  }
+
+  saveMonetization() {
+    this.monetizationSaving.set(true);
+    this.monetizationError.set(null);
+    this.monetizationSuccess.set(false);
+
+    const payload = {
+      accountName: this.monetizationAccountName(),
+      bankName: this.monetizationBankName(),
+      accountNumber: this.monetizationAccountNumber(),
+      ifscCode: this.monetizationIfscCode()
+    };
+
+    this.auth.updateMonetization(payload).subscribe({
+      next: () => {
+        this.monetizationSaving.set(false);
+        this.monetizationSuccess.set(true);
+        // Do not update local user session manually for security reasons here.
+        // Re-fetching full profile if strictly needed, or just let it be since they just entered it.
+        // It's masked in DB anyway.
+        setTimeout(() => {
+          this.monetizationSuccess.set(false);
+        }, 3000);
+      },
+      error: (err) => {
+        this.monetizationSaving.set(false);
+        this.monetizationError.set(err.error?.msg || 'Failed to update monetization details.');
+      }
+    });
+  }
+
+  requestWithdrawal() {
+    // Check if bank details are set
+    if (!this.monetizationAccountName() || !this.monetizationAccountNumber() || !this.monetizationIfscCode()) {
+      this.withdrawError.set('Please fill out and save your bank details first.');
+      return;
+    }
+
+    this.withdrawLoading.set(true);
+    this.withdrawError.set(null);
+    this.withdrawSuccess.set(false);
+
+    this.auth.requestWithdrawal().subscribe({
+      next: () => {
+        this.withdrawLoading.set(false);
+        this.withdrawSuccess.set(true);
+        this.loadEarnings(); // Refresh balances
+        setTimeout(() => this.withdrawSuccess.set(false), 4000);
+      },
+      error: (err) => {
+        this.withdrawLoading.set(false);
+        this.withdrawError.set(err.error?.msg || 'Failed to request withdrawal.');
+      }
     });
   }
 

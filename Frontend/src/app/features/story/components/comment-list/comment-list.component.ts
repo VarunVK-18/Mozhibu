@@ -81,7 +81,7 @@ import { RouterModule } from '@angular/router';
       
       <div class="reviews-column">
       <!-- Write Review/Comment Input -->
-      @if (!isStoryAuthor || !hasUserReviewed) {
+      @if (!isStoryAuthor) {
         <div class="comment-input-area write-review-box">
           <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
         <div class="input-wrapper">
@@ -133,7 +133,7 @@ import { RouterModule } from '@angular/router';
                 </button>
                 <button
                   class="btn-submit"
-                  [disabled]="!newCommentText.trim() || newRating === 0"
+                  [disabled]="!newCommentText.trim() && newRating === 0"
                   (click)="submitComment()"
                 >
                   Post Review
@@ -247,7 +247,7 @@ import { RouterModule } from '@angular/router';
                       {{ comment.isPinned ? 'Unpin' : 'Pin' }} Comment
                     </button>
                     <button
-                      *ngIf="comment.authorName === currentUserName && !comment.isEdited"
+                      *ngIf="comment.authorName === currentUserName"
                       class="dropdown-item"
                       (click)="enableEditMode(comment)"
                     >
@@ -363,7 +363,7 @@ import { RouterModule } from '@angular/router';
                   <div class="input-footer">
                     <div class="input-actions" style="margin-left: auto;">
                       <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
-                      <button class="btn-submit" [disabled]="!editCommentText.trim() || editRating === 0" (click)="submitEdit(comment.id)">Save</button>
+                      <button class="btn-submit" [disabled]="!editCommentText.trim() && editRating === 0" (click)="submitEdit(comment.id)">Save</button>
                     </div>
                   </div>
                 </div>
@@ -478,7 +478,7 @@ import { RouterModule } from '@angular/router';
                             [class.open]="activeDropdownId === reply.id"
                           >
                             <button
-                              *ngIf="reply.authorName === currentUserName && !reply.isEdited"
+                              *ngIf="reply.authorName === currentUserName"
                               class="dropdown-item"
                               (click)="enableEditMode(reply)"
                             >

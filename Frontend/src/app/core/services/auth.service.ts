@@ -21,6 +21,15 @@ export interface User {
   favoriteBooks?: string[];
   dob?: string;
   isPremium?: boolean;
+  isOnboarded?: boolean;
+  penName?: string;
+  legalName?: string;
+  monetization?: {
+    accountName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+  };
 }
 
 @Injectable({
@@ -239,6 +248,7 @@ export class AuthService {
     bio?: string;
     avatar?: string | null;
     dob?: string;
+    penName?: string;
   }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {
@@ -252,6 +262,27 @@ export class AuthService {
         }
       }),
     );
+  }
+
+  updateMonetization(data: {
+    accountName?: string;
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+  }): Observable<any> {
+    return this.api.put('/users/me/monetization', data);
+  }
+
+  getEarnings(): Observable<any> {
+    return this.api.get('/earnings/me');
+  }
+
+  getEarningsProjection(): Observable<any> {
+    return this.api.get('/earnings/me/projection');
+  }
+
+  requestWithdrawal(): Observable<any> {
+    return this.api.post('/earnings/withdraw', {});
   }
 
   forgotPassword(email: string): Observable<any> {

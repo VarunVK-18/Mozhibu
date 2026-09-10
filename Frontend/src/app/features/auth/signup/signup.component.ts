@@ -233,7 +233,7 @@ export function passwordMatchValidator(
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" [disabled]="isLoading || !isDobCompleted">
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading">
               {{ isLoading ? 'Creating account...' : 'Create account' }}
             </button>
 

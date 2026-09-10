@@ -189,7 +189,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
   styles: [
     `
       .page-wrapper {
-        max-width: 1240px;
+        max-width: 1536px;
         margin: 0 auto;
         padding: 0 32px 80px 32px;
       }

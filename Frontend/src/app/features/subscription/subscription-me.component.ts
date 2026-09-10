@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { SubscriptionService } from '../../core/services/subscription.service';
 
 @Component({
@@ -74,14 +74,26 @@ import { SubscriptionService } from '../../core/services/subscription.service';
               </div>
             </div>
             <div class="action-row">
-              <a routerLink="/subscription/plans" class="btn-upgrade"
-                >Upgrade Plan</a
-              >
-              @if (subscription()!.subscription!.autoRenew) {
-                <button class="btn-cancel" (click)="cancelAutoRenew()">
-                  Cancel Auto-Renewal
-                </button>
-              }
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; gap: 12px;">
+                  <button 
+                    class="btn-upgrade" 
+                    (click)="goToPlans()"
+                  >
+                    Upgrade Plan
+                  </button>
+                  @if (subscription()!.subscription!.autoRenew) {
+                    <button class="btn-cancel" (click)="cancelAutoRenew()">
+                      Cancel Auto-Renewal
+                    </button>
+                  }
+                </div>
+                @if (upgradeError()) {
+                  <div class="inline-error" style="color: #ef4444; font-size: 13px; font-weight: 500; margin-top: 4px; padding: 8px 12px; background: #fef2f2; border-radius: 6px; border: 1px solid #fecaca; display: inline-block;">
+                    {{ upgradeError() }}
+                  </div>
+                }
+              </div>
             </div>
           </div>
         } @else {
@@ -270,6 +282,12 @@ import { SubscriptionService } from '../../core/services/subscription.service';
         border: none;
         cursor: pointer;
       }
+      .btn-upgrade:disabled,
+      .btn-upgrade.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #9ca3af;
+      }
       .btn-cancel {
         background: transparent;
         border: 1px solid #fecaca;
@@ -392,10 +410,12 @@ import { SubscriptionService } from '../../core/services/subscription.service';
 })
 export class SubscriptionMeComponent implements OnInit {
   private subscriptionService = inject(SubscriptionService);
+  private router = inject(Router);
 
   subscription = signal<any>(null);
   history = signal<any[]>([]);
   isLoading = signal(true);
+  upgradeError = signal<string | null>(null);
 
   ngOnInit() {
     this.subscriptionService.getMySubscription().subscribe({
@@ -437,6 +457,24 @@ export class SubscriptionMeComponent implements OnInit {
         },
       });
     }
+  }
+
+  isUpgradeRestricted(): boolean {
+    const sub = this.subscription();
+    if (sub && sub.active && sub.subscription) {
+      return sub.subscription.daysRemaining > 2;
+    }
+    return false;
+  }
+
+  goToPlans() {
+    this.upgradeError.set(null);
+    if (this.isUpgradeRestricted()) {
+      const days = this.subscription()?.subscription?.daysRemaining;
+      this.upgradeError.set(`You can only upgrade when you have 2 or fewer days remaining (${days} days left).`);
+      return;
+    }
+    this.router.navigate(['/subscription/plans']);
   }
 }
 

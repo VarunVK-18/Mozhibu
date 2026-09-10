@@ -48,6 +48,13 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
           </select>
         </div>
       </header>
+      <!-- Reading Progress Bar -->
+      <div class="reading-progress-bar" [class.controls-hidden]="!showControls()" [style.--scroll-pct]="scrollPercentage()">
+        <div class="reading-progress-fill" [style.width.%]="scrollPercentage()"></div>
+        <div class="progress-text" [style.left.%]="scrollPercentage()">
+          {{ scrollPercentage() }}%
+        </div>
+      </div>
 
       <!-- Reading Area -->
       <main class="reading-area" appNoCopy (click)="toggleControls()" [style.fontSize.px]="fontSize()">
@@ -227,8 +234,44 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
       to { opacity: 1; transform: translate(-50%, 0); }
     }
     
-    .reader-header.hidden {
-      transform: translateY(-100%);
+    .reader-header.hidden { transform: translateY(-100%); }
+
+    /* Reading Progress Bar */
+    .reading-progress-bar {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--reader-border);
+      z-index: 101;
+      transition: top 0.3s ease;
+    }
+    .reading-progress-bar.controls-hidden {
+      top: 0;
+    }
+    .reading-progress-fill {
+      height: 100%;
+      background: var(--reader-accent);
+      transition: width 0.1s ease-out;
+      border-radius: 0 2px 2px 0;
+    }
+    .progress-text {
+      position: absolute;
+      top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--reader-accent);
+      background: var(--reader-bg);
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--reader-border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      pointer-events: none;
+      transition: left 0.1s ease-out;
+      /* Smart positioning: left-aligned at 0%, centered at 50%, right-aligned at 100% to prevent overflow */
+      transform: translateX(calc(-1 * var(--scroll-pct, 0) * 1%));
+      z-index: 102;
     }
 
     .back-btn {
@@ -625,11 +668,28 @@ export class ReaderComponent implements OnInit, OnDestroy {
       .subscribe((percentage) => {
         this.saveProgress(percentage);
       });
+      
+    // Initialize scroll state in case the browser restores position automatically
+    setTimeout(() => this.onWindowScroll(), 100);
+
+    // Fallback native listeners
+    window.addEventListener('scroll', () => this.onWindowScroll(), { passive: true });
+    document.addEventListener('scroll', () => this.onWindowScroll(), { passive: true });
+
+    // Bulletproof scroll poller
+    this.scrollPoller = setInterval(() => {
+      this.onWindowScroll();
+    }, 150) as any;
   }
+  
+  private scrollPoller: any;
 
   ngOnDestroy(): void {
     if (this.scrollSub) {
       this.scrollSub.unsubscribe();
+    }
+    if (this.scrollPoller) {
+      clearInterval(this.scrollPoller);
     }
     this.stopAutoScroll();
   }
@@ -641,18 +701,30 @@ export class ReaderComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:scroll', [])
+  @HostListener('document:scroll', [])
   onWindowScroll() {
-    const scrollOffset =
-      window.scrollY ||
-      this.document.documentElement.scrollTop ||
-      this.document.body.scrollTop ||
+    // Check all possible scrolling elements
+    const body = this.document.body;
+    const html = this.document.documentElement;
+    
+    // Sometimes Angular apps scroll inside the <main> or <app-root> wrapper
+    const mainWrapper = this.document.querySelector('main');
+    
+    const scrollOffset = 
+      window.scrollY || 
+      html.scrollTop || 
+      body.scrollTop || 
+      (mainWrapper ? mainWrapper.scrollTop : 0) || 
       0;
-    const scrollHeight =
-      this.document.documentElement.scrollHeight ||
-      this.document.body.scrollHeight ||
-      0;
-    const clientHeight =
-      this.document.documentElement.clientHeight || window.innerHeight || 0;
+    
+    // Calculate full document height accurately
+    const scrollHeight = Math.max(
+      body.scrollHeight, body.offsetHeight,
+      html.clientHeight, html.scrollHeight, html.offsetHeight,
+      mainWrapper ? mainWrapper.scrollHeight : 0
+    );
+    
+    const clientHeight = html.clientHeight || window.innerHeight || (mainWrapper ? mainWrapper.clientHeight : 0) || 0;
 
     let percent = 0;
     if (scrollHeight <= clientHeight) {

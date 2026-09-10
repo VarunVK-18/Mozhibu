@@ -199,8 +199,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
+    const scrollContainer = document.body.scrollTop > 0 ? document.body : document.documentElement;
     const currentScrollY =
-      window.pageYOffset || document.documentElement.scrollTop || 0;
+      window.pageYOffset || scrollContainer.scrollTop || 0;
 
     if (currentScrollY > 10) {
       if (!this.isScrolled()) this.isScrolled.set(true);
@@ -236,6 +237,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Listen to scroll events in capture phase so we can detect scroll on body or any container
+    window.addEventListener('scroll', this.onWindowScroll.bind(this), true);
+
     this.socketService.notificationReceived
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -246,6 +250,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    window.removeEventListener('scroll', this.onWindowScroll.bind(this), true);
     this.destroy$.next();
     this.destroy$.complete();
   }

@@ -1,10 +1,10 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { AuthService } from '../services/auth.service';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
+  const router = inject(Router);
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
 
   let headers = req.headers;
@@ -28,7 +28,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           (typeof error.error?.msg === 'string' &&
             error.error.msg.toLowerCase().includes('account has been suspended')))
       ) {
-        authService.markSuspended(error.error?.suspendedUntil);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        if (error.error?.suspendedUntil) {
+          router.navigate(['/suspended'], { queryParams: { until: error.error.suspendedUntil } });
+        } else {
+          router.navigate(['/suspended']);
+        }
       }
       return throwError(() => error);
     })

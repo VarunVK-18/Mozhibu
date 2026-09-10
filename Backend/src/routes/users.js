@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const sharp = require("sharp");
+const cryptoUtils = require("../utils/crypto");
 const User = require("../models/User");
 const Book = require("../models/Book");
 const ReadingProgress = require("../models/ReadingProgress");
@@ -82,6 +83,25 @@ router.get("/me", protect, async (req, res) => {
     const activeSub = await getActiveSubscription(user.id);
     const userObj = user.toObject();
     userObj.isPremium = !!activeSub;
+    
+    // Decrypt and mask monetization data if it exists
+    if (userObj.monetization) {
+      if (userObj.monetization.accountNumber) {
+        const decryptedAcc = cryptoUtils.decrypt(userObj.monetization.accountNumber);
+        userObj.monetization.accountNumber = cryptoUtils.maskData(decryptedAcc);
+      }
+      if (userObj.monetization.ifscCode) {
+        const decryptedIfsc = cryptoUtils.decrypt(userObj.monetization.ifscCode);
+        userObj.monetization.ifscCode = cryptoUtils.maskData(decryptedIfsc, 4);
+      }
+      if (userObj.monetization.accountName) {
+        userObj.monetization.accountName = cryptoUtils.decrypt(userObj.monetization.accountName) || "";
+      }
+      if (userObj.monetization.bankName) {
+        userObj.monetization.bankName = cryptoUtils.decrypt(userObj.monetization.bankName) || "";
+      }
+    }
+    
     res.json(userObj);
   } catch (err) {
     console.error(err.message);
@@ -282,6 +302,53 @@ router.get("/author/:id", async (req, res) => {
   }
 });
 
+// @route GET /api/users/author/:id/followers
+// @desc Get author's followers
+router.get("/author/:id/followers", async (req, res) => {
+  try {
+    const followers = await User.find({ following: req.params.id, status: "active" }).select(
+      "username avatar followersCount isPremium"
+    );
+    res.json(followers);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route GET /api/users/author/:id/following
+// @desc Get author's following
+router.get("/author/:id/following", async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id, status: "active" }).populate(
+      "following",
+      "username avatar followersCount isPremium"
+    );
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    // Filter out inactive users from populated array if needed, but simple return is okay
+    res.json(user.following);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route GET /api/users/author/:id/reviews
+// @desc Get reviews written by the user
+router.get("/author/:id/reviews", async (req, res) => {
+  try {
+    const Review = require("../models/Review");
+    const reviews = await Review.find({ user: req.params.id, parentReview: null })
+      .populate("user", "username avatar isPremium")
+      .populate("book", "title cover")
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 // @route POST /api/users/follow/:authorId
 // @desc Follow or unfollow an author
 router.post("/follow/:authorId", protect, async (req, res) => {
@@ -473,7 +540,7 @@ router.post(
 // @desc Update user profile (bio)
 router.put("/me/profile", protect, async (req, res) => {
   try {
-    const { bio, dob } = req.body;
+    const { bio, dob, penName, legalName } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -490,6 +557,19 @@ router.put("/me/profile", protect, async (req, res) => {
       user.avatar = "";
     }
 
+    if (penName !== undefined && penName.trim() !== "" && penName !== user.penName) {
+      // Validate uniqueness
+      const existing = await User.findOne({ 
+        penName: { $regex: new RegExp(`^${penName.trim()}$`, "i") },
+        _id: { $ne: user._id }
+      });
+      if (existing) {
+        return res.status(400).json({ msg: "Pen name already exists. Please choose another." });
+      }
+      user.penName = penName.trim();
+      user.username = penName.trim();
+    }
+
     await user.save();
 
     res.json({
@@ -502,7 +582,49 @@ router.put("/me/profile", protect, async (req, res) => {
         avatar: user.avatar,
         bio: user.bio,
         dob: user.dob,
+        penName: user.penName,
+        legalName: user.legalName,
+        isOnboarded: user.isOnboarded,
       },
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route PUT /api/users/me/monetization
+// @desc Update user monetization bank details securely
+router.put("/me/monetization", protect, async (req, res) => {
+  try {
+    const { accountName, bankName, accountNumber, ifscCode } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (!user.monetization) {
+      user.monetization = {};
+    }
+
+    if (accountName !== undefined) {
+      user.monetization.accountName = cryptoUtils.encrypt(accountName);
+    }
+    if (bankName !== undefined) {
+      user.monetization.bankName = cryptoUtils.encrypt(bankName);
+    }
+    if (accountNumber !== undefined) {
+      user.monetization.accountNumber = cryptoUtils.encrypt(accountNumber);
+    }
+    if (ifscCode !== undefined) {
+      user.monetization.ifscCode = cryptoUtils.encrypt(ifscCode);
+    }
+
+    await user.save();
+
+    res.json({
+      msg: "Monetization details securely updated",
     });
   } catch (err) {
     console.error(err.message);

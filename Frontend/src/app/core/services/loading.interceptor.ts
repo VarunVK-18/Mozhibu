@@ -12,10 +12,10 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req.clone({ headers }));
   }
 
-  loadingService.show();
+  setTimeout(() => loadingService.show(), 0);
   return next(req).pipe(
     finalize(() => {
-      loadingService.hide();
+      setTimeout(() => loadingService.hide(), 0);
     }),
   );
 };

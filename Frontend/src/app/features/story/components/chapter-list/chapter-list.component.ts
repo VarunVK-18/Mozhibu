@@ -104,7 +104,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
               @if (!isMature) {
                 <p class="ep-synopsis" [innerHTML]="ep.synopsis"></p>
               } @else {
-                <p class="ep-synopsis" style="font-style: italic; opacity: 0.7;">Hidden for 18+ content</p>
+                <p class="ep-synopsis" style="font-style: italic; opacity: 0.7;">Hidden for Erotic content</p>
               }
             </div>
           </a>

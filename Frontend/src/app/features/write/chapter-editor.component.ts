@@ -97,6 +97,9 @@ import { environment } from '../../../environments/environment';
                   <div class="cover-placeholder">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                     <span>Upload Cover</span>
+                    <div style="font-size: 11px; color: var(--ink-soft); margin-top: 12px; text-align: center; line-height: 1.4; padding: 0 12px;">
+                      Please use only <strong>free &amp; royalty-free</strong> images (e.g., <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" style="color: var(--primary);">Unsplash</a>, <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style="color: var(--primary);">Pexels</a>) to avoid copyright issues.
+                    </div>
                   </div>
                 }
               </div>
@@ -165,20 +168,18 @@ import { environment } from '../../../environments/environment';
             <div
               class="content-editable-editor"
               [class.preview-mode]="isPreviewMode"
+              [class.is-empty]="isEditorEmpty()"
               [attr.contenteditable]="!isPreviewMode"
               #editor
               (input)="onEditorInput()"
               (keydown)="onEditorKeyDown($event)"
-              placeholder="Write your story..."
+              placeholder="Start writing your story here..."
             ></div>
           </div>
           
           <div class="editor-footer-stats" [class.shifted]="showSettings()">
             <span>{{ wordCount }} words</span>
             <span>{{ charCount }} characters</span>
-            <span class="free-image-notice">
-              📷 Please use only <strong>free &amp; royalty-free</strong> images (e.g., <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>, <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer">Pexels</a>) to avoid copyright issues.
-            </span>
           </div>
         </main>
       </div>
@@ -461,12 +462,18 @@ import { environment } from '../../../environments/environment';
         line-height: 1.8;
         color: var(--text-primary);
         min-height: 50vh;
+        position: relative;
       }
-      .content-editable-editor[empty]:empty::before {
+      .content-editable-editor.is-empty::before {
         content: attr(placeholder);
-        color: var(--text-secondary);
-        opacity: 0.5;
+        color: var(--border);
         pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
       }
       
       .content-editable-editor h1 { font-family: var(--font-sans); font-size: 32px; font-weight: 700; margin: 32px 0 16px; }
@@ -1220,6 +1227,12 @@ bookId: string | null = null;
     this.imageChangedEvent = '';
     this.croppedImage = null;
     this.activeBlob = null;
+  }
+
+  isEditorEmpty(): boolean {
+    if (!this.editorRef) return true;
+    const text = this.editorRef.nativeElement.innerText.trim();
+    return text.length === 0;
   }
 
   onContentChange() {

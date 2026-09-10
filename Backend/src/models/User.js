@@ -8,6 +8,9 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, select: false }, // Optional for oauth, but required for 'normal'
     preferredLanguage: { type: String, required: true },
     favoriteGenres: { type: [String], required: true },
+    penName: { type: String, unique: true, sparse: true, trim: true },
+    legalName: { type: String, trim: true, default: "" },
+    isOnboarded: { type: Boolean, default: false },
     authProvider: {
       type: String,
       enum: ["normal", "google", "facebook"],
@@ -40,6 +43,12 @@ const UserSchema = new mongoose.Schema(
     favoriteBooks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Book" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     dob: { type: Date },
+    monetization: {
+      accountName: { type: String, default: "" }, // Will store encrypted string
+      bankName: { type: String, default: "" },    // Will store encrypted string
+      accountNumber: { type: String, default: "" },// Will store encrypted string
+      ifscCode: { type: String, default: "" }     // Will store encrypted string
+    },
     resetPasswordToken: { type: String, select: false },
     resetPasswordExpire: { type: Date, select: false },
   },

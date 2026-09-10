@@ -147,7 +147,7 @@ import { environment } from '../../../environments/environment';
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 6px;">
               <div style="display: flex; flex-direction: column; gap: 2px;">
                 <label style="margin: 0; color: var(--ink); font-size: 13px; font-weight: 600; text-transform: none; display: flex; align-items: center; gap: 6px;">
-                  <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: 700;">18+</span>
+                  <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 1px 4px; font-size: 10px; font-weight: 700;">Erotic</span>
                   Mature Content
                 </label>
               </div>
@@ -999,7 +999,7 @@ export class StoryEditorComponent implements OnInit {
       if (isDraft) {
         bookData.status = 'draft';
       } else if (this.story.isMature) {
-        // 18+ books require admin approval
+        // Erotic books require admin approval
         bookData.status = 'pending';
       } else {
         bookData.status = 'published';

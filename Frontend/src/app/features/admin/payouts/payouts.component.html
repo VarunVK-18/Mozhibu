@@ -1,0 +1,77 @@
+<div class="payouts-container">
+  <div class="header" style="margin-bottom: 24px;">
+    <h1 style="font-family: var(--display); font-size: 24px;">Payout Requests</h1>
+    <p style="color: var(--ink-soft); margin-top: 8px;">Manage user withdrawal requests and mark them as paid after processing wire transfers.</p>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state" style="text-align: center; padding: 48px; color: var(--ink-soft);">
+    Loading payout requests...
+  </div>
+
+  <div *ngIf="!loading() && payouts().length === 0" class="empty-state" style="text-align: center; padding: 48px; background: white; border-radius: 8px; border: 1px solid var(--border-soft);">
+    <h3 style="margin-bottom: 8px;">No Pending Payouts</h3>
+    <p style="color: var(--ink-soft);">There are currently no withdrawal requests from users.</p>
+  </div>
+
+  <div *ngIf="!loading() && payouts().length > 0" class="table-responsive" style="background: white; border-radius: 8px; border: 1px solid var(--border-soft); overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+      <thead style="background-color: var(--paper); border-bottom: 1px solid var(--border-soft);">
+        <tr>
+          <th style="padding: 16px; font-weight: 600; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px;">User</th>
+          <th style="padding: 16px; font-weight: 600; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px;">Bank Details</th>
+          <th style="padding: 16px; font-weight: 600; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px;">Requested Amount</th>
+          <th style="padding: 16px; font-weight: 600; font-size: 13px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let req of payouts()" style="border-bottom: 1px solid var(--border-soft);">
+          <td style="padding: 16px; vertical-align: top;">
+            <div style="font-weight: 500; font-size: 15px; margin-bottom: 4px;">{{ req.user.name || req.user.username || 'User' }}</div>
+            <div style="color: var(--ink-soft); font-size: 13px; margin-bottom: 4px;">{{ req.user.email }}</div>
+            <div *ngIf="req.user.mobile" style="color: var(--ink-soft); font-size: 13px;">📞 {{ req.user.mobile }}</div>
+          </td>
+          
+          <td style="padding: 16px; vertical-align: top;">
+            <div *ngIf="req.user.bankDetails" style="font-size: 13px;">
+              <div style="margin-bottom: 4px;">
+                <span style="color: var(--ink-soft);">Account: </span> 
+                <strong style="font-family: monospace;">{{ req.user.bankDetails.accountNumber }}</strong>
+              </div>
+              <div style="margin-bottom: 4px;">
+                <span style="color: var(--ink-soft);">IFSC: </span>
+                <strong style="font-family: monospace;">{{ req.user.bankDetails.ifscCode }}</strong>
+              </div>
+              <div style="color: var(--ink-soft); font-size: 12px; margin-top: 6px;">
+                {{ req.user.bankDetails.accountName }} &bull; {{ req.user.bankDetails.bankName }}
+              </div>
+            </div>
+            
+            <div *ngIf="!req.user.bankDetails" style="color: var(--error); font-size: 13px; padding: 6px 10px; background: #fef2f2; border-radius: 4px; display: inline-block;">
+              No bank details
+            </div>
+          </td>
+          
+          <td style="padding: 16px; vertical-align: top;">
+            <div style="font-size: 18px; font-weight: 600; color: var(--forest-deep); margin-bottom: 4px;">
+              {{ req.totalRequestedDisplay }}
+            </div>
+            <div style="font-size: 12px; color: var(--ink-soft);">
+              {{ req.authorEarningsCount }} author, {{ req.readerRewardsCount }} reader records
+            </div>
+          </td>
+          
+          <td style="padding: 16px; vertical-align: top; text-align: right;">
+            <button 
+              class="btn btn-primary" 
+              [disabled]="!req.user.bankDetails || processingId() === req.user._id"
+              (click)="markAsPaid(req)"
+              style="padding: 8px 16px; font-size: 14px;"
+            >
+              {{ processingId() === req.user._id ? 'Processing...' : 'Mark as Paid' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -74,71 +74,176 @@ import { ConfirmService } from '../../core/services/confirm.service';
           </div>
         </div>
 
-        <!-- Books Grid -->
+        <!-- Profile Content Tabs -->
         <div class="profile-content">
-          <h3 class="section-title">Published Stories</h3>
+          <div class="profile-tabs">
+            <button class="tab-btn" [class.active]="activeTab === 'stories'" (click)="setTab('stories')">Published Stories</button>
+            <button class="tab-btn" [class.active]="activeTab === 'followers'" (click)="setTab('followers')">Followers ({{ profile.author.followersCount }})</button>
+            <button class="tab-btn" [class.active]="activeTab === 'following'" (click)="setTab('following')">Following</button>
+            <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">Reviews</button>
+          </div>
 
-          @if (profile.books.length === 0) {
-            <div class="empty-state">
-              <p>This author hasn't published any stories yet.</p>
-            </div>
-          } @else {
-            <div class="results-grid">
-              @for (item of profile.books; track item._id) {
-                <div class="book-card" [routerLink]="['/story', item._id]">
-                  <div class="cover-wrapper">
-                    <img
-                      [src]="getCoverUrl(item.cover)"
-                      alt="Book cover"
-                      class="book-cover"
-                      (error)="onCoverError($event)"
-                    />
-                    @if (item.completionStatus === 'completed') {
-                      <span class="status-badge completed">Completed</span>
-                    } @else {
-                      <span class="status-badge ongoing">Ongoing</span>
-                    }
-                  </div>
-                  <div class="book-info">
-                    <h4 class="book-title">{{ item.title }}</h4>
-                    <div class="book-meta">
-                      <span class="meta-item">
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="12"
-                          height="12"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                          ></path>
-                          <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                        {{ item.views || 0 }}
-                      </span>
-                      <span class="meta-item">
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="12"
-                          height="12"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                        >
-                          <path
-                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                          ></path>
-                        </svg>
-                        {{ item.likesCount || 0 }}
-                      </span>
-                      <span class="genre-badge">{{ item.genre }}</span>
+          @if (activeTab === 'stories') {
+            @if (profile.books.length === 0) {
+              <div class="empty-state">
+                <p>This author hasn't published any stories yet.</p>
+              </div>
+            } @else {
+              <div class="results-grid">
+                @for (item of profile.books; track item._id) {
+                  <div class="book-card" [routerLink]="['/story', item._id]">
+                    <div class="cover-wrapper">
+                      <img
+                        [src]="getCoverUrl(item.cover)"
+                        alt="Book cover"
+                        class="book-cover"
+                        (error)="onCoverError($event)"
+                      />
+                      @if (item.completionStatus === 'completed') {
+                        <span class="status-badge completed">Completed</span>
+                      } @else {
+                        <span class="status-badge ongoing">Ongoing</span>
+                      }
+                    </div>
+                    <div class="book-info">
+                      <h4 class="book-title">{{ item.title }}</h4>
+                      <div class="book-meta">
+                        <span class="meta-item">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                            ></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                          {{ item.views || 0 }}
+                        </span>
+                        <span class="meta-item">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="12"
+                            height="12"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                            ></path>
+                          </svg>
+                          {{ item.likesCount || 0 }}
+                        </span>
+                        <span class="genre-badge">{{ item.genre }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              }
-            </div>
+                }
+              </div>
+            }
+          }
+
+          @if (activeTab === 'followers') {
+            @if (isLoadingFollowers) {
+              <div class="loading-state"><div class="spinner"></div></div>
+            } @else if (followersList.length === 0) {
+              <div class="empty-state"><p>No followers yet.</p></div>
+            } @else {
+              <div class="users-grid">
+                @for (user of followersList; track user._id) {
+                  <div class="user-card" [routerLink]="['/author', user._id]">
+                    <div class="avatar-ring premium-container" [class.premium-ring]="user.isPremium">
+                      <img [src]="getAvatarUrl(user.avatar, user.username)" class="user-avatar" (error)="onAvatarError($event, user.username)" />
+                    </div>
+                    <div class="user-info">
+                      <h4 class="user-name">
+                        {{ user.username }}
+                        <span *ngIf="user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 4px;">PRO</span>
+                      </h4>
+                      <p class="user-meta">{{ user.followersCount || 0 }} Followers</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          @if (activeTab === 'following') {
+            @if (isLoadingFollowing) {
+              <div class="loading-state"><div class="spinner"></div></div>
+            } @else if (followingList.length === 0) {
+              <div class="empty-state"><p>Not following anyone yet.</p></div>
+            } @else {
+              <div class="users-grid">
+                @for (user of followingList; track user._id) {
+                  <div class="user-card" [routerLink]="['/author', user._id]">
+                    <div class="avatar-ring premium-container" [class.premium-ring]="user.isPremium">
+                      <img [src]="getAvatarUrl(user.avatar, user.username)" class="user-avatar" (error)="onAvatarError($event, user.username)" />
+                    </div>
+                    <div class="user-info">
+                      <h4 class="user-name">
+                        {{ user.username }}
+                        <span *ngIf="user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 4px;">PRO</span>
+                      </h4>
+                      <p class="user-meta">{{ user.followersCount || 0 }} Followers</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          }
+
+          @if (activeTab === 'reviews') {
+            @if (isLoadingReviews) {
+              <div class="loading-state"><div class="spinner"></div></div>
+            } @else if (reviewsList.length === 0) {
+              <div class="empty-state"><p>No reviews written yet.</p></div>
+            } @else {
+              <div class="reviews-list">
+                @for (review of reviewsList; track review._id) {
+                  <div class="review-card">
+                    <div class="review-header">
+                      <div class="reviewer-info" [routerLink]="['/author', review.user._id]" style="cursor: pointer;">
+                        <img [src]="getAvatarUrl(review.user.avatar, review.user.username)" class="reviewer-avatar" (error)="onAvatarError($event, review.user.username)" />
+                        <div>
+                          <h4 class="reviewer-name">
+                            {{ review.user.username }}
+                            <span *ngIf="review.user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 6px;">PRO</span>
+                          </h4>
+                          <p class="review-date">{{ review.createdAt | date:'longDate' }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="review-body">
+                      @if (review.rating > 0) {
+                        <div class="star-rating">
+                          @for (star of [1,2,3,4,5]; track star) {
+                            <span class="star" [class.filled]="star <= review.rating">★</span>
+                          }
+                        </div>
+                      }
+                      @if (review.text) {
+                        <p class="review-text">"{{ review.text }}"</p>
+                      }
+                    </div>
+
+                    <div class="reviewed-book" [routerLink]="['/story', review.book._id]" style="cursor: pointer;">
+                      <img [src]="getCoverUrl(review.book.cover)" class="mini-cover" (error)="onCoverError($event)" />
+                      <div>
+                        <span style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 2px;">Reviewed on</span>
+                        <span class="book-title-mini">{{ review.book.title }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           }
         </div>
       } @else {
@@ -341,17 +446,192 @@ import { ConfirmService } from '../../core/services/confirm.service';
         padding: 48px;
       }
 
-      .section-title {
+      .profile-tabs {
+        display: flex;
+        gap: 24px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 32px;
+        overflow-x: auto;
+      }
+      .tab-btn {
+        background: transparent;
+        border: none;
+        padding: 0 0 16px;
         font-family: var(--display);
-        font-size: 24px;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .tab-btn:hover {
         color: var(--ink);
-        margin: 0 0 32px;
+      }
+      .tab-btn.active {
+        color: var(--forest);
+        border-bottom-color: var(--forest);
+      }
+
+      .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 24px;
+      }
+      .user-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+      .user-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+        border-color: #d1d5db;
+      }
+      .user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      .user-name {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+      }
+      .user-meta {
+        margin: 0;
+        font-size: 13px;
+        color: var(--ink-soft);
       }
 
       .results-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 32px 24px;
+      }
+
+      /* Reviews List Styles */
+      .reviews-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+        align-items: start;
+      }
+      .review-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .review-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+        border-color: #d1d5db;
+      }
+      .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .reviewer-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .reviewer-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .reviewer-name {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+      }
+      .review-date {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink-faint);
+      }
+      .reviewed-book {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #f9fafb;
+        padding: 8px 12px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        transition: background 0.2s;
+        margin-top: 8px;
+      }
+      .reviewed-book:hover {
+        background: #f3f4f6;
+      }
+      .mini-cover {
+        width: 32px;
+        height: 48px;
+        border-radius: 6px;
+        object-fit: cover;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .book-title-mini {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .review-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .star-rating {
+        display: flex;
+        gap: 4px;
+      }
+      .star {
+        color: #e5e7eb;
+        font-size: 18px;
+      }
+      .star.filled {
+        color: #f59e0b;
+      }
+      .review-text {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #4b5563;
+        white-space: pre-wrap;
+        font-style: italic;
+        position: relative;
+        padding-left: 12px;
+        border-left: 3px solid #e5e7eb;
       }
 
       /* Book Card Reuse */
@@ -496,6 +776,17 @@ export class AuthorProfileComponent implements OnInit {
   isFollowing = false;
   showBigAvatar = false;
 
+  activeTab: 'stories' | 'followers' | 'following' | 'reviews' = 'stories';
+  followersList: any[] = [];
+  followingList: any[] = [];
+  reviewsList: any[] = [];
+  isLoadingFollowers = false;
+  isLoadingFollowing = false;
+  isLoadingReviews = false;
+  followersLoaded = false;
+  followingLoaded = false;
+  reviewsLoaded = false;
+
   toggleBigAvatar() {
     this.showBigAvatar = !this.showBigAvatar;
   }
@@ -504,7 +795,72 @@ export class AuthorProfileComponent implements OnInit {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) {
+        this.activeTab = 'stories';
+        this.followersLoaded = false;
+        this.followingLoaded = false;
+        this.reviewsLoaded = false;
         this.fetchProfile(id);
+      }
+    });
+  }
+
+  setTab(tab: 'stories' | 'followers' | 'following' | 'reviews') {
+    this.activeTab = tab;
+    if (tab === 'followers' && !this.followersLoaded && this.profile) {
+      this.loadFollowers();
+    }
+    if (tab === 'following' && !this.followingLoaded && this.profile) {
+      this.loadFollowing();
+    }
+    if (tab === 'reviews' && !this.reviewsLoaded && this.profile) {
+      this.loadReviews();
+    }
+  }
+
+  loadFollowers() {
+    if (!this.profile) return;
+    this.isLoadingFollowers = true;
+    this.authorService.getAuthorFollowers(this.profile.author._id).subscribe({
+      next: (res) => {
+        this.followersList = res;
+        this.isLoadingFollowers = false;
+        this.followersLoaded = true;
+      },
+      error: (err) => {
+        console.error('Failed to load followers', err);
+        this.isLoadingFollowers = false;
+      }
+    });
+  }
+
+  loadFollowing() {
+    if (!this.profile) return;
+    this.isLoadingFollowing = true;
+    this.authorService.getAuthorFollowing(this.profile.author._id).subscribe({
+      next: (res) => {
+        this.followingList = res;
+        this.isLoadingFollowing = false;
+        this.followingLoaded = true;
+      },
+      error: (err) => {
+        console.error('Failed to load following', err);
+        this.isLoadingFollowing = false;
+      }
+    });
+  }
+
+  loadReviews() {
+    if (!this.profile) return;
+    this.isLoadingReviews = true;
+    this.authorService.getAuthorReviews(this.profile.author._id).subscribe({
+      next: (res) => {
+        this.reviewsList = res;
+        this.isLoadingReviews = false;
+        this.reviewsLoaded = true;
+      },
+      error: (err) => {
+        console.error('Failed to load reviews', err);
+        this.isLoadingReviews = false;
       }
     });
   }

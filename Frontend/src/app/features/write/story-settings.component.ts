@@ -146,7 +146,7 @@ import { SafeUrlPipe } from '../../shared/pipes/safe-url.pipe';
                   <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
                       <label style="margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; text-transform: none; display: flex; align-items: center; gap: 8px;">
-                        <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700;">18+</span>
+                        <span style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #DC2626; border-radius: 4px; padding: 2px 6px; font-size: 11px; font-weight: 700;">Erotic</span>
                         Mature Content
                       </label>
                       <span style="font-size: 12px; color: var(--ink-soft); font-weight: 400;">Enable if your story contains explicit themes, violence, or profanity.</span>

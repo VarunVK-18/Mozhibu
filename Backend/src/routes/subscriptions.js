@@ -13,6 +13,7 @@ const { getGateway } = require("../services/paymentGateway");
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 const UserSubscription = require("../models/UserSubscription");
 const Coupon = require("../models/Coupon");
+const Notification = require("../models/Notification");
 const { getActiveSubscription } = require("../middleware/premiumContent");
 
 // ─── GET /api/subscriptions/plans ────────────────────────────
@@ -297,14 +298,38 @@ router.get("/me", protect, async (req, res) => {
     if (!subscription) {
       return res.json({ active: false, subscription: null });
     }
+
+    const daysRemaining = Math.ceil(
+      (subscription.endDate - new Date()) / (1000 * 60 * 60 * 24),
+    );
+
+    // Create notification if expiring soon (<= 3 days)
+    if (daysRemaining <= 3 && daysRemaining >= 0) {
+      // Check if we already sent a notification recently (e.g. within 24 hours)
+      const recentNotification = await Notification.findOne({
+        recipient: req.user.id,
+        type: "system",
+        title: "Subscription Expiring Soon",
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      });
+
+      if (!recentNotification) {
+        await Notification.create({
+          recipient: req.user.id,
+          type: "system",
+          title: "Subscription Expiring Soon",
+          message: `Your premium plan is going to end within ${daysRemaining} days. Renew now to keep your benefits!`,
+          link: "/subscription/me",
+        });
+      }
+    }
+
     res.json({
       active: true,
       subscription: {
         ...subscription.toObject(),
         plan: subscription.plan,
-        daysRemaining: Math.ceil(
-          (subscription.endDate - new Date()) / (1000 * 60 * 60 * 24),
-        ),
+        daysRemaining,
       },
     });
   } catch (err) {

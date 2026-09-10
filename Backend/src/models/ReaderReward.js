@@ -11,7 +11,7 @@ const ReaderRewardSchema = new mongoose.Schema(
     readersPoolInPaise: { type: Number, default: 0 }, // snapshot of pool used
     status: {
       type: String,
-      enum: ["pending", "paid", "rolled_over"],
+      enum: ["pending", "requested", "paid", "rolled_over"],
       default: "pending",
     },
     computedAt: { type: Date },

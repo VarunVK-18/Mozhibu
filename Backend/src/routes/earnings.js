@@ -17,34 +17,57 @@ const { recordReadEvent } = require("../services/engagementScorer");
 
 // ─── Author Earnings ──────────────────────────────────────────
 
-// GET /api/earnings/me — full history
+// GET /api/earnings/me — UNIFIED WALLET: Author Earnings + Reader Rewards combined
 router.get("/earnings/me", protect, async (req, res) => {
   try {
-    const earnings = await AuthorEarnings.find({ author: req.user.id }).sort({
-      year: -1,
-      month: -1,
-    });
+    const [authorEarnings, readerRewards] = await Promise.all([
+      AuthorEarnings.find({ author: req.user.id }).sort({ year: -1, month: -1 }).lean(),
+      ReaderReward.find({ user: req.user.id }).sort({ year: -1, month: -1 }).lean(),
+    ]);
 
-    const totalPaid = earnings
-      .filter((e) => e.status === "paid")
-      .reduce((s, e) => s + e.earningsInPaise, 0);
+    // Normalize ReaderReward records to same shape as AuthorEarnings for the frontend
+    const normalizedRewards = readerRewards.map((r) => ({
+      ...r,
+      source: "reader",
+      earningsInPaise: r.rewardInPaise,
+      qualifiedReads: 0,
+      earningsDisplay: `₹${(r.rewardInPaise / 100).toFixed(2)}`,
+    }));
 
-    const totalPending = earnings
-      .filter((e) => e.status === "pending")
-      .reduce((s, e) => s + e.earningsInPaise, 0);
+    const normalizedEarnings = authorEarnings.map((e) => ({
+      ...e,
+      source: "author",
+      earningsDisplay: `₹${(e.earningsInPaise / 100).toFixed(2)}`,
+    }));
 
-    const totalRequested = earnings
-      .filter((e) => e.status === "requested")
-      .reduce((s, e) => s + e.earningsInPaise, 0);
+    // Merge and sort by year/month descending
+    const allRecords = [...normalizedEarnings, ...normalizedRewards].sort(
+      (a, b) => b.year - a.year || b.month - a.month
+    );
+
+    // Compute unified summary
+    const calc = (records, statusFilter, field) =>
+      records
+        .filter((r) => statusFilter.includes(r.status))
+        .reduce((s, r) => s + (r[field] || 0), 0);
+
+    const totalPaid =
+      calc(authorEarnings, ["paid"], "earningsInPaise") +
+      calc(readerRewards, ["paid"], "rewardInPaise");
+
+    const totalPending =
+      calc(authorEarnings, ["pending"], "earningsInPaise") +
+      calc(readerRewards, ["pending"], "rewardInPaise");
+
+    const totalRequested =
+      calc(authorEarnings, ["requested"], "earningsInPaise") +
+      calc(readerRewards, ["requested"], "rewardInPaise");
 
     let config = await RevenueSplitConfig.findOne().sort({ createdAt: -1 });
     const minPayoutInPaise = config ? config.minAuthorPayoutInPaise : 10000;
 
     res.json({
-      earnings: earnings.map((e) => ({
-        ...e.toObject(),
-        earningsDisplay: `₹${(e.earningsInPaise / 100).toFixed(2)}`,
-      })),
+      earnings: allRecords,
       summary: {
         totalPaidInPaise: totalPaid,
         totalPendingInPaise: totalPending,
@@ -52,47 +75,57 @@ router.get("/earnings/me", protect, async (req, res) => {
         totalPaidDisplay: `₹${(totalPaid / 100).toFixed(2)}`,
         totalPendingDisplay: `₹${(totalPending / 100).toFixed(2)}`,
         totalRequestedDisplay: `₹${(totalRequested / 100).toFixed(2)}`,
-        minPayoutInPaise: minPayoutInPaise,
+        minPayoutInPaise,
       },
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Server Error" });
   }
 });
 
-// POST /api/earnings/withdraw — Request payout for pending earnings
+// POST /api/earnings/withdraw — UNIFIED: Request payout across both AuthorEarnings + ReaderReward
 router.post("/earnings/withdraw", protect, async (req, res) => {
   try {
-    const earnings = await AuthorEarnings.find({
-      author: req.user.id,
-      status: "pending",
-    });
+    const [pendingEarnings, pendingRewards] = await Promise.all([
+      AuthorEarnings.find({ author: req.user.id, status: "pending" }),
+      ReaderReward.find({ user: req.user.id, status: "pending" }),
+    ]);
 
-    if (earnings.length === 0) {
-      return res.status(400).json({ msg: "No pending earnings to withdraw" });
+    const totalPending =
+      pendingEarnings.reduce((s, e) => s + e.earningsInPaise, 0) +
+      pendingRewards.reduce((s, r) => s + r.rewardInPaise, 0);
+
+    if (totalPending === 0) {
+      return res.status(400).json({ msg: "No pending balance to withdraw." });
     }
-
-    const totalPending = earnings.reduce((s, e) => s + e.earningsInPaise, 0);
 
     let config = await RevenueSplitConfig.findOne().sort({ createdAt: -1 });
     const minPayoutInPaise = config ? config.minAuthorPayoutInPaise : 10000;
 
     if (totalPending < minPayoutInPaise) {
-      return res
-        .status(400)
-        .json({
-          msg: `Minimum withdrawal amount is ₹${(minPayoutInPaise / 100).toFixed(2)}`,
-        });
+      return res.status(400).json({
+        msg: `Your combined balance is ₹${(totalPending / 100).toFixed(2)}. Minimum withdrawal amount is ₹${(minPayoutInPaise / 100).toFixed(2)}.`,
+      });
     }
 
-    // Update all pending to requested
-    await AuthorEarnings.updateMany(
-      { author: req.user.id, status: "pending" },
-      { $set: { status: "requested" } },
-    );
+    // Mark both AuthorEarnings and ReaderRewards as 'requested' in parallel
+    await Promise.all([
+      AuthorEarnings.updateMany(
+        { author: req.user.id, status: "pending" },
+        { $set: { status: "requested" } }
+      ),
+      ReaderReward.updateMany(
+        { user: req.user.id, status: "pending" },
+        { $set: { status: "requested" } }
+      ),
+    ]);
 
-    res.json({ msg: "Withdrawal requested successfully" });
+    res.json({
+      msg: `Withdrawal of ₹${(totalPending / 100).toFixed(2)} requested successfully. Our team will process it shortly.`,
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Server Error" });
   }
 });

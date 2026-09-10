@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 const { protect } = require("../middleware/auth");
 const { getActiveSubscription } = require("../middleware/premiumContent");
 
@@ -166,6 +167,9 @@ router.post("/register", async (req, res) => {
           authorStatus: user.authorStatus,
           avatar: user.avatar,
           isPremium,
+          isOnboarded: user.isOnboarded,
+          penName: user.penName,
+          legalName: user.legalName,
         },
       });
     });
@@ -236,6 +240,9 @@ router.post("/login", async (req, res) => {
           authorStatus: user.authorStatus,
           avatar: user.avatar,
           isPremium,
+          isOnboarded: user.isOnboarded,
+          penName: user.penName,
+          legalName: user.legalName,
         },
       });
     });
@@ -324,6 +331,9 @@ router.post("/google", async (req, res) => {
               authorStatus: user.authorStatus,
               avatar: user.avatar,
               isPremium,
+              isOnboarded: user.isOnboarded,
+              penName: user.penName,
+              legalName: user.legalName,
             },
           });
         },
@@ -373,6 +383,9 @@ router.post("/google", async (req, res) => {
           authorStatus: user.authorStatus,
           avatar: user.avatar,
           isPremium: false,
+          isOnboarded: user.isOnboarded,
+          penName: user.penName,
+          legalName: user.legalName,
         },
       });
     });
@@ -561,6 +574,74 @@ router.put("/change-password", protect, async (req, res) => {
     await user.save();
 
     res.json({ msg: "Password successfully updated!" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route   GET /api/auth/check-penname
+// @desc    Check if a pen name is available
+// @access  Public
+router.get("/check-penname", async (req, res) => {
+  try {
+    const { name, excludeUserId } = req.query;
+    if (!name) return res.status(400).json({ msg: "Pen name is required" });
+
+    // Enforce valid characters — only lowercase letters, numbers, underscore
+    if (/[^a-z0-9_]/.test(name)) {
+      return res.json({ available: false, invalid: true });
+    }
+
+    // Build query: exact case-insensitive match
+    const query = { penName: { $regex: new RegExp(`^${name}$`, "i") } };
+
+    // Exclude the current user's own record so their existing pen name doesn't show as taken
+    if (excludeUserId && mongoose.Types.ObjectId.isValid(excludeUserId)) {
+      query._id = { $ne: new mongoose.Types.ObjectId(excludeUserId) };
+    }
+
+    const user = await User.findOne(query);
+    return res.json({ available: !user });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route   POST /api/auth/onboard
+// @desc    Submit onboarding details (pen name, legal name)
+// @access  Private
+router.post("/onboard", protect, async (req, res) => {
+  try {
+    const { penName, legalName } = req.body;
+    
+    if (!penName || penName.trim() === "") {
+      return res.status(400).json({ msg: "Pen name is required" });
+    }
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+    
+    // Check pen name uniqueness
+    const existing = await User.findOne({ 
+      penName: { $regex: new RegExp(`^${penName}$`, "i") },
+      _id: { $ne: user._id }
+    });
+    
+    if (existing) {
+      return res.status(400).json({ msg: "Pen name already exists. Please choose another." });
+    }
+    
+    user.penName = penName.trim();
+    user.username = penName.trim();
+    if (legalName) user.legalName = legalName.trim();
+    user.isOnboarded = true;
+    
+    await user.save();
+    res.json({ msg: "Onboarding complete", user });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");

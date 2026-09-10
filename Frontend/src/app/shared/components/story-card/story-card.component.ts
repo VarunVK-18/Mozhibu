@@ -41,7 +41,7 @@ export interface Story {
           <div class="genre-tag" *ngIf="story.genre">{{ ('trending.tabs.' + story.genre.toLowerCase() | translate) !== 'trending.tabs.' + story.genre.toLowerCase() ? ('trending.tabs.' + story.genre.toLowerCase() | translate) : story.genre }}</div>
         </div>
         <div class="top-right-badges">
-          <div class="mature-badge" *ngIf="story.isMature">18+</div>
+          <div class="mature-badge" *ngIf="story.isMature">Erotic</div>
           <div class="paid-badge" *ngIf="story.accessType === 'premium'">
             <svg
               width="24"

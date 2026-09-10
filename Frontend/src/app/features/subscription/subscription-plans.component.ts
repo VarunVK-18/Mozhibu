@@ -170,10 +170,17 @@ declare var Razorpay: any;
                 <span>Total</span>
                 <span>{{ finalPrice() }}</span>
               </div>
+
+              @if (isUpgradeRestricted()) {
+                <div class="upgrade-restricted-warning" style="background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; text-align: center; border: 1px solid #ffeeba;">
+                  You can only renew or upgrade your plan when you have 2 or fewer days remaining on your current active subscription. ({{ currentSub()?.subscription?.daysRemaining }} days remaining)
+                </div>
+              }
+
               <button
                 class="btn-checkout"
                 (click)="checkout()"
-                [disabled]="checkoutLoading()"
+                [disabled]="checkoutLoading() || isUpgradeRestricted()"
               >
                 @if (checkoutLoading()) {
                   <span class="spinner-sm"></span> Processing...
@@ -604,6 +611,14 @@ export class SubscriptionPlansComponent implements OnInit {
     return `INR ${(paise / 100).toFixed(2)}`;
   }
 
+  isUpgradeRestricted(): boolean {
+    const sub = this.currentSub();
+    if (sub && sub.active && sub.subscription) {
+      return sub.subscription.daysRemaining > 2;
+    }
+    return false;
+  }
+
   validateCoupon() {
     if (!this.couponCode.trim() || !this.selectedPlan()) return;
     this.couponLoading.set(true);
@@ -637,10 +652,24 @@ export class SubscriptionPlansComponent implements OnInit {
     if (!plan) return;
     this.checkoutLoading.set(true);
 
-    this.subscriptionService
-      .createOrder(plan._id, this.appliedCoupon() ? this.couponCode : undefined)
-      .subscribe({
-        next: (orderData) => {
+    if (this.currentSub()?.active) {
+      if (!confirm('Note: After your current plan ends, this new plan and benefits will reflect. Do you want to proceed to payment?')) {
+        this.checkoutLoading.set(false);
+        return;
+      }
+    }
+
+    this.loadRazorpayScript().then((razorpayLoaded) => {
+      if (!razorpayLoaded) {
+        this.checkoutLoading.set(false);
+        alert('Razorpay SDK failed to load. Are you online?');
+        return;
+      }
+
+      this.subscriptionService
+        .createOrder(plan._id, this.appliedCoupon() ? this.couponCode : undefined)
+        .subscribe({
+          next: (orderData) => {
           const options = {
             key: orderData.keyId,
             amount: orderData.amount,
@@ -700,6 +729,21 @@ export class SubscriptionPlansComponent implements OnInit {
           );
         },
       });
+    });
+  }
+
+  private loadRazorpayScript(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   }
 }
 

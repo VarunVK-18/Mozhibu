@@ -16,6 +16,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'help',
+    loadComponent: () =>
+      import('./features/company/help-support.component').then(
+        (m) => m.HelpSupportComponent,
+      ),
+  },
+  {
     path: 'signup',
     loadComponent: () =>
       import('./features/auth/signup/signup.component').then(
@@ -249,6 +256,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'feedback',
+        loadComponent: () =>
+          import('./features/admin/feedback/feedback.component').then(
+            (m) => m.AdminFeedbackComponent,
+          ),
+      },
+      {
         path: 'authors',
         loadComponent: () =>
           import('./features/admin/authors/authors.component').then(
@@ -295,6 +309,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/settings/settings.component').then(
             (m) => m.AdminSettingsComponent,
+          ),
+      },
+      {
+        path: 'payouts',
+        loadComponent: () =>
+          import('./features/admin/payouts/payouts.component').then(
+            (m) => m.PayoutsComponent,
           ),
       },
     ],

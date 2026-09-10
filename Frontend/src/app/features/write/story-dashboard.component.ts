@@ -29,7 +29,7 @@ import { Subject, filter, takeUntil } from 'rxjs';
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <div class="banner-content">
-              <strong>Pending Admin Approval:</strong> Your book contains 18+ content and is currently under review by our moderation team. It will be published automatically once approved.
+              <strong>Pending Admin Approval:</strong> Your book contains Erotic content and is currently under review by our moderation team. It will be published automatically once approved.
             </div>
           </div>
         }

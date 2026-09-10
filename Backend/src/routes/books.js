@@ -415,16 +415,9 @@ router.post("/:id/reviews", protect, async (req, res) => {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
-    // Allow author to make exactly one review
+    // Prevent author from reviewing their own book
     if (book.author.toString() === req.user.id) {
-      const existingReview = await Review.findOne({
-        book: req.params.id,
-        user: req.user.id,
-        parentReview: { $exists: false },
-      });
-      if (existingReview) {
-        return res.status(403).json({ msg: "You can only write one review for your own book" });
-      }
+      return res.status(403).json({ msg: "You cannot write a review for your own book" });
     }
 
     // Allow multiple comments per user (removed existingReview check for non-authors)
@@ -540,10 +533,7 @@ router.put("/:id/reviews/:reviewId", protect, async (req, res) => {
       return res.status(403).json({ msg: "Not authorized to edit this comment" });
     }
 
-    // Verify 1-time edit limit
-    if (review.isEdited) {
-      return res.status(403).json({ msg: "You can only edit your comment once" });
-    }
+    // Allow multiple edits (removed 1-time edit limit)
 
     const { content, rating } = req.body;
     if (content) review.comment = content;

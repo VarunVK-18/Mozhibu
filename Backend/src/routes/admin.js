@@ -9,6 +9,12 @@ const Broadcast = require("../models/Broadcast");
 const SubscriptionPlan = require("../models/SubscriptionPlan");
 const SubscriptionPlanHistory = require("../models/SubscriptionPlanHistory");
 const UserSubscription = require("../models/UserSubscription");
+const AuthorEarnings = require("../models/AuthorEarnings");
+const ReaderReward = require("../models/ReaderReward");
+const crypto = require("crypto");
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key");
 
 const router = express.Router();
 
@@ -952,6 +958,146 @@ router.get("/plans/:id/history", async (req, res) => {
       .sort({ changedAt: -1 });
     res.json(history);
   } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route GET /api/admin/payouts
+// @desc Get all users with requested payouts
+router.get("/payouts", async (req, res) => {
+  try {
+    const [requestedEarnings, requestedRewards] = await Promise.all([
+      AuthorEarnings.find({ status: "requested" }).populate("author", "name username email mobile monetization").lean(),
+      ReaderReward.find({ status: "requested" }).populate("user", "name username email mobile monetization").lean(),
+    ]);
+
+    // Group by user ID
+    const userMap = new Map();
+
+    const processRecord = (record, isAuthor) => {
+      const userObj = isAuthor ? record.author : record.user;
+      if (!userObj) return; // Defensive check
+      
+      const userId = userObj._id.toString();
+      const amount = isAuthor ? record.earningsInPaise : record.rewardInPaise;
+
+      if (!userMap.has(userId)) {
+        // Decrypt bank details if present
+        let bankDetails = null;
+        if (userObj.monetization && userObj.monetization.accountNumber) {
+          try {
+            const cryptoUtils = require('./../utils/crypto');
+            
+            bankDetails = {
+              accountName: cryptoUtils.decrypt(userObj.monetization.accountName) || '',
+              bankName: cryptoUtils.decrypt(userObj.monetization.bankName) || '',
+              accountNumber: cryptoUtils.decrypt(userObj.monetization.accountNumber) || '', // Decrypted for admin
+              ifscCode: cryptoUtils.decrypt(userObj.monetization.ifscCode) || '',
+            };
+          } catch (e) {
+            console.error("Failed to decrypt bank details for user", userId);
+          }
+        }
+
+        userMap.set(userId, {
+          user: {
+            _id: userObj._id,
+            name: userObj.name,
+            username: userObj.username,
+            email: userObj.email,
+            mobile: userObj.mobile,
+            bankDetails,
+          },
+          totalRequestedInPaise: 0,
+          authorEarningsCount: 0,
+          readerRewardsCount: 0,
+        });
+      }
+
+      const userData = userMap.get(userId);
+      userData.totalRequestedInPaise += amount;
+      if (isAuthor) userData.authorEarningsCount++;
+      else userData.readerRewardsCount++;
+    };
+
+    requestedEarnings.forEach(e => processRecord(e, true));
+    requestedRewards.forEach(r => processRecord(r, false));
+
+    const groupedPayouts = Array.from(userMap.values()).map(data => ({
+      ...data,
+      totalRequestedDisplay: `₹${(data.totalRequestedInPaise / 100).toFixed(2)}`
+    }));
+
+    res.json(groupedPayouts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route POST /api/admin/payouts/:userId/mark-paid
+// @desc Mark all requested payouts as paid for a user and notify them
+router.post("/payouts/:userId/mark-paid", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const adminId = req.user.id;
+
+    // 1. Mark records as paid
+    const [earningsRes, rewardsRes] = await Promise.all([
+      AuthorEarnings.updateMany(
+        { author: userId, status: "requested" },
+        { $set: { status: "paid", paidAt: new Date(), paidBy: adminId } }
+      ),
+      ReaderReward.updateMany(
+        { user: userId, status: "requested" },
+        { $set: { status: "paid", paidAt: new Date(), paidBy: adminId } }
+      ),
+    ]);
+
+    if (earningsRes.modifiedCount === 0 && rewardsRes.modifiedCount === 0) {
+      return res.status(400).json({ msg: "No requested payouts found for this user" });
+    }
+
+    // 2. Fetch User to get email
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    // 3. Create In-App Notification (Bell Icon)
+    await Notification.create({
+      recipient: userId,
+      sender: req.user.id,
+      type: "system",
+      title: "Payout Completed",
+      message: `Your requested payout has been processed and wired to your bank account. Check your email for more details.`,
+      link: "/profile/earnings",
+    });
+
+    // 4. Send Email via Resend
+    if (process.env.RESEND_API_KEY) {
+      try {
+        await resend.emails.send({
+          from: "Mozhibu <noreply@mozhibu.com>",
+          to: user.email,
+          subject: "Your Mozhibu Payout is Complete!",
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333;">
+              <h2>Great news, ${user.name}!</h2>
+              <p>Your withdrawal request has been processed successfully.</p>
+              <p>The funds have been wired to your configured bank account. Please allow 2-3 business days for the transfer to appear on your bank statement depending on your bank.</p>
+              <p>Thank you for being an amazing part of the Mozhibu community!</p>
+              <p>Best,<br/>The Mozhibu Team</p>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error("Failed to send Resend email:", emailErr);
+        // Continue even if email fails
+      }
+    }
+
+    res.json({ msg: "Payout marked as paid and user notified successfully" });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ msg: "Server Error" });
   }
 });
