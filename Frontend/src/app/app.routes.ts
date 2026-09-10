@@ -18,8 +18,8 @@ export const routes: Routes = [
   {
     path: 'help',
     loadComponent: () =>
-      import('./features/company/help-support.component').then(
-        (m) => m.HelpSupportComponent,
+      import('./features/company/community.component').then(
+        (m) => m.CommunityComponent,
       ),
   },
   {

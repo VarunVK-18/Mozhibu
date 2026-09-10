@@ -161,13 +161,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   selectLang(code: Lang) {
     if (this.langService.currentLang() !== code) {
-      this.langService.setLanguage(code);
       this.langMenuOpen.set(false);
-
-      // Smoothly reload the current route to fetch translated data
-      const currentUrl = this.router.url;
-      this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-        this.router.navigate([currentUrl]);
+      this.langService.setLanguage(code).subscribe(() => {
+        // Smoothly reload the current route to fetch translated data
+        const currentUrl = this.router.url;
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+          this.router.navigate([currentUrl]);
+        });
       });
     } else {
       this.langMenuOpen.set(false);

@@ -2,6 +2,8 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { LanguageService } from '../../core/services/language.service';
 
 interface Category {
   id: string;
@@ -14,15 +16,14 @@ interface Category {
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
     <div class="categories-page">
       <div class="hero-section">
         <div class="wrap">
-          <h1>Explore by Category</h1>
+          <h1>{{ 'categoriesPage.title' | translate }}</h1>
           <p>
-            Dive into worlds of wonder, mystery, and romance. Find your next
-            favorite story.
+            {{ 'categoriesPage.subtitle' | translate }}
           </p>
         </div>
       </div>
@@ -37,15 +38,15 @@ interface Category {
               <div class="card-bg">
                 <img
                   [src]="category.image"
-                  [alt]="category.name"
+                  [alt]="getCategoryName(category)"
                   class="bg-img"
                 />
                 <div class="overlay"></div>
               </div>
               <div class="card-content">
-                <h2>{{ category.name }}</h2>
-                <p>{{ category.description }}</p>
-                <span class="count">{{ category.count }} Stories</span>
+                <h2>{{ ('genres.' + category.id + '.name' | translate) !== ('genres.' + category.id + '.name') ? ('genres.' + category.id + '.name' | translate) : category.name }}</h2>
+                <p>{{ ('genres.' + category.id + '.desc' | translate) !== ('genres.' + category.id + '.desc') ? ('genres.' + category.id + '.desc' | translate) : category.description }}</p>
+                <span class="count">{{ category.count }} {{ 'categoriesPage.stories' | translate }}</span>
               </div>
             </a>
           }
@@ -232,8 +233,15 @@ interface Category {
 })
 export class CategoriesComponent implements OnInit {
   bookService = inject(BookService);
+  langService = inject(LanguageService);
 
   categories: Category[] = [];
+
+  getCategoryName(cat: Category): string {
+    const key = `genres.${cat.id}.name`;
+    const trans = this.langService.translate(key);
+    return trans !== key ? trans : cat.name;
+  }
 
   private allGenres = [
     {

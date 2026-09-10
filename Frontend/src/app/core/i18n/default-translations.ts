@@ -170,7 +170,97 @@ export const DEFAULT_EN_TRANSLATIONS: Record<string, any> = {
     becomeAuthor: "Become an Author",
     noFollowing: "You aren't following anyone yet. Follow authors you love to get notified when they publish new stories.",
     findAuthors: "Find Authors",
-    noFollowers: "You don't have any followers yet. Keep writing and sharing your stories to grow your audience!"
+    noFollowers: "You don't have any followers yet. Keep writing and sharing your stories to grow your audience!",
+    reviewedContents: "Reviewed Contents",
+    noReviews: "You haven't reviewed any stories yet."
+  },
+  categoriesPage: {
+    title: "Explore by Category",
+    subtitle: "Dive into worlds of wonder, mystery, and romance. Find your next favorite story.",
+    stories: "Stories",
+    allCategories: "All Categories",
+    storiesFound: "Stories found",
+    loadingStories: "Loading stories...",
+    noStoriesFound: "No stories found in this category"
+  },
+  authorProfile: {
+    followers: "Followers",
+    following: "Following",
+    publishedStories: "Published Stories",
+    reviewedContents: "Reviewed Contents",
+    about: "About",
+    follow: "Follow",
+    unfollow: "Unfollow",
+    editProfile: "Edit Profile",
+    noBio: "This author hasn't written a bio yet.",
+    noStories: "This author hasn't published any stories yet.",
+    noReviews: "This author hasn't reviewed any stories yet."
+  },
+  genres: {
+    romance: {
+      name: "Romance",
+      desc: "Stories of love, passion, and emotional journeys."
+    },
+    fantasy: {
+      name: "Fantasy",
+      desc: "Magic, mythical creatures, and epic adventures."
+    },
+    thriller: {
+      name: "Thriller",
+      desc: "Suspenseful tales that keep you on the edge of your seat."
+    },
+    horror: {
+      name: "Horror",
+      desc: "Dark, terrifying, and bone-chilling stories."
+    },
+    mystery: {
+      name: "Mystery",
+      desc: "Puzzles, crimes, and secrets waiting to be uncovered."
+    },
+    historical: {
+      name: "Historical",
+      desc: "Step back in time to experience the past."
+    },
+    drama: {
+      name: "Drama",
+      desc: "Emotional, gripping character studies."
+    },
+    comedy: {
+      name: "Comedy",
+      desc: "Lighthearted, funny, and entertaining stories."
+    },
+    "sci-fi": {
+      name: "Sci-Fi",
+      desc: "Explore the future, space, and advanced technology."
+    },
+    children: {
+      name: "Children",
+      desc: "Fun and educational tales for kids."
+    },
+    poetry: {
+      name: "Poetry",
+      desc: "Beautiful verses and rhythmic expressions."
+    },
+    "short-stories": {
+      name: "Short Stories",
+      desc: "Quick reads for every mood."
+    },
+    "fan-fiction": {
+      name: "Fan Fiction",
+      desc: "Stories set in your favorite universes."
+    },
+    motivational: {
+      name: "Motivational",
+      desc: "Inspiring words to lift you up."
+    },
+    biography: {
+      name: "Biography",
+      desc: "True life stories of remarkable people."
+    },
+    mythology: {
+      name: "Mythology",
+      desc: "Legends, gods, and ancient lore."
+    }
   },
   reportModal: {
     title: "Report Story",

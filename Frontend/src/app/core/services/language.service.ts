@@ -67,12 +67,14 @@ export class LanguageService {
     this.loadTranslations(initialLang);
   }
 
-  setLanguage(lang: Lang): void {
+  private translationCache = new Map<Lang, Record<string, any>>();
+
+  setLanguage(lang: Lang) {
     this._lang.set(lang);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('preferredLang', lang);
     }
-    this.loadTranslations(lang);
+    return this.loadTranslations(lang);
   }
 
   getCurrentLangOption(): LangOption {
@@ -127,24 +129,39 @@ export class LanguageService {
     return val;
   }
 
-  private loadTranslations(lang: Lang): void {
+  loadTranslations(lang: Lang) {
+    const subject = new BehaviorSubject<Record<string, any> | null>(null);
+
+    if (this.translationCache.has(lang)) {
+      const cached = this.translationCache.get(lang)!;
+      this._translations.next(cached);
+      subject.next(cached);
+      subject.complete();
+      return subject.asObservable();
+    }
+
     const url = `/assets/i18n/${lang}.json`;
     this.http.get<Record<string, any>>(url).subscribe({
       next: (data) => {
         if (data && typeof data === 'object') {
-          if (lang === 'en') {
-            this._translations.next({ ...DEFAULT_EN_TRANSLATIONS, ...data });
-          } else {
-            this._translations.next(data);
-          }
+          const merged = lang === 'en' ? { ...DEFAULT_EN_TRANSLATIONS, ...data } : data;
+          this.translationCache.set(lang, merged);
+          this._translations.next(merged);
+          subject.next(merged);
+        } else {
+          this._translations.next(DEFAULT_EN_TRANSLATIONS);
+          subject.next(DEFAULT_EN_TRANSLATIONS);
         }
+        subject.complete();
       },
       error: (err) => {
         console.warn(`[LanguageService] Failed to load ${url}, falling back to defaults`, err);
-        if (lang !== 'en') {
-          this._translations.next(DEFAULT_EN_TRANSLATIONS);
-        }
+        this._translations.next(DEFAULT_EN_TRANSLATIONS);
+        subject.next(DEFAULT_EN_TRANSLATIONS);
+        subject.complete();
       },
     });
+
+    return subject.asObservable();
   }
 }

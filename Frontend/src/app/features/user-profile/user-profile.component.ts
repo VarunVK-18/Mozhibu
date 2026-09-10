@@ -98,6 +98,13 @@ import { environment } from '../../../environments/environment';
           >
             {{ 'profile.followers' | translate }} ({{ followers().length }})
           </button>
+          <button
+            class="tab-btn"
+            [class.active]="activeTab() === 'reviews'"
+            (click)="activeTab.set('reviews')"
+          >
+            {{ 'profile.reviewedContents' | translate }} ({{ reviewsList().length }})
+          </button>
         </nav>
       </div>
 
@@ -187,6 +194,55 @@ import { environment } from '../../../environments/environment';
                 <p>
                   {{ 'profile.noFollowers' | translate }}
                 </p>
+              </div>
+            }
+          </div>
+
+          <!-- REVIEWS -->
+          <div *ngIf="activeTab() === 'reviews'" class="tab-pane">
+            @if (isLoadingReviews()) {
+              <div class="loading-state"><div class="spinner"></div></div>
+            } @else if (reviewsList().length === 0) {
+              <div class="empty-state"><p>You haven't written any reviews yet.</p></div>
+            } @else {
+              <div class="reviews-list">
+                @for (review of reviewsList(); track review._id) {
+                  <div class="review-card">
+                    <div class="review-header">
+                      <div class="reviewer-info" [routerLink]="['/author', review.user._id]" style="cursor: pointer;">
+                        <img [src]="getAvatarUrl(review.user.avatar, review.user.username)" class="reviewer-avatar" (error)="onAvatarError($event, review.user.username)" />
+                        <div>
+                          <h4 class="reviewer-name">
+                            {{ review.user.username }}
+                            <span *ngIf="review.user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 6px;">PRO</span>
+                          </h4>
+                          <p class="review-date">{{ review.createdAt | date:'longDate' }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="review-body">
+                      @if (review.rating > 0) {
+                        <div class="star-rating">
+                          @for (star of [1,2,3,4,5]; track star) {
+                            <span class="star" [class.filled]="star <= review.rating">★</span>
+                          }
+                        </div>
+                      }
+                      @if (review.text) {
+                        <p class="review-text">"{{ review.text }}"</p>
+                      }
+                    </div>
+
+                    <div class="reviewed-book" [routerLink]="['/story', review.book._id]" style="cursor: pointer;">
+                      <img [src]="getCoverUrl(review.book.cover)" class="mini-cover" (error)="onCoverError($event)" />
+                      <div>
+                        <span style="font-size: 11px; color: #6b7280; text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 2px;">Reviewed on</span>
+                        <span class="book-title-mini">{{ review.book.title }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -599,6 +655,119 @@ import { environment } from '../../../environments/environment';
       .author-card:hover {
         box-shadow: 0 4px 16px rgba(43, 38, 32, 0.05);
       }
+
+      /* Reviews List Styles */
+      .reviews-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+        align-items: start;
+      }
+      .review-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .review-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+        border-color: #d1d5db;
+      }
+      .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .reviewer-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .reviewer-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .reviewer-name {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+      }
+      .review-date {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink-faint);
+      }
+      .reviewed-book {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #f9fafb;
+        padding: 8px 12px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        transition: background 0.2s;
+        margin-top: 8px;
+      }
+      .reviewed-book:hover {
+        background: #f3f4f6;
+      }
+      .mini-cover {
+        width: 32px;
+        height: 48px;
+        border-radius: 6px;
+        object-fit: cover;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .book-title-mini {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ink);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .review-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .star-rating {
+        display: flex;
+        gap: 4px;
+      }
+      .star {
+        color: #e5e7eb;
+        font-size: 18px;
+      }
+      .star.filled {
+        color: #f59e0b;
+      }
+      .review-text {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+        color: #4b5563;
+        white-space: pre-wrap;
+        font-style: italic;
+        position: relative;
+        padding-left: 12px;
+        border-left: 3px solid #e5e7eb;
+      }
+
       .author-info {
         display: flex;
         align-items: center;
@@ -696,6 +865,7 @@ export class UserProfileComponent implements OnInit {
     | 'published'
     | 'following'
     | 'followers'
+    | 'reviews'
   >('published');
   isLoading = signal<boolean>(true);
 
@@ -704,6 +874,9 @@ export class UserProfileComponent implements OnInit {
   following = signal<any[]>([]);
   followers = signal<any[]>([]);
   showBigAvatar = signal<boolean>(false);
+  
+  reviewsList = signal<any[]>([]);
+  isLoadingReviews = signal<boolean>(false);
 
   toggleBigAvatar() {
     this.showBigAvatar.set(!this.showBigAvatar());
@@ -717,7 +890,7 @@ export class UserProfileComponent implements OnInit {
   loadAllData() {
     this.isLoading.set(true);
     let completedReqs = 0;
-    const totalReqs = 3;
+    const totalReqs = 4;
     const checkDone = () => {
       completedReqs++;
       if (completedReqs >= totalReqs) {
@@ -789,6 +962,25 @@ export class UserProfileComponent implements OnInit {
       },
       error: () => checkDone(),
     });
+
+    // 4. Load Reviews
+    this.isLoadingReviews.set(true);
+    if (this.user()?.id) {
+      this.authorService.getAuthorReviews(this.user()!.id).subscribe({
+        next: (reviews) => {
+          this.reviewsList.set(reviews);
+          this.isLoadingReviews.set(false);
+          checkDone();
+        },
+        error: () => {
+          this.isLoadingReviews.set(false);
+          checkDone();
+        }
+      });
+    } else {
+      this.isLoadingReviews.set(false);
+      checkDone();
+    }
   }
 
 

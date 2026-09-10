@@ -9,11 +9,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { environment } from '../../../environments/environment';
 import { ConfirmService } from '../../core/services/confirm.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-author-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TranslatePipe],
   template: `
     <div class="profile-layout">
       @if (isLoading) {
@@ -44,7 +45,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
                 </div>
               <div class="author-meta">
                 <span class="meta-item">
-                  <strong>{{ profile.author.followersCount }}</strong> Followers
+                  <strong>{{ profile.author.followersCount }}</strong> {{ 'authorProfile.followers' | translate }}
                 </span>
                 <span class="meta-separator">•</span>
                 <span class="meta-item">
@@ -56,7 +57,7 @@ import { ConfirmService } from '../../core/services/confirm.service';
                 <p>
                   {{
                     profile.author.bio ||
-                      "This author hasn't written a bio yet."
+                      ('authorProfile.noBio' | translate)
                   }}
                 </p>
               </div>
@@ -64,10 +65,10 @@ import { ConfirmService } from '../../core/services/confirm.service';
 
             <div class="author-actions">
               @if (isCurrentUser()) {
-                <button class="btn-outline">Edit Profile</button>
+                <button class="btn-outline">{{ 'authorProfile.editProfile' | translate }}</button>
               } @else {
                 <button class="btn-primary" (click)="toggleFollow()">
-                  {{ isFollowing ? 'Unfollow' : 'Follow' }}
+                  {{ isFollowing ? ('authorProfile.unfollow' | translate) : ('authorProfile.follow' | translate) }}
                 </button>
               }
             </div>
@@ -77,16 +78,16 @@ import { ConfirmService } from '../../core/services/confirm.service';
         <!-- Profile Content Tabs -->
         <div class="profile-content">
           <div class="profile-tabs">
-            <button class="tab-btn" [class.active]="activeTab === 'stories'" (click)="setTab('stories')">Published Stories</button>
-            <button class="tab-btn" [class.active]="activeTab === 'followers'" (click)="setTab('followers')">Followers ({{ profile.author.followersCount }})</button>
-            <button class="tab-btn" [class.active]="activeTab === 'following'" (click)="setTab('following')">Following</button>
-            <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">Reviews</button>
+            <button class="tab-btn" [class.active]="activeTab === 'stories'" (click)="setTab('stories')">{{ 'authorProfile.publishedStories' | translate }}</button>
+            <button class="tab-btn" [class.active]="activeTab === 'followers'" (click)="setTab('followers')">{{ 'authorProfile.followers' | translate }} ({{ profile.author.followersCount }})</button>
+            <button class="tab-btn" [class.active]="activeTab === 'following'" (click)="setTab('following')">{{ 'authorProfile.following' | translate }}</button>
+            <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">{{ 'authorProfile.reviewedContents' | translate }}</button>
           </div>
 
           @if (activeTab === 'stories') {
             @if (profile.books.length === 0) {
               <div class="empty-state">
-                <p>This author hasn't published any stories yet.</p>
+                <p>{{ 'authorProfile.noStories' | translate }}</p>
               </div>
             } @else {
               <div class="results-grid">

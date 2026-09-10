@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BookService } from '../../../core/services/book.service';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 import {
   StoryCardComponent,
   Story,
@@ -10,7 +11,7 @@ import {
 @Component({
   selector: 'app-category-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, StoryCardComponent],
+  imports: [CommonModule, RouterModule, StoryCardComponent, TranslatePipe],
   template: `
     <div class="category-detail-page">
       <div class="hero-section">
@@ -26,23 +27,23 @@ import {
             >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            All Categories
+            {{ 'categoriesPage.allCategories' | translate }}
           </a>
-          <h1>{{ categoryName }}</h1>
-          <p>{{ categoryDesc }}</p>
+          <h1>{{ ('genres.' + categoryId + '.name' | translate) !== ('genres.' + categoryId + '.name') ? ('genres.' + categoryId + '.name' | translate) : categoryName }}</h1>
+          <p>{{ ('genres.' + categoryId + '.desc' | translate) !== ('genres.' + categoryId + '.desc') ? ('genres.' + categoryId + '.desc' | translate) : categoryDesc }}</p>
         </div>
       </div>
 
       <div class="wrap content-section">
         <div class="controls">
-          <span class="results-count">{{ books.length }} Stories found</span>
+          <span class="results-count">{{ books.length }} {{ 'categoriesPage.storiesFound' | translate }}</span>
           <!-- In a full app, we would add sort dropdowns here -->
         </div>
 
         @if (isLoading) {
           <div class="loading-state">
             <div class="spinner"></div>
-            <p>Loading stories...</p>
+            <p>{{ 'categoriesPage.loadingStories' | translate }}</p>
           </div>
         } @else if (books.length > 0) {
           <div class="story-grid">
@@ -209,6 +210,7 @@ export class CategoryDetailComponent implements OnInit {
   route = inject(ActivatedRoute);
   bookService = inject(BookService);
 
+  categoryId = '';
   categoryName = '';
   categoryDesc = '';
   books: Story[] = [];
@@ -259,6 +261,7 @@ export class CategoryDetailComponent implements OnInit {
 
   loadCategory(id: string) {
     this.isLoading = true;
+    this.categoryId = id;
 
     // Find the genre by id (e.g. 'sci-fi' -> 'Sci-Fi')
     const genreMatch = this.allGenres.find(

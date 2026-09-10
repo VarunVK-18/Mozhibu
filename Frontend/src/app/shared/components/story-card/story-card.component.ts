@@ -38,7 +38,7 @@ export interface Story {
         />
         <div class="top-left-badges">
 
-          <div class="genre-tag" *ngIf="story.genre">{{ ('trending.tabs.' + story.genre.toLowerCase() | translate) !== 'trending.tabs.' + story.genre.toLowerCase() ? ('trending.tabs.' + story.genre.toLowerCase() | translate) : story.genre }}</div>
+          <div class="genre-tag" *ngIf="story.genre">{{ ('genres.' + story.genre.toLowerCase().replace(' ', '-') + '.name' | translate) !== ('genres.' + story.genre.toLowerCase().replace(' ', '-') + '.name') ? ('genres.' + story.genre.toLowerCase().replace(' ', '-') + '.name' | translate) : (('trending.tabs.' + story.genre.toLowerCase() | translate) !== ('trending.tabs.' + story.genre.toLowerCase()) ? ('trending.tabs.' + story.genre.toLowerCase() | translate) : story.genre) }}</div>
         </div>
         <div class="top-right-badges">
           <div class="mature-badge" *ngIf="story.isMature">Erotic</div>
