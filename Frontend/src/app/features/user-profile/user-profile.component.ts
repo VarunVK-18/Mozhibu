@@ -124,7 +124,25 @@ import { environment } from '../../../environments/environment';
               @if (publishedStories().length > 0) {
                 <div class="results-grid">
                   @for (item of publishedStories(); track item._id) {
-                    <app-story-card [story]="item"></app-story-card>
+                    <div class="profile-book-card" [routerLink]="['/story', item._id]">
+                      <div class="profile-book-cover">
+                        <img [src]="item.cover || 'assets/default-cover.png'" [alt]="item.title" loading="lazy" />
+                        <span class="profile-book-genre" *ngIf="item.genre">{{ item.genre }}</span>
+                      </div>
+                      <div class="profile-book-info">
+                        <h4 class="profile-book-title">{{ item.title }}</h4>
+                        <div class="profile-book-stats">
+                          <span class="stat-item">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            {{ item.views || 0 }}
+                          </span>
+                          <span class="stat-item">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            {{ item.likesCount || 0 }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   }
                 </div>
               } @else {
@@ -214,7 +232,7 @@ import { environment } from '../../../environments/environment';
                         <div>
                           <h4 class="reviewer-name">
                             {{ review.user.username }}
-                            <span *ngIf="review.user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 6px;">PRO</span>
+
                           </h4>
                           <p class="review-date">{{ review.createdAt | date:'longDate' }}</p>
                         </div>
@@ -510,6 +528,78 @@ import { environment } from '../../../environments/environment';
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 32px 24px;
+      }
+
+      .profile-book-card {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        border-radius: var(--radius-m);
+        overflow: hidden;
+        background: var(--card);
+        border: 1px solid var(--border-soft);
+      }
+      .profile-book-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      }
+      .profile-book-cover {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 2/3;
+        overflow: hidden;
+      }
+      .profile-book-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .profile-book-genre {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--forest);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 100px;
+        font-family: var(--display);
+      }
+      .profile-book-info {
+        padding: 8px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .profile-book-title {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin: 0;
+      }
+      .profile-book-stats {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-weight: 500;
+      }
+      .stat-item svg {
+        color: var(--ink-faint);
+        flex-shrink: 0;
       }
 
       .book-card {

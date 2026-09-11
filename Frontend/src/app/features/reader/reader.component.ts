@@ -19,6 +19,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StoryService } from '../../core/services/story.service';
+import { BookService } from '../../core/services/book.service';
 import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
 
 @Component({
@@ -160,7 +161,7 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
             </button>
           </div>
 
-          <button class="nav-btn" (click)="nextChapter()">
+          <button class="nav-btn" (click)="nextChapter()" [disabled]="currentChapterNum() >= storyEpisodes().length" [style.opacity]="currentChapterNum() >= storyEpisodes().length ? '0.3' : '1'">
             Next
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -543,6 +544,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
   scrollSpeed = signal(1.0);
   private scrollAnimationId: number | null = null;
   private accumulatedScroll: number = 0;
+  private lastViewedChapterId: string | null = null;
 
   storyId: string = '';
   chapterContent = signal<SafeHtml>('');
@@ -554,6 +556,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
 
   private authService = inject(AuthService);
   private storyService = inject(StoryService);
+  private bookService = inject(BookService);
   private document = inject(DOCUMENT);
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
@@ -597,6 +600,13 @@ export class ReaderComponent implements OnInit, OnDestroy {
               currentEp.title || `Chapter ${currentEp.episode}`;
             this.requiresSubscription.set(!currentEp.isUnlocked);
 
+            if (currentEp.id && currentEp.id !== this.lastViewedChapterId) {
+              this.lastViewedChapterId = currentEp.id;
+              this.bookService.incrementBookViews(this.storyId, currentEp.id).subscribe({
+                error: (err) => console.error('Failed to increment views', err)
+              });
+            }
+
             if (currentEp.isUnlocked && currentEp.content) {
               this.currentHtml = currentEp.content;
               this.processContent(currentEp.content);
@@ -605,6 +615,11 @@ export class ReaderComponent implements OnInit, OnDestroy {
               this.chapterContent.set('');
             }
           }
+        }
+
+        // Save initial progress to ensure the book appears in "Continue Reading"
+        if (this.authService.user()) {
+          this.saveProgress(this.scrollPercentage() || 0);
         }
       },
       { allowSignalWrites: true },

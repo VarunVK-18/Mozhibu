@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   ActivatedRoute,
   Router,
@@ -15,7 +16,7 @@ import { Subject, filter, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-story-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, SafeUrlPipe],
+  imports: [CommonModule, FormsModule, RouterModule, SafeUrlPipe],
   template: `
     <div class="dashboard-page">
       @if (isLoading) {
@@ -79,12 +80,77 @@ import { Subject, filter, takeUntil } from 'rxjs';
                   @if (book.status === 'draft' || book.status === 'published') {
                     <button
                       class="btn-outline"
-                      (click)="togglePublishStatus()"
+                      (click)="book.status === 'draft' ? showPublishModal() : togglePublishStatus()"
                       [style.borderColor]="book.status === 'draft' ? 'var(--forest)' : ''"
                       [style.color]="book.status === 'draft' ? 'var(--forest)' : ''"
                     >
                       {{ book.status === 'published' ? 'Unpublish Story' : 'Publish Story' }}
                     </button>
+                  }
+
+                  <!-- Publish Confirmation Modal -->
+                  @if (publishModalVisible) {
+                    <div class="publish-modal-overlay" (click)="closePublishModal()">
+                      <div class="publish-modal" (click)="$event.stopPropagation()">
+                        <div class="publish-modal-header">
+                          <div class="publish-modal-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                              <path d="M2 17l10 5 10-5"/>
+                              <path d="M2 12l10 5 10-5"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3>Ready to Publish?</h3>
+                            <p>Please review and accept the following before publishing.</p>
+                          </div>
+                          <button class="modal-close-btn" (click)="closePublishModal()">✕</button>
+                        </div>
+
+                        <div class="publish-modal-body">
+                          <label class="policy-checkbox">
+                            <input
+                              type="checkbox"
+                              [(ngModel)]="agreedToOriginal"
+                              id="cb-original"
+                            />
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-label">
+                              I confirm that this content is <strong>my original work</strong> and does not infringe on any third-party copyrights, trademarks, or intellectual property rights.
+                            </span>
+                          </label>
+
+                          <label class="policy-checkbox">
+                            <input
+                              type="checkbox"
+                              [(ngModel)]="agreedToTerms"
+                              id="cb-terms"
+                            />
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-label">
+                              I have read and agree to Mozhibu's
+                              <a routerLink="/terms" target="_blank" class="policy-link">Terms of Service</a>
+                              and
+                              <a routerLink="/privacy" target="_blank" class="policy-link">Privacy Policy</a>.
+                            </span>
+                          </label>
+                        </div>
+
+                        <div class="publish-modal-footer">
+                          <button class="btn-outline" (click)="closePublishModal()">Cancel</button>
+                          <button
+                            class="btn-primary"
+                            [disabled]="!agreedToOriginal || !agreedToTerms"
+                            (click)="confirmPublish()"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            Publish Story
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   }
                   <button
                     class="btn-outline"
@@ -420,6 +486,181 @@ import { Subject, filter, takeUntil } from 'rxjs';
           gap: 12px;
         }
       }
+
+      /* Publish Confirmation Modal */
+      .publish-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        animation: fadeOverlay 0.2s ease;
+      }
+
+      @keyframes fadeOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      .publish-modal {
+        background: #fff;
+        border-radius: 20px;
+        padding: 32px;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+        animation: popModal 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      @keyframes popModal {
+        from { opacity: 0; transform: scale(0.92) translateY(12px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      .publish-modal-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .publish-modal-icon {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--forest);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .publish-modal-header h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #111827;
+        margin: 0 0 4px;
+      }
+
+      .publish-modal-header p {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0;
+      }
+
+      .modal-close-btn {
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: color 0.2s;
+      }
+
+      .modal-close-btn:hover { color: #374151; }
+
+      .publish-modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .policy-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        cursor: pointer;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1.5px solid #e5e7eb;
+        transition: border-color 0.2s, background 0.2s;
+      }
+
+      .policy-checkbox:has(input:checked) {
+        border-color: var(--forest);
+        background: rgba(16, 185, 129, 0.04);
+      }
+
+      .policy-checkbox input[type="checkbox"] {
+        display: none;
+      }
+
+      .checkbox-custom {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        border: 2px solid #d1d5db;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        margin-top: 1px;
+        background: #fff;
+      }
+
+      .policy-checkbox input:checked + .checkbox-custom {
+        background: var(--forest);
+        border-color: var(--forest);
+      }
+
+      .policy-checkbox input:checked + .checkbox-custom::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 10px;
+        border: 2px solid #fff;
+        border-top: none;
+        border-left: none;
+        transform: rotate(45deg) translateY(-1px);
+      }
+
+      .checkbox-label {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.5;
+      }
+
+      .checkbox-label strong {
+        color: #111827;
+      }
+
+      .policy-link {
+        color: var(--forest);
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .policy-link:hover {
+        text-decoration: underline;
+      }
+
+      .publish-modal-footer {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      .publish-modal-footer .btn-primary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .publish-modal-footer .btn-primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     `,
   ],
 })
@@ -436,6 +677,11 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
   isLoading = true;
   totalWords = 0;
   private currentBookId: string | null = null;
+
+  // Publish modal state
+  publishModalVisible = false;
+  agreedToOriginal = false;
+  agreedToTerms = false;
 
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
@@ -524,6 +770,32 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  showPublishModal() {
+    if (!this.book) return;
+    if (!this.book.cover) {
+      this.showAlert('Please upload a cover image before publishing the story.');
+      return;
+    }
+    const hasPublishedChapter = this.chapters.some(c => c.status === 'published');
+    if (!hasPublishedChapter) {
+      this.showAlert('You cannot publish a book without any published chapters.');
+      return;
+    }
+    // Reset checkboxes each time
+    this.agreedToOriginal = false;
+    this.agreedToTerms = false;
+    this.publishModalVisible = true;
+  }
+
+  closePublishModal() {
+    this.publishModalVisible = false;
+  }
+
+  confirmPublish() {
+    this.publishModalVisible = false;
+    this.togglePublishStatus();
+  }
+
   togglePublishStatus() {
     if (!this.book) return;
 
@@ -533,13 +805,23 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
       this.showAlert('Please upload a cover image before publishing the story.');
       return;
     }
+    
+    if (newStatus === 'published') {
+      const hasPublishedChapter = this.chapters.some(c => c.status === 'published');
+      if (!hasPublishedChapter) {
+        this.showAlert('You cannot publish a book without any published chapters.');
+        return;
+      }
+    }
+    
     this.bookService.updateBook(this.book._id, { status: newStatus }).subscribe({
       next: (res) => {
         this.book.status = res.status;
       },
       error: (err) => {
         console.error('Failed to update publish status', err);
-        this.showAlert('Failed to update story status');
+        const errorMsg = err.error?.msg || 'Failed to update story status';
+        this.showAlert(errorMsg);
       },
     });
   }
@@ -550,8 +832,10 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
     const newStatus = chapter.status === 'published' ? 'draft' : 'published';
     
     if (newStatus === 'published') {
-      if (this.book.status !== 'published') {
-        this.showAlert('You must publish the story before you can publish individual chapters.');
+      const text = (chapter.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const wordCount = text ? text.split(' ').length : 0;
+      if (wordCount < 500) {
+        this.showAlert(`A chapter must have at least 500 words to be published. Current word count: ${wordCount}`);
         return;
       }
       if (!chapter.cover) {

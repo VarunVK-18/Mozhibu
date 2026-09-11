@@ -73,6 +73,12 @@ import { environment } from '../../../environments/environment';
             <option value="Drama">Drama</option>
             <option value="Comedy">Comedy</option>
             <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Children">Children</option>
+            <option value="Poetry">Poetry</option>
+            <option value="Short Stories">Short Stories</option>
+            <option value="Fan Fiction">Fan Fiction</option>
+            <option value="Motivational">Motivational</option>
+            <option value="Biography">Biography</option>
           </select>
         </div>
 
@@ -89,6 +95,14 @@ import { environment } from '../../../environments/environment';
             <option value="Hindi">Hindi</option>
             <option value="Malayalam">Malayalam</option>
             <option value="Telugu">Telugu</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Marathi">Marathi</option>
+            <option value="Gujarati">Gujarati</option>
+            <option value="Kannada">Kannada</option>
+            <option value="Odia">Odia</option>
+            <option value="Punjabi">Punjabi</option>
+            <option value="Assamese">Assamese</option>
+            <option value="Urdu">Urdu</option>
           </select>
         </div>
       </aside>
@@ -206,7 +220,7 @@ import { environment } from '../../../environments/environment';
                     </div>
                     <div style="display: flex; align-items: center; gap: 4px; margin-top: 16px; margin-bottom: 4px;">
                       <h4 class="author-name" style="margin: 0;">{{ item.username }}</h4>
-                      <span *ngIf="item.isPremium" class="pro-badge">PRO</span>
+
                     </div>
                     <p class="author-followers">
                       {{ item.followersCount }} Followers

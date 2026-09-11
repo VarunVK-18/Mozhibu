@@ -51,7 +51,7 @@ import { debounceTime, switchMap, catchError } from 'rxjs/operators';
 
         <div class="settings-grid">
           <!-- Basic Profile Info -->
-          <div class="settings-card" *ngIf="activeTab() === 'profile'">
+          <div class="settings-card" id="profile" *ngIf="activeTab() === 'profile'">
             <h3>Profile Information</h3>
 
             <div class="avatar-upload-section">

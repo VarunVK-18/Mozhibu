@@ -285,6 +285,13 @@ router.put("/:id", protect, author, async (req, res) => {
       if (willBeMature) {
         updateData.status = 'pending';
       }
+
+      // Check if book has at least one published chapter
+      const Chapter = require("../models/Chapter");
+      const chapterCount = await Chapter.countDocuments({ book: req.params.id, status: "published" });
+      if (chapterCount === 0) {
+        return res.status(400).json({ msg: "You cannot publish a book without any published chapters." });
+      }
     }
 
     const updatedBook = await Book.findByIdAndUpdate(
@@ -420,8 +427,18 @@ router.post("/:id/reviews", protect, async (req, res) => {
       return res.status(403).json({ msg: "You cannot write a review for your own book" });
     }
 
-    // Allow multiple comments per user (removed existingReview check for non-authors)
-
+    // If this is a review (has a rating), ensure the user hasn't already reviewed the book
+    if (req.body.rating && req.body.rating > 0) {
+      const existingReview = await Review.findOne({
+        book: req.params.id,
+        user: req.user.id,
+        rating: { $gt: 0 },
+        parentReview: { $exists: false }
+      });
+      if (existingReview) {
+        return res.status(400).json({ msg: "You have already reviewed this book. You can only leave one review, but you may leave multiple comments." });
+      }
+    }
     const newReview = new Review({
       book: req.params.id,
       user: req.user.id,
@@ -444,8 +461,7 @@ router.post("/:id/reviews", protect, async (req, res) => {
         reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) /
         reviews.length;
     }
-    book.rating = avgRating;
-    await book.save();
+    await Book.updateOne({ _id: book._id }, { $set: { rating: avgRating } });
 
     if (book.author.toString() !== req.user.id) {
       await Notification.create({
@@ -536,7 +552,7 @@ router.put("/:id/reviews/:reviewId", protect, async (req, res) => {
     // Allow multiple edits (removed 1-time edit limit)
 
     const { content, rating } = req.body;
-    if (content) review.comment = content;
+    if (content !== undefined) review.comment = content;
     
     // Only update rating if it's a top-level review (not a reply) and rating is provided
     if (rating !== undefined && !review.parentReview) {
@@ -560,8 +576,7 @@ router.put("/:id/reviews/:reviewId", protect, async (req, res) => {
         if (allReviews.length > 0) {
           avgRating = allReviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / allReviews.length;
         }
-        book.rating = avgRating;
-        await book.save();
+        await Book.updateOne({ _id: book._id }, { $set: { rating: avgRating } });
       }
     }
 
@@ -736,10 +751,14 @@ router.post("/:id/report", protect, async (req, res) => {
 // @desc Create a new book
 router.post("/", protect, author, async (req, res) => {
   try {
+    if (req.body.status === "published") {
+      return res.status(400).json({ msg: "You cannot publish a book without any published chapters." });
+    }
+
     const newBook = new Book({
       ...req.body,
       author: req.user.id,
-      status: req.body.status || "published",
+      status: req.body.status || "draft",
     });
 
     // Deadline Enforcement for Competition Books
@@ -791,6 +810,15 @@ router.post("/:id/chapters", protect, author, async (req, res) => {
     // Sanitize HTML content
     const sanitizedContent = req.body.content ? xss(req.body.content) : "";
 
+    // Validate minimum word count for published chapters
+    if (req.body.status === "published") {
+      const text = sanitizedContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const wordCount = text ? text.split(' ').length : 0;
+      if (wordCount < 500) {
+        return res.status(400).json({ msg: "A chapter must have at least 500 words to be published." });
+      }
+    }
+
     const newChapter = new Chapter({
       ...req.body,
       content: sanitizedContent,
@@ -799,6 +827,26 @@ router.post("/:id/chapters", protect, author, async (req, res) => {
     });
     const chapter = await newChapter.save();
     res.json(chapter);
+  } catch (err) {
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route POST /api/books/:id/view
+// @desc Increment view count for a book
+router.post("/:id/view", protectOptional, async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    const isAuthor = req.user && book.author && book.author.toString() === req.user.id;
+    
+    if (!isAuthor) {
+      book.views = (book.views || 0) + 1;
+      await book.save();
+    }
+    
+    res.json({ views: book.views });
   } catch (err) {
     res.status(500).json({ msg: "Server Error" });
   }
@@ -870,6 +918,18 @@ router.put("/:id/chapters/:chapterId", protect, author, async (req, res) => {
 
     if (req.body.content) {
       req.body.content = xss(req.body.content);
+    }
+
+    const contentToCheck = req.body.content !== undefined ? req.body.content : existingChapter.content;
+    const statusToCheck = req.body.status !== undefined ? req.body.status : existingChapter.status;
+    
+    // Validate minimum word count for published chapters
+    if (statusToCheck === "published") {
+      const text = (contentToCheck || "").replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const wordCount = text ? text.split(' ').length : 0;
+      if (wordCount < 500) {
+        return res.status(400).json({ msg: "A chapter must have at least 500 words to be published." });
+      }
     }
 
     const chapter = await Chapter.findOneAndUpdate(
@@ -1030,6 +1090,40 @@ ${chapter.content}`;
     await chapter.save();
 
     res.json({ content: translatedContent });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// @route POST /api/books/:id/view
+// @desc Increment book views only if the user hasn't read this chapter before
+router.post("/:id/view", protectOptional, async (req, res) => {
+  try {
+    const { chapterId } = req.body;
+    if (!chapterId) {
+      return res.status(400).json({ msg: "Chapter ID is required" });
+    }
+
+    const chapter = await Chapter.findById(chapterId);
+    if (!chapter) return res.status(404).json({ msg: "Chapter not found" });
+
+    // Use req.user.id if logged in, otherwise req.ip
+    const identifier = req.user ? req.user.id.toString() : req.ip;
+
+    if (!chapter.viewers) {
+      chapter.viewers = [];
+    }
+
+    if (!chapter.viewers.includes(identifier)) {
+      chapter.viewers.push(identifier);
+      await chapter.save();
+
+      // Increment the book views
+      await Book.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+    }
+
+    res.json({ success: true });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ msg: "Server Error" });

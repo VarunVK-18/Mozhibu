@@ -159,6 +159,14 @@ export class BookService {
     return this.api.get('/books/categories');
   }
 
+  deleteBook(bookId: string): Observable<any> {
+    return this.api.delete(`/books/${bookId}`);
+  }
+
+  incrementBookViews(bookId: string, chapterId: string): Observable<any> {
+    return this.api.post(`/books/${bookId}/view`, { chapterId });
+  }
+
   toggleLike(bookId: string): Observable<any> {
     return this.api.post(`/books/${bookId}/like`, {});
   }

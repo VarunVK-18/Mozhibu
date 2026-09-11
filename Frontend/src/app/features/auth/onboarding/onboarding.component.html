@@ -1,12 +1,33 @@
 <div class="onboarding-page">
-  <div class="onboarding-card glass-panel small-popup">
+  <div class="onboarding-card small-popup">
+    <div class="onboarding-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
     <div class="onboarding-header">
-      <h2>Profile Incomplete</h2>
-      <p>Please complete your profile by setting a Pen Name and Authorized Legal Name to continue.</p>
+      <h2>Complete Your Profile</h2>
+      <p>To continue using Mozhibu, please set your <strong>{{ missingLabel }}</strong> in your profile settings.</p>
+    </div>
+
+    <div class="missing-fields">
+      <div class="field-status" [class.missing]="missingPenName()">
+        <span class="status-dot"></span>
+        <span>Pen Name</span>
+        <span class="status-tag" *ngIf="missingPenName()">Required</span>
+        <span class="status-tag done" *ngIf="!missingPenName()">✓ Set</span>
+      </div>
+      <div class="field-status" [class.missing]="missingLegalName()">
+        <span class="status-dot"></span>
+        <span>Legal Name</span>
+        <span class="status-tag" *ngIf="missingLegalName()">Required</span>
+        <span class="status-tag done" *ngIf="!missingLegalName()">✓ Set</span>
+      </div>
     </div>
 
     <div class="actions">
-      <button class="btn btn-primary w-100" (click)="goToSettings()">Go to Edit Profile</button>
+      <button class="btn btn-primary w-100" (click)="goToSettings()">Go to Profile Settings</button>
     </div>
   </div>
 </div>

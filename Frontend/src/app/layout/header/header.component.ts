@@ -283,6 +283,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notificationService.markAllAsRead().subscribe();
   }
 
+  markSingleAsRead(event: Event, notification: NotificationItem) {
+    event.stopPropagation();
+    if (!notification.isRead) {
+      this.notificationService.markAsRead(notification._id).subscribe();
+    }
+  }
+
   clearAllNotifications(event?: Event) {
     if (event) {
       event.stopPropagation();

@@ -41,7 +41,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
               <div class="author-info">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <h1 class="author-name">{{ profile.author.username }}</h1>
-                  <span *ngIf="profile.author.isPremium" class="pro-badge" style="font-size: 12px; padding: 3px 8px;">PRO</span>
+
                 </div>
               <div class="author-meta">
                 <span class="meta-item">
@@ -164,7 +164,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                     <div class="user-info">
                       <h4 class="user-name">
                         {{ user.username }}
-                        <span *ngIf="user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 4px;">PRO</span>
+
                       </h4>
                       <p class="user-meta">{{ user.followersCount || 0 }} Followers</p>
                     </div>
@@ -189,7 +189,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                     <div class="user-info">
                       <h4 class="user-name">
                         {{ user.username }}
-                        <span *ngIf="user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 4px;">PRO</span>
+
                       </h4>
                       <p class="user-meta">{{ user.followersCount || 0 }} Followers</p>
                     </div>
@@ -214,7 +214,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
                         <div>
                           <h4 class="reviewer-name">
                             {{ review.user.username }}
-                            <span *ngIf="review.user.isPremium" class="pro-badge" style="font-size: 9px; padding: 2px 4px; margin-left: 6px;">PRO</span>
+
                           </h4>
                           <p class="review-date">{{ review.createdAt | date:'longDate' }}</p>
                         </div>

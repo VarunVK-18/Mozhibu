@@ -23,10 +23,10 @@ import { RouterModule } from '@angular/router';
     <div class="comments-section" id="reviews-section">
       <div class="comments-section-grid">
         <div class="ratings-column">
-          <!-- Ratings & Reviews Dashboard -->
+          <!-- Ratings Dashboard -->
           <div class="ratings-dashboard">
         <div class="dashboard-left">
-          <h2>Ratings & Reviews</h2>
+          <h2>Ratings</h2>
           <div class="avg-score">
             <span class="big-number">{{ averageRating }}</span>
             <div class="stars-display">
@@ -77,38 +77,43 @@ import { RouterModule } from '@angular/router';
           </div>
         </div>
         </div>
+
+        <!-- Quick Rate Section -->
+        @if (!isStoryAuthor) {
+          <div class="quick-rate-box">
+            <p class="quick-rate-label">Rate this book:</p>
+            <div class="quick-rate-stars">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <svg
+                  viewBox="0 0 24 24"
+                  [attr.fill]="star <= (hoverRating || quickRating) ? 'currentColor' : 'none'"
+                  [attr.stroke]="star <= (hoverRating || quickRating) ? 'none' : 'currentColor'"
+                  stroke-width="2"
+                  class="quick-star-icon"
+                  (mouseenter)="hoverRating = star"
+                  (mouseleave)="hoverRating = 0"
+                  (click)="submitQuickRating(star)"
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                </svg>
+              }
+            </div>
+            @if (quickRatingSubmitted) {
+              <p class="quick-rate-thanks">Thanks for rating! ⭐</p>
+            }
+          </div>
+        }
       </div>
       
       <div class="reviews-column">
-      <!-- Write Review/Comment Input -->
+      <!-- Write Review Input - text only, rating optional -->
       @if (!isStoryAuthor) {
         <div class="comment-input-area write-review-box">
           <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
         <div class="input-wrapper">
-          @if (isFocused || newCommentText.trim().length > 0) {
-            <div class="rating-selector">
-              <span class="rating-label">Tap to Rate:</span>
-              <div class="stars">
-                @for (star of [1, 2, 3, 4, 5]; track star) {
-                  <svg
-                    viewBox="0 0 24 24"
-                    [attr.fill]="star <= newRating ? 'currentColor' : 'none'"
-                    [attr.stroke]="star <= newRating ? 'none' : 'currentColor'"
-                    stroke-width="2"
-                    (click)="newRating = star"
-                    class="star-icon"
-                  >
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    ></path>
-                  </svg>
-                }
-              </div>
-            </div>
-          }
           <textarea
             [(ngModel)]="newCommentText"
-            [placeholder]="'Write a review (with rating)...'"
+            [placeholder]="'Write a review (optional)...'"
             rows="1"
             (focus)="isFocused = true"
             (blur)="onBlur()"
@@ -120,7 +125,7 @@ import { RouterModule } from '@angular/router';
                 @for (emoji of quickEmojis; track emoji) {
                   <button
                     class="emoji-btn"
-                    (click)="addEmojiToComment(emoji)"
+                    (mousedown)="addEmojiToComment(emoji); $event.preventDefault()"
                     type="button"
                   >
                     {{ emoji }}
@@ -133,7 +138,7 @@ import { RouterModule } from '@angular/router';
                 </button>
                 <button
                   class="btn-submit"
-                  [disabled]="!newCommentText.trim() && newRating === 0"
+                  [disabled]="!newCommentText.trim()"
                   (click)="submitComment()"
                 >
                   Post Review
@@ -178,7 +183,7 @@ import { RouterModule } from '@angular/router';
                     <ng-template #noLinkName>
                       <span class="author-name">{{ comment.authorName }}</span>
                     </ng-template>
-                    <span *ngIf="comment.isPremium" class="pro-badge">PRO</span>
+
                   </div>
                   <span class="timestamp">{{ comment.timestamp }} <span *ngIf="comment.isEdited" style="font-size: 11px; font-style: italic; opacity: 0.7;">(edited)</span></span>
                   @if (comment.isPinned) {
@@ -298,7 +303,12 @@ import { RouterModule } from '@angular/router';
               </div>
 
               <ng-container *ngIf="editingCommentId !== comment.id">
-                <p class="comment-text">{{ comment.text }}</p>
+                <p class="comment-text" [class.line-clamp]="!isTextExpanded(comment.id)">{{ comment.text }}</p>
+                @if (comment.text && comment.text.length > 200) {
+                  <button class="btn-text read-more-btn" (click)="toggleTextExpansion(comment.id)">
+                    {{ isTextExpanded(comment.id) ? 'Show less' : 'Show more' }}
+                  </button>
+                }
 
                 <div class="comment-actions">
                   <button
@@ -452,7 +462,7 @@ import { RouterModule } from '@angular/router';
                             <ng-template #replyNoLinkName>
                               <span class="author-name">{{ reply.authorName }}</span>
                             </ng-template>
-                            <span *ngIf="reply.isPremium" class="pro-badge">PRO</span>
+
                           </div>
                           <span class="timestamp">{{ reply.timestamp }} <span *ngIf="reply.isEdited" style="font-size: 11px; font-style: italic; opacity: 0.7;">(edited)</span></span>
                         </div>
@@ -529,7 +539,7 @@ import { RouterModule } from '@angular/router';
                       </div>
 
                       <ng-container *ngIf="editingCommentId !== reply.id">
-                        <p class="comment-text">
+                        <p class="comment-text" [class.line-clamp]="!isTextExpanded(reply.id)">
                           <span
                             class="mentioned-user"
                             *ngIf="reply.text && reply.text.startsWith('@')"
@@ -541,6 +551,12 @@ import { RouterModule } from '@angular/router';
                               : reply.text
                           }}
                         </p>
+                        @if (reply.text && reply.text.length > 200) {
+                          <button class="btn-text read-more-btn" (click)="toggleTextExpansion(reply.id)">
+                            {{ isTextExpanded(reply.id) ? 'Show less' : 'Show more' }}
+                          </button>
+                        }
+
 
                         <!-- Reply actions -->
                         <div class="comment-actions">
@@ -661,8 +677,16 @@ import { RouterModule } from '@angular/router';
         </div>
       </ng-template>
 
-      <!-- Sort Navigation -->
+      <!-- Sort Navigation & Tabs -->
       <div class="reviews-tabs">
+        <div class="tabs-buttons">
+          <button class="tab-btn" [class.active]="activeTab === 'comments'" (click)="activeTab = 'comments'">
+            Comments & Reviews ({{ textComments.length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab === 'ratings'" (click)="activeTab = 'ratings'">
+            Ratings Only ({{ ratingOnlyReviews.length }})
+          </button>
+        </div>
         <div class="right-sort" style="margin-left: auto;">
           <span class="sort-label">Sort by:</span>
           <select [(ngModel)]="sortOrder" class="sort-select">
@@ -675,7 +699,7 @@ import { RouterModule } from '@angular/router';
       <!-- Reviews List -->
       <div class="reviews-list-container">
         <div class="comments-list" style="max-width: 800px;">
-          @for (comment of sortedComments; track comment.id) {
+          @for (comment of displayedComments; track comment.id) {
             <ng-container
               *ngTemplateOutlet="
                 commentThread;
@@ -788,6 +812,46 @@ import { RouterModule } from '@angular/router';
         margin: 0;
       }
 
+      /* Quick Rate Box */
+      .quick-rate-box {
+        padding: 16px 0 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .quick-rate-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        margin: 0;
+        font-family: var(--display);
+      }
+      .quick-rate-stars {
+        display: flex;
+        gap: 6px;
+      }
+      .quick-star-icon {
+        width: 30px;
+        height: 30px;
+        color: #ffb800;
+        cursor: pointer;
+        transition: transform 0.15s, color 0.15s;
+      }
+      .quick-star-icon:hover {
+        transform: scale(1.2);
+      }
+      .quick-rate-thanks {
+        font-size: 13px;
+        color: var(--forest);
+        font-weight: 600;
+        margin: 0;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       .dashboard-right {
         flex: 1;
         max-width: 320px;
@@ -869,7 +933,7 @@ import { RouterModule } from '@angular/router';
         border-bottom: 1px solid var(--border-soft);
         margin-bottom: 24px;
       }
-      .left-tabs {
+      .left-tabs, .tabs-buttons {
         display: flex;
         gap: 24px;
       }
@@ -1105,6 +1169,23 @@ import { RouterModule } from '@angular/router';
         color: var(--ink);
         line-height: 1.5;
         margin-bottom: 8px;
+      }
+      .comment-text.line-clamp {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .read-more-btn {
+        margin-top: 0px;
+        margin-bottom: 8px;
+        color: var(--forest);
+        font-size: 13px;
+        font-weight: 500;
+        padding: 0;
+        cursor: pointer;
+        background: none;
+        border: none;
       }
       .mentioned-user {
         color: var(--forest);
@@ -1399,10 +1480,36 @@ export class CommentListComponent {
 
   sortOrder: 'newest' | 'popular' = 'popular';
 
+  activeTab: 'comments' | 'ratings' = 'comments';
+  expandedTexts: Set<string> = new Set();
+
+  get textComments() {
+    return this.sortList(this.comments.filter(c => c.text && c.text.trim().length > 0));
+  }
+
+  get ratingOnlyReviews() {
+    return this.sortList(this.comments.filter(c => (!c.text || c.text.trim().length === 0) && c.rating > 0));
+  }
+
+  get displayedComments() {
+    return this.activeTab === 'comments' ? this.textComments : this.ratingOnlyReviews;
+  }
+
   get sortedComments() {
     return this.sortList(this.comments);
   }
 
+  toggleTextExpansion(id: string) {
+    if (this.expandedTexts.has(id)) {
+      this.expandedTexts.delete(id);
+    } else {
+      this.expandedTexts.add(id);
+    }
+  }
+
+  isTextExpanded(id: string): boolean {
+    return this.expandedTexts.has(id);
+  }
   private sortList(source: any[]) {
     let sorted = [...source];
 
@@ -1453,6 +1560,11 @@ export class CommentListComponent {
   activeReplyId: string | null = null;
   replyText = '';
   
+  // Quick standalone rating (no review text required)
+  quickRating = 0;
+  hoverRating = 0;
+  quickRatingSubmitted = false;
+
   editingCommentId: string | null = null;
   editCommentText: string = '';
   editRating?: number;
@@ -1504,10 +1616,11 @@ export class CommentListComponent {
   }
 
   submitEdit(commentId: string) {
-    if (!this.editCommentText.trim()) return;
+    const text = this.editCommentText ? this.editCommentText.trim() : '';
+    if (!text && !this.editRating) return;
     this.editCommentEvent.emit({
       commentId,
-      text: this.editCommentText,
+      text: text,
       rating: this.editRating,
     });
     this.editingCommentId = null;
@@ -1568,7 +1681,7 @@ export class CommentListComponent {
 
   onBlur() {
     setTimeout(() => {
-      if (!this.newCommentText.trim()) {
+      if (!this.newCommentText.trim() && this.newRating === 0) {
         this.isFocused = false;
       }
     }, 200);
@@ -1580,8 +1693,15 @@ export class CommentListComponent {
     this.isFocused = false;
   }
 
+  submitQuickRating(star: number) {
+    this.quickRating = star;
+    this.postComment.emit({ text: '', rating: star });
+    this.quickRatingSubmitted = true;
+    setTimeout(() => { this.quickRatingSubmitted = false; }, 3000);
+  }
+
   submitComment() {
-    if (this.newCommentText.trim() && this.newRating > 0) {
+    if (this.newCommentText.trim() || this.newRating > 0) {
       const ratingToSubmit = this.newRating;
       this.postComment.emit({
         text: this.newCommentText.trim(),

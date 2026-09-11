@@ -41,6 +41,7 @@ export class ContinueReadingComponent implements OnInit {
         next: (progressList) => {
           if (progressList && progressList.length > 0) {
             this.items = progressList
+              .filter((p: any) => p.book)
               .slice(0, 3)
               .map((p: any, index: number) => ({
                 id: p.book._id,

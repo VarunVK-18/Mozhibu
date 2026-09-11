@@ -32,8 +32,8 @@ import { environment } from '../../../environments/environment';
             Back
           </button>
           <div class="save-status">
-            <span class="dot" [style.background]="isSaving ? '#f59e0b' : '#10B981'"></span>
-            {{ isSaving ? 'Saving...' : lastSaved ? 'Saved ' + (lastSaved | date: 'shortTime') : 'Not saved' }}
+            <span class="dot" [style.background]="(isSavingDraft || isPublishing || isAutoSaving) ? '#f59e0b' : '#10B981'"></span>
+            {{ (isSavingDraft || isPublishing || isAutoSaving) ? 'Saving...' : lastSaved ? 'Saved ' + (lastSaved | date: 'shortTime') : 'Not saved' }}
           </div>
         </div>
         
@@ -61,13 +61,13 @@ import { environment } from '../../../environments/environment';
             </svg>
           </button>
           
-          <button class="btn-secondary" [disabled]="isSaving" (click)="publishChapter(true)" title="Save Draft">
-            <div *ngIf="isSaving" class="btn-loader dark"></div>
+          <button class="btn-secondary" [disabled]="isSavingDraft || isPublishing" (click)="publishChapter(true)" title="Save Draft">
+            <div *ngIf="isSavingDraft" class="btn-loader dark"></div>
             Save Draft
           </button>
 
-          <button class="btn-primary" [disabled]="isSaving" (click)="publishChapter(false)">
-            <div *ngIf="isSaving" class="btn-loader"></div>
+          <button class="btn-primary" [disabled]="isSavingDraft || isPublishing" (click)="publishChapter(false)">
+            <div *ngIf="isPublishing" class="btn-loader"></div>
             {{ scheduledAt ? 'Schedule' : 'Publish' }}
           </button>
         </div>
@@ -670,7 +670,9 @@ bookId: string | null = null;
   season = 1;
   scheduledAt: string = '';
 
-  isSaving = false;
+  isSavingDraft = false;
+  isPublishing = false;
+  isAutoSaving = false;
   lastSaved: Date | null = null;
   errorMessage = '';
   saveTimeout: any;
@@ -1290,7 +1292,7 @@ bookId: string | null = null;
   }
 
   autoSave() {
-    if (this.isSaving) return;
+    if (this.isSavingDraft || this.isPublishing || this.isAutoSaving) return;
     if (this.chapterTitle && this.editorContent) {
       this.publishChapter(true, true);
     }
@@ -1311,7 +1313,13 @@ bookId: string | null = null;
       return;
     }
 
-    this.isSaving = true;
+    if (isAutoSave) {
+      this.isAutoSaving = true;
+    } else if (isDraft) {
+      this.isSavingDraft = true;
+    } else {
+      this.isPublishing = true;
+    }
     this.errorMessage = '';
 
     if (this.croppedBlob && !this.isCoverUploaded) {
@@ -1335,7 +1343,9 @@ bookId: string | null = null;
           if (!isAutoSave)
             this.errorMessage =
               'Failed to upload cover image. Please try again.';
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     } else {
@@ -1385,7 +1395,9 @@ bookId: string | null = null;
         .updateChapter(this.bookId!, this.chapterId, chapterData)
         .subscribe({
           next: () => {
-            this.isSaving = false;
+            this.isSavingDraft = false;
+            this.isPublishing = false;
+            this.isAutoSaving = false;
             this.lastSaved = new Date();
             if (!isAutoSave) {
               this.clearLocal();
@@ -1396,14 +1408,18 @@ bookId: string | null = null;
             console.error('Failed to update chapter', err);
             if (!isAutoSave)
               this.errorMessage = 'Failed to update chapter. Please try again.';
-            this.isSaving = false;
+            this.isSavingDraft = false;
+            this.isPublishing = false;
+            this.isAutoSaving = false;
           },
         });
     } else {
       this.bookService.createChapter(this.bookId!, chapterData).subscribe({
         next: (chapter) => {
           this.chapterId = chapter._id;
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
           this.lastSaved = new Date();
 
           localStorage.removeItem(`chapterDraft_${this.bookId}_new`);
@@ -1418,7 +1434,9 @@ bookId: string | null = null;
           console.error('Failed to publish chapter', err);
           if (!isAutoSave)
             this.errorMessage = 'Failed to save chapter. Please try again.';
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     }

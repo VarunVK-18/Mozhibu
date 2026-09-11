@@ -17,6 +17,7 @@ const ChapterSchema = new mongoose.Schema(
       enum: ["inherit", "free", "premium"],
       default: "inherit",
     },
+    viewers: [{ type: String }],
   },
   { timestamps: true },
 );

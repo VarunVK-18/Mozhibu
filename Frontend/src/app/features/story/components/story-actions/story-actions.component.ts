@@ -17,7 +17,6 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
     <div class="actions-container">
       <button 
         class="btn-primary" 
-        [disabled]="chapterCount === 0"
         (click)="readClicked.emit()">
         <svg
           class="icon"
@@ -29,13 +28,11 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
           <polygon points="5 3 19 12 5 21 5 3"></polygon>
         </svg>
         {{
-          chapterCount === 0
-            ? 'No Chapters Yet'
-            : accessType === 'premium' && !isPremiumSubscriber
-              ? 'Unlock Premium'
-              : userProgress.hasStarted
-                ? 'Resume Reading'
-                : 'Start Reading'
+          accessType === 'premium' && !isPremiumSubscriber
+            ? 'Unlock Premium'
+            : userProgress.hasStarted
+              ? 'Resume Reading'
+              : 'Start Reading'
         }}
       </button>
 

@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
-import { CommonModule } from '@angular/common';
+import { CommonModule, ViewportScroller } from '@angular/common';
 import { LoadingService } from './core/services/loading.service';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
@@ -24,6 +24,14 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
     OnboardingComponent,
   ],
   template: `
+    <!-- Update Available Banner -->
+    @if (showUpdateBanner()) {
+      <div class="update-banner">
+        <span>🚀 A new version of Mozhibu is available!</span>
+        <button class="update-btn" (click)="applyUpdate()">Update Now</button>
+        <button class="dismiss-btn" (click)="showUpdateBanner.set(false)">✕</button>
+      </div>
+    }
     @if (!isStandaloneRoute) {
       <app-header></app-header>
     }
@@ -34,7 +42,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
       <app-footer></app-footer>
     }
     <app-confirm-modal></app-confirm-modal>
-    @if (authService.user() && !authService.user()?.penName && !currentUrl.startsWith('/settings')) {
+    @if (authService.user() && (!authService.user()?.penName || !authService.user()?.legalName) && !currentUrl.startsWith('/settings')) {
       <app-onboarding></app-onboarding>
     }
   `,
@@ -53,6 +61,70 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
       app-header, app-footer {
         flex-shrink: 0;
       }
+
+      /* Update Banner */
+      .update-banner {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99998;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #1a1a2e;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 100px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        white-space: nowrap;
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+      .update-btn {
+        background: #10b981;
+        color: #fff;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .update-btn:hover { background: #059669; }
+      .dismiss-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255,255,255,0.5);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 4px;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+      .dismiss-btn:hover { color: #fff; }
+
+      @media (max-width: 480px) {
+        .update-banner {
+          bottom: 16px;
+          left: 16px;
+          right: 16px;
+          transform: none;
+          border-radius: 16px;
+          white-space: normal;
+          flex-wrap: wrap;
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      }
     `,
   ],
 })
@@ -62,8 +134,10 @@ export class AppComponent {
   public loadingService = inject(LoadingService);
   private themeService = inject(ThemeService);
   private swUpdate = inject(SwUpdate);
+  private viewportScroller = inject(ViewportScroller);
   isStandaloneRoute = false;
   currentUrl = '';
+  showUpdateBanner = signal(false);
 
   constructor() {
     this.router.events
@@ -91,8 +165,13 @@ export class AppComponent {
           }
         }
 
-        // Force scroll to top on every route change
-        window.scrollTo(0, 0);
+        // Force scroll to top on every route change after view initializes
+        setTimeout(() => this.viewportScroller.scrollToPosition([0, 0]), 50);
+
+        // Check for new SW version on each navigation (catches deployments faster)
+        if (this.swUpdate.isEnabled) {
+          this.swUpdate.checkForUpdate().catch(() => {});
+        }
       });
 
     if (this.swUpdate.isEnabled) {
@@ -103,10 +182,13 @@ export class AppComponent {
           ),
         )
         .subscribe(() => {
-          if (confirm('A new update is available! Reload to apply?')) {
-            window.location.reload();
-          }
+          // Show non-blocking banner instead of native confirm()
+          this.showUpdateBanner.set(true);
         });
     }
+  }
+
+  applyUpdate() {
+    window.location.reload();
   }
 }

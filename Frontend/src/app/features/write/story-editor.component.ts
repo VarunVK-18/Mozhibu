@@ -143,6 +143,29 @@ import { environment } from '../../../environments/environment';
             </select>
           </div>
 
+          <div class="form-group">
+            <label>Language <span class="required-asterisk">*</span></label>
+            <select
+              class="input-field select-field"
+              [(ngModel)]="story.language"
+              (ngModelChange)="onContentChange()"
+            >
+              <option value="English">English</option>
+              <option value="Tamil">Tamil</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Malayalam">Malayalam</option>
+              <option value="Telugu">Telugu</option>
+              <option value="Bengali">Bengali</option>
+              <option value="Marathi">Marathi</option>
+              <option value="Gujarati">Gujarati</option>
+              <option value="Kannada">Kannada</option>
+              <option value="Odia">Odia</option>
+              <option value="Punjabi">Punjabi</option>
+              <option value="Assamese">Assamese</option>
+              <option value="Urdu">Urdu</option>
+            </select>
+          </div>
+
           <div class="form-group" style="margin-bottom: 20px;">
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 6px;">
               <div style="display: flex; flex-direction: column; gap: 2px;">
@@ -201,14 +224,18 @@ import { environment } from '../../../environments/environment';
           <div class="save-status">
             <span
               class="dot"
-              [style.background]="isSaving ? '#f59e0b' : '#10B981'"
+              [style.background]="isSavingDraft || isPublishing || isAutoSaving ? '#f59e0b' : '#10B981'"
             ></span>
             {{
-              isSaving
-                ? 'Saving...'
-                : lastSaved
-                  ? 'Saved at ' + (lastSaved | date: 'shortTime')
-                  : 'Not saved yet'
+              isAutoSaving
+                ? 'Auto-saving...'
+                : isSavingDraft
+                  ? 'Saving draft...'
+                  : isPublishing
+                    ? 'Publishing...'
+                    : lastSaved
+                      ? 'Saved at ' + (lastSaved | date: 'shortTime')
+                      : 'Not saved yet'
             }}
           </div>
           <div
@@ -244,18 +271,18 @@ import { environment } from '../../../environments/environment';
             </button>
             <button
               class="btn-secondary"
-              [disabled]="isSaving"
+              [disabled]="isSavingDraft || isPublishing"
               (click)="publishChapter(true)"
             >
-              <div *ngIf="isSaving" class="btn-loader dark"></div>
+              <div *ngIf="isSavingDraft" class="btn-loader dark"></div>
               Save Draft
             </button>
             <button
               class="btn-primary"
-              [disabled]="isSaving"
+              [disabled]="isSavingDraft || isPublishing"
               (click)="publishChapter(false)"
             >
-              <div *ngIf="isSaving" class="btn-loader"></div>
+              <div *ngIf="isPublishing" class="btn-loader"></div>
               Publish Chapter
             </button>
           </div>
@@ -657,7 +684,9 @@ export class StoryEditorComponent implements OnInit {
   ];
   typingLanguage = 'en';
 
-  isSaving = false;
+  isSavingDraft = false;
+  isPublishing = false;
+  isAutoSaving = false;
   lastSaved: Date | null = null;
   errorMessage = '';
   competitionTag: string | null = null;
@@ -669,11 +698,12 @@ export class StoryEditorComponent implements OnInit {
 
   story = {
     title: '',
-    genre: '',
     description: '',
+    genre: '',
+    language: 'English',
+    isMature: false,
     tags: '',
     series: '',
-    isMature: false,
   };
 
   chapter = {
@@ -962,22 +992,43 @@ export class StoryEditorComponent implements OnInit {
   }
 
   publishChapter(isDraft: boolean, isAutoSave = false) {
-    if (!this.story.title || !this.story.genre || !this.chapter.title) {
-      if (!isAutoSave) {
-        this.errorMessage =
-          'Please fill out the story title, genre, and chapter title.';
+    if (!isAutoSave) {
+      if (!isDraft) {
+        const text = this.chapter.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        const wordCount = text ? text.split(' ').length : 0;
+        if (wordCount < 500) {
+          this.errorMessage = `A chapter must have at least 500 words to be published. Current word count: ${wordCount}. You can save it as a draft instead.`;
+          return;
+        }
       }
-      return;
-    }
 
-    if (!isDraft && !this.coverPreviewUrl()) {
-      if (!isAutoSave) {
+      const missingFields = [];
+      if (!this.story.title.trim()) missingFields.push('Story Title');
+      if (!this.story.description.trim()) missingFields.push('Story Description');
+      if (!this.chapter.title.trim()) missingFields.push('Chapter Title');
+      if (!this.chapter.content.trim()) missingFields.push('Chapter Content');
+      
+      if (missingFields.length > 0) {
+        this.errorMessage = `Please fill in the following required fields: ${missingFields.join(', ')}.`;
+        return;
+      }
+      if (!this.story.genre) {
+        this.errorMessage = 'Please select a genre.';
+        return;
+      }
+      if (!isDraft && !this.bookId && !this.coverPreviewUrl()) {
         this.errorMessage = 'Please upload a cover image before publishing.';
+        return;
       }
-      return;
     }
 
-    this.isSaving = true;
+    if (isAutoSave) {
+      this.isAutoSaving = true;
+    } else if (isDraft) {
+      this.isSavingDraft = true;
+    } else {
+      this.isPublishing = true;
+    }
     this.errorMessage = '';
 
     const tagsArray = this.story.tags
@@ -990,23 +1041,24 @@ export class StoryEditorComponent implements OnInit {
     const bookData: any = {
       title: this.story.title,
       genre: this.story.genre,
+      originalLanguage: this.story.language,
       description: this.story.description,
       tags: tagsArray,
       isMature: this.story.isMature,
     };
     
-    if (!isAutoSave) {
-      if (isDraft) {
-        bookData.status = 'draft';
-      } else if (this.story.isMature) {
-        // Erotic books require admin approval
-        bookData.status = 'pending';
+    // We always save the book initially as 'draft' to avoid the "must have a published chapter" deadlock
+    bookData.status = 'draft';
+    let finalBookStatus = 'draft';
+
+    if (!isAutoSave && !isDraft) {
+      if (this.story.isMature) {
+        finalBookStatus = 'pending';
       } else {
-        bookData.status = 'published';
+        finalBookStatus = 'published';
       }
-    } else if (!this.bookId) {
-      bookData.status = 'draft';
     }
+    
     if (this.story.series) {
       bookData.series = this.story.series;
     }
@@ -1019,24 +1071,19 @@ export class StoryEditorComponent implements OnInit {
         type: 'image/jpeg',
       });
       this.bookService.uploadCover(file).subscribe({
-        next: (res) => {
+        next: (res: any) => {
           bookData.cover = res.coverUrl;
           this.isCoverUploaded = true;
-          const baseUrl = environment.apiUrl.replace('/api', '');
-          const finalUrl =
-            res.coverUrl.startsWith('data:') || res.coverUrl.startsWith('http')
-              ? res.coverUrl
-              : `${baseUrl}${res.coverUrl.startsWith('/') ? '' : '/'}${res.coverUrl}`;
-          this.coverPreviewUrl.set(finalUrl);
-          this.saveToLocal();
-          this.submitBook(bookData, isDraft, isAutoSave);
+          this.submitBook(bookData, isDraft, isAutoSave, finalBookStatus);
         },
-        error: (err) => {
-          console.error('Failed to upload cover', err);
+        error: (err: any) => {
+          console.error('Image upload failed', err);
           if (!isAutoSave)
             this.errorMessage =
               'Failed to upload cover image. Please try again.';
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     } else {
@@ -1052,15 +1099,15 @@ export class StoryEditorComponent implements OnInit {
         }
         bookData.cover = currentCover;
       }
-      this.submitBook(bookData, isDraft, isAutoSave);
+      this.submitBook(bookData, isDraft, isAutoSave, finalBookStatus);
     }
   }
 
-  private submitBook(bookData: any, isDraft: boolean, isAutoSave: boolean) {
+  private submitBook(bookData: any, isDraft: boolean, isAutoSave: boolean, finalBookStatus: string) {
     if (this.bookId) {
       this.bookService.updateBook(this.bookId, bookData).subscribe({
         next: () => {
-          this.submitChapter(isDraft, isAutoSave);
+          this.submitChapter(isDraft, isAutoSave, finalBookStatus);
         },
         error: (err) => {
           console.error('Failed to update book', err);
@@ -1068,7 +1115,9 @@ export class StoryEditorComponent implements OnInit {
             this.errorMessage =
               err.error?.msg || 'Failed to update story. Please try again.';
           }
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     } else {
@@ -1076,7 +1125,7 @@ export class StoryEditorComponent implements OnInit {
         next: (book) => {
           this.bookId = book._id;
           this.saveToLocal();
-          this.submitChapter(isDraft, isAutoSave);
+          this.submitChapter(isDraft, isAutoSave, finalBookStatus);
         },
         error: (err) => {
           console.error('Failed to create book', err);
@@ -1084,13 +1133,39 @@ export class StoryEditorComponent implements OnInit {
             this.errorMessage =
               err.error?.msg || 'Failed to create story. Please try again.';
           }
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     }
   }
 
-  private submitChapter(isDraft: boolean, isAutoSave: boolean) {
+  private finalizePublish(finalBookStatus: string) {
+    if (finalBookStatus === 'draft') {
+      this.finishSave();
+      return;
+    }
+    this.bookService.updateBook(this.bookId!, { status: finalBookStatus }).subscribe({
+      next: () => this.finishSave(),
+      error: (err) => {
+        console.error('Failed to finalize publish', err);
+        this.errorMessage = err.error?.msg || 'Failed to publish story.';
+        this.isSavingDraft = false;
+          this.isPublishing = false;
+      }
+    });
+  }
+
+  private finishSave() {
+    this.isSavingDraft = false;
+    this.isPublishing = false;
+    this.lastSaved = new Date();
+    localStorage.removeItem('storyDraft');
+    this.router.navigate(['/write']);
+  }
+
+  private submitChapter(isDraft: boolean, isAutoSave: boolean, finalBookStatus: string) {
     const chapterData: any = {
       title: this.chapter.title,
       content: this.chapter.content,
@@ -1108,37 +1183,41 @@ export class StoryEditorComponent implements OnInit {
         .updateChapter(this.bookId!, this.chapterId, chapterData)
         .subscribe({
           next: () => {
-            this.isSaving = false;
-            this.lastSaved = new Date();
-            if (!isAutoSave) {
-              localStorage.removeItem('storyDraft');
-              this.router.navigate(['/write']);
+            if (isAutoSave) {
+              this.isAutoSaving = false;
+              this.lastSaved = new Date();
+            } else {
+              this.finalizePublish(finalBookStatus);
             }
           },
           error: (err) => {
             console.error('Failed to update chapter', err);
             if (!isAutoSave)
               this.errorMessage = 'Failed to update chapter. Please try again.';
-            this.isSaving = false;
+            this.isSavingDraft = false;
+            this.isPublishing = false;
+            this.isAutoSaving = false;
           },
         });
     } else {
       this.bookService.createChapter(this.bookId!, chapterData).subscribe({
         next: (chapter) => {
           this.chapterId = chapter._id;
-          this.isSaving = false;
-          this.lastSaved = new Date();
           this.saveToLocal();
-          if (!isAutoSave) {
-            localStorage.removeItem('storyDraft');
-            this.router.navigate(['/write']);
+          if (isAutoSave) {
+            this.isAutoSaving = false;
+            this.lastSaved = new Date();
+          } else {
+            this.finalizePublish(finalBookStatus);
           }
         },
         error: (err) => {
           console.error('Failed to save chapter', err);
           if (!isAutoSave)
             this.errorMessage = 'Failed to save chapter. Please try again.';
-          this.isSaving = false;
+          this.isSavingDraft = false;
+          this.isPublishing = false;
+          this.isAutoSaving = false;
         },
       });
     }
@@ -1173,7 +1252,7 @@ export class StoryEditorComponent implements OnInit {
   }
 
   autoSave() {
-    if (this.isSaving) return;
+    if (this.isSavingDraft || this.isPublishing || this.isAutoSaving) return;
     // Only auto-save if required fields are present
     if (this.story.title && this.story.genre && this.chapter.title) {
       this.publishChapter(true, true);

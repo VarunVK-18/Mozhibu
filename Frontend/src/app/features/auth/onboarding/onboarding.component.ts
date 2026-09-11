@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,8 +11,18 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./onboarding.component.css'],
 })
 export class OnboardingComponent implements OnInit {
-  private auth = inject(AuthService);
+  public auth = inject(AuthService);
   private router = inject(Router);
+
+  missingPenName = computed(() => !this.auth.user()?.penName);
+  missingLegalName = computed(() => !this.auth.user()?.legalName);
+
+  get missingLabel(): string {
+    const parts: string[] = [];
+    if (this.missingPenName()) parts.push('Pen Name');
+    if (this.missingLegalName()) parts.push('Legal Name');
+    return parts.join(' and ');
+  }
 
   ngOnInit(): void {
     const user = this.auth.user();
@@ -22,6 +32,6 @@ export class OnboardingComponent implements OnInit {
   }
 
   goToSettings() {
-    this.router.navigate(['/settings']);
+    this.router.navigate(['/settings'], { fragment: 'profile' });
   }
 }
