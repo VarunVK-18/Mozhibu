@@ -24,6 +24,12 @@
         <span class="status-tag" *ngIf="missingLegalName()">Required</span>
         <span class="status-tag done" *ngIf="!missingLegalName()">✓ Set</span>
       </div>
+      <div class="field-status" [class.missing]="missingDob()">
+        <span class="status-dot"></span>
+        <span>Date of Birth</span>
+        <span class="status-tag" *ngIf="missingDob()">Required</span>
+        <span class="status-tag done" *ngIf="!missingDob()">✓ Set</span>
+      </div>
     </div>
 
     <div class="actions">

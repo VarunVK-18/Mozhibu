@@ -42,7 +42,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
       <app-footer></app-footer>
     }
     <app-confirm-modal></app-confirm-modal>
-    @if (authService.user() && (!authService.user()?.penName || !authService.user()?.legalName) && !currentUrl.startsWith('/settings')) {
+    @if (authService.user() && authService.user()?.role !== 'admin' && authService.user()?.role !== 'superadmin' && (!authService.user()?.penName || !authService.user()?.legalName || !authService.user()?.dob) && !currentUrl.startsWith('/settings')) {
       <app-onboarding></app-onboarding>
     }
   `,

@@ -16,12 +16,20 @@ export class OnboardingComponent implements OnInit {
 
   missingPenName = computed(() => !this.auth.user()?.penName);
   missingLegalName = computed(() => !this.auth.user()?.legalName);
+  missingDob = computed(() => !this.auth.user()?.dob);
 
   get missingLabel(): string {
     const parts: string[] = [];
     if (this.missingPenName()) parts.push('Pen Name');
     if (this.missingLegalName()) parts.push('Legal Name');
-    return parts.join(' and ');
+    if (this.missingDob()) parts.push('Date of Birth');
+    
+    if (parts.length === 0) return '';
+    if (parts.length === 1) return parts[0];
+    if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+    
+    const last = parts.pop();
+    return `${parts.join(', ')}, and ${last}`;
   }
 
   ngOnInit(): void {

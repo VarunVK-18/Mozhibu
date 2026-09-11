@@ -189,7 +189,7 @@ export class StoryService {
 
       const episodes = chapters.map((c: any) => {
         const wordCount = c.content ? c.content.split(/\s+/).length : 0;
-        const readTime = Math.max(1, Math.ceil(wordCount / 200));
+        const readTime = (wordCount / 200).toFixed(1);
         return {
           id: c._id,
           season: c.season || 1,
@@ -211,7 +211,7 @@ export class StoryService {
       this.storyEpisodes.set(episodes);
 
       const totalMinutes = episodes.reduce(
-        (total, ep) => total + parseInt(ep.readingTime),
+        (total, ep) => total + parseFloat(ep.readingTime),
         0,
       );
 
@@ -221,7 +221,7 @@ export class StoryService {
           ...s,
           chapterCount: chapters.length,
           readingTime:
-            totalMinutes > 0 ? `${totalMinutes} min read` : '1 min read',
+            totalMinutes > 0 ? `${totalMinutes.toFixed(1)} min read` : '0 min read',
         };
       });
     });

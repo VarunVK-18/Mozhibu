@@ -832,12 +832,6 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
     const newStatus = chapter.status === 'published' ? 'draft' : 'published';
     
     if (newStatus === 'published') {
-      const text = (chapter.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      const wordCount = text ? text.split(' ').length : 0;
-      if (wordCount < 500) {
-        this.showAlert(`A chapter must have at least 500 words to be published. Current word count: ${wordCount}`);
-        return;
-      }
       if (!chapter.cover) {
         this.showAlert('Please upload a cover image for this chapter before publishing.');
         return;

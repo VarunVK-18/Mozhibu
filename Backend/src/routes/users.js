@@ -570,6 +570,10 @@ router.put("/me/profile", protect, async (req, res) => {
       user.username = penName.trim();
     }
 
+    if (legalName !== undefined) {
+      user.legalName = legalName.trim();
+    }
+
     await user.save();
 
     res.json({

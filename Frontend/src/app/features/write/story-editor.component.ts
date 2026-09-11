@@ -993,15 +993,6 @@ export class StoryEditorComponent implements OnInit {
 
   publishChapter(isDraft: boolean, isAutoSave = false) {
     if (!isAutoSave) {
-      if (!isDraft) {
-        const text = this.chapter.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-        const wordCount = text ? text.split(' ').length : 0;
-        if (wordCount < 500) {
-          this.errorMessage = `A chapter must have at least 500 words to be published. Current word count: ${wordCount}. You can save it as a draft instead.`;
-          return;
-        }
-      }
-
       const missingFields = [];
       if (!this.story.title.trim()) missingFields.push('Story Title');
       if (!this.story.description.trim()) missingFields.push('Story Description');

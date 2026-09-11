@@ -249,6 +249,7 @@ export class AuthService {
     avatar?: string | null;
     dob?: string;
     penName?: string;
+    legalName?: string;
   }): Observable<any> {
     return this.api.put('/users/me/profile', data).pipe(
       tap((res: any) => {

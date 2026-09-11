@@ -140,9 +140,9 @@ import { Router } from '@angular/router';
             <!-- Unified Analytics Chart -->
             <div class="analytics-card card-panel">
               <div class="analytics-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h3 style="font-size: 20px; font-weight: 700; color: #1e293b; font-family: var(--display);">Visitors</h3>
+                <h3 style="font-size: 20px; font-weight: 700; color: #1e293b; font-family: var(--display);">Platform Growth (Last 12 Months)</h3>
                 <div class="time-tabs" style="display: flex; gap: 8px;">
-                  @for (opt of ['ALL', '1M', '6M', '1Y']; track opt) {
+                  @for (opt of ['6M', '1Y']; track opt) {
                     <button
                       class="time-tab"
                       (click)="selectSort(opt)"
@@ -158,20 +158,16 @@ import { Router } from '@angular/router';
 
               <div class="analytics-metrics" style="display: flex; justify-content: space-around; margin-bottom: 40px; text-align: center; border-bottom: 1px dashed #e2e8f0; padding-bottom: 24px;">
                 <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">Today</span>
-                  <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.readers }}</span>
-                </div>
-                <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">This Month</span>
+                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">New Users (This Month)</span>
                   <div style="display: flex; align-items: baseline; gap: 8px;">
-                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.totalUsers }}</span>
+                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.monthlyUsersData[stats()!.monthlyUsersData.length - 1] || 0 }}</span>
                     <span class="trend positive" style="font-size: 12px; font-weight: 600; color: #10b981; background: transparent; padding: 0;">{{ getTrend(stats()!.monthlyUsersData) }}% ↑</span>
                   </div>
                 </div>
                 <div class="metric-item" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">This Year</span>
+                  <span class="label" style="font-size: 14px; font-weight: 500; color: #64748b;">New Books (This Month)</span>
                   <div style="display: flex; align-items: baseline; gap: 8px;">
-                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.totalPublishedBooks }}</span>
+                    <span class="value" style="font-family: var(--display); font-size: 24px; font-weight: 700; color: #1e293b;">{{ stats()!.monthlyBooksData[stats()!.monthlyBooksData.length - 1] || 0 }}</span>
                     <span class="trend positive" style="font-size: 12px; font-weight: 600; color: #10b981; background: transparent; padding: 0;">{{ getTrend(stats()!.monthlyBooksData) }}% ↑</span>
                   </div>
                 </div>
@@ -179,10 +175,10 @@ import { Router } from '@angular/router';
 
               <div class="chart-legend" style="display: flex; justify-content: flex-end; gap: 16px; margin-bottom: -16px; position: relative; z-index: 2;">
                 <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #64748b;">
-                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #6366f1;"></span> Current
+                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #6366f1;"></span> New Users
                 </div>
                 <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #64748b;">
-                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b;"></span> Previous
+                  <span class="dot" style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b;"></span> New Books
                 </div>
               </div>
 
@@ -215,7 +211,7 @@ import { Router } from '@angular/router';
                     <line x1="0" y1="150" x2="1000" y2="150" stroke="#f1f5f9" stroke-width="1" />
                     <line x1="0" y1="250" x2="1000" y2="250" stroke="#f1f5f9" stroke-width="1" />
 
-                    <!-- Previous (Books) Smooth Area -->
+                    <!-- New Books Smooth Area -->
                     <path
                       [attr.d]="getAreaPath(stats()!.monthlyBooksData, true, true)"
                       fill="url(#orangeGradient)"
@@ -228,7 +224,7 @@ import { Router } from '@angular/router';
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
-                    <!-- Previous Points -->
+                    <!-- New Books Points -->
                     @for (val of stats()!.monthlyBooksData; track $index) {
                       <circle
                         [attr.cx]="getBarX($index, stats()!.monthlyBooksData.length)"
@@ -240,7 +236,7 @@ import { Router } from '@angular/router';
                       />
                     }
 
-                    <!-- Current (Users) Smooth Area -->
+                    <!-- New Users Smooth Area -->
                     <path
                       [attr.d]="getAreaPath(stats()!.monthlyUsersData, true, true)"
                       fill="url(#blueGradient)"
@@ -253,7 +249,7 @@ import { Router } from '@angular/router';
                       stroke-linecap="round"
                       stroke-linejoin="round"
                     />
-                    <!-- Current Points -->
+                    <!-- New Users Points -->
                     @for (val of stats()!.monthlyUsersData; track $index) {
                       <circle
                         [attr.cx]="getBarX($index, stats()!.monthlyUsersData.length)"
@@ -326,10 +322,10 @@ import { Router } from '@angular/router';
                     >
                       <div class="tooltip-header">{{ stats()!.chartLabels[hoverIndex()!] }}</div>
                       <div class="tooltip-row">
-                        <span class="dot" style="background: #6366f1;"></span> Current: <strong>{{ stats()!.monthlyUsersData[hoverIndex()!] }}</strong>
+                        <span class="dot" style="background: #6366f1;"></span> New Users: <strong>{{ stats()!.monthlyUsersData[hoverIndex()!] }}</strong>
                       </div>
                       <div class="tooltip-row">
-                        <span class="dot" style="background: #f59e0b;"></span> Previous: <strong>{{ stats()!.monthlyBooksData[hoverIndex()!] }}</strong>
+                        <span class="dot" style="background: #f59e0b;"></span> New Books: <strong>{{ stats()!.monthlyBooksData[hoverIndex()!] }}</strong>
                       </div>
                     </div>
                   }
@@ -843,7 +839,7 @@ export class OverviewComponent implements OnInit {
 
   baseStats: AdminStats | null = null;
 
-  sortOptions = ['1Y', '6M', '1M', 'ALL'];
+  sortOptions = ['1Y', '6M'];
   currentSort = signal('1Y');
   sortDropdownOpen = signal(false);
   hoverIndex = signal<number | null>(null);
@@ -867,14 +863,6 @@ export class OverviewComponent implements OnInit {
       newData.chartLabels = newData.chartLabels.slice(6);
       newData.monthlyBooksData = newData.monthlyBooksData.slice(6);
       newData.monthlyUsersData = newData.monthlyUsersData.slice(6);
-    } else if (option === '1M') {
-      newData.chartLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-      newData.monthlyBooksData = [5, 12, 8, 15];
-      newData.monthlyUsersData = [30, 85, 45, 110];
-    } else if (option === 'ALL') {
-      newData.chartLabels = ['2020', '2021', '2022', '2023', '2024'];
-      newData.monthlyBooksData = [20, 150, 400, 320, 700];
-      newData.monthlyUsersData = [100, 850, 2500, 4200, 9500];
     }
 
     this.stats.set(newData);

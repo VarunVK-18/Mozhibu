@@ -456,6 +456,10 @@ export const routes: Routes = [
     data: { title: 'Copyright' },
   },
 
-  { path: '**', redirectTo: '' },
+  { 
+    path: '**', 
+    loadComponent: () => 
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent)
+  },
 ];
 // force angular recompile
