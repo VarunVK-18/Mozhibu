@@ -282,6 +282,10 @@ export class AuthService {
     return this.api.get('/earnings/me/projection');
   }
 
+  getReaderRewards(): Observable<any> {
+    return this.api.get('/rewards/me');
+  }
+
   requestWithdrawal(): Observable<any> {
     return this.api.post('/earnings/withdraw', {});
   }

@@ -412,6 +412,41 @@ import { debounceTime, switchMap, catchError } from 'rxjs/operators';
               <p style="margin-top: 16px; color: var(--ink-soft);">Loading earnings data...</p>
             </div>
 
+            <!-- Engagement Score (Reader Metrics) -->
+            <div *ngIf="!earningsLoading() && currentScore()" class="engagement-dashboard" style="margin-top: 24px; margin-bottom: 32px; background: var(--paper-warm); padding: 24px; border-radius: 12px; border: 1px solid var(--border-soft);">
+              <h4 style="font-family: var(--display); font-size: 18px; margin-bottom: 16px;">Current Month Engagement Score: {{ currentScore()?.totalScore || 0 }} / 100</h4>
+              <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 20px;">Your share of the Reader Reward Pool is calculated based on these metrics. Read more and leave reviews to boost your score!</p>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+                <!-- Reading Completion -->
+                <div style="background: var(--paper); padding: 16px; border-radius: 8px; border: 1px solid var(--border-soft);">
+                  <div style="font-size: 12px; color: var(--ink-soft); text-transform: uppercase;">Reading Completion</div>
+                  <div style="font-size: 24px; font-weight: 600; color: var(--ink); margin: 4px 0;">{{ currentScore()?.readingScore || 0 }} <span style="font-size: 14px; font-weight: normal; color: var(--ink-soft);">pts</span></div>
+                  <div style="height: 4px; background: var(--border-soft); border-radius: 2px; overflow: hidden;">
+                    <div style="height: 100%; background: #3b82f6; width: {{ (currentScore()?.readingScore || 0) }}%;"></div>
+                  </div>
+                </div>
+
+                <!-- Time Spent -->
+                <div style="background: var(--paper); padding: 16px; border-radius: 8px; border: 1px solid var(--border-soft);">
+                  <div style="font-size: 12px; color: var(--ink-soft); text-transform: uppercase;">Reading Time</div>
+                  <div style="font-size: 24px; font-weight: 600; color: var(--ink); margin: 4px 0;">{{ currentScore()?.timeScore || 0 }} <span style="font-size: 14px; font-weight: normal; color: var(--ink-soft);">pts</span></div>
+                  <div style="height: 4px; background: var(--border-soft); border-radius: 2px; overflow: hidden;">
+                    <div style="height: 100%; background: #10b981; width: {{ (currentScore()?.timeScore || 0) }}%;"></div>
+                  </div>
+                </div>
+
+                <!-- Interactions -->
+                <div style="background: var(--paper); padding: 16px; border-radius: 8px; border: 1px solid var(--border-soft);">
+                  <div style="font-size: 12px; color: var(--ink-soft); text-transform: uppercase;">Reviews & Interactions</div>
+                  <div style="font-size: 24px; font-weight: 600; color: var(--ink); margin: 4px 0;">{{ currentScore()?.interactionScore || 0 }} <span style="font-size: 14px; font-weight: normal; color: var(--ink-soft);">pts</span></div>
+                  <div style="height: 4px; background: var(--border-soft); border-radius: 2px; overflow: hidden;">
+                    <div style="height: 100%; background: #8b5cf6; width: {{ (currentScore()?.interactionScore || 0) }}%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Earnings Dashboard -->
             <div *ngIf="!earningsLoading() && earningsSummary()" class="earnings-dashboard" style="margin-top: 24px;">
               <!-- Overview Cards -->
@@ -1216,6 +1251,7 @@ export class SettingsComponent implements OnInit {
 
   earningsSummary = signal<any>(null);
   earningsHistory = signal<any[]>([]);
+  currentScore = signal<any>(null);
   earningsLoading = signal(true);
   withdrawLoading = signal(false);
   withdrawSuccess = signal(false);
@@ -1284,11 +1320,23 @@ export class SettingsComponent implements OnInit {
 
   loadEarnings() {
     this.earningsLoading.set(true);
+    
+    // Fetch unified earnings and reader specific data
     this.auth.getEarnings().subscribe({
       next: (res) => {
         this.earningsSummary.set(res.summary);
         this.earningsHistory.set(res.earnings || []);
-        this.earningsLoading.set(false);
+        
+        // Also fetch reader rewards to get the current month's Engagement Score
+        this.auth.getReaderRewards().subscribe({
+          next: (readerRes) => {
+            this.currentScore.set(readerRes.currentMonthScore);
+            this.earningsLoading.set(false);
+          },
+          error: () => {
+            this.earningsLoading.set(false);
+          }
+        });
       },
       error: () => {
         this.earningsLoading.set(false);

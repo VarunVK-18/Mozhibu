@@ -568,6 +568,10 @@ export class ReaderComponent implements OnInit, OnDestroy {
   storyEpisodes = this.storyService.getEpisodes();
   storyDetail = this.storyService.getActiveStory();
 
+  private chapterEntryTime: number = 0;
+  private currentTrackedChapterId: string | null = null;
+  private currentMaxScrollPercent: number = 0;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -601,7 +605,14 @@ export class ReaderComponent implements OnInit, OnDestroy {
             this.requiresSubscription.set(!currentEp.isUnlocked);
 
             if (currentEp.id && currentEp.id !== this.lastViewedChapterId) {
+              // Track previous chapter before switching
+              this.trackReadEvent();
+              
               this.lastViewedChapterId = currentEp.id;
+              this.currentTrackedChapterId = currentEp.id;
+              this.chapterEntryTime = Date.now();
+              this.currentMaxScrollPercent = 0;
+
               this.bookService.incrementBookViews(this.storyId, currentEp.id).subscribe({
                 error: (err) => console.error('Failed to increment views', err)
               });
@@ -624,6 +635,23 @@ export class ReaderComponent implements OnInit, OnDestroy {
       },
       { allowSignalWrites: true },
     );
+  }
+
+  private trackReadEvent() {
+    if (!this.currentTrackedChapterId || !this.authService.user() || !this.storyId) return;
+    
+    const timeOnPageSeconds = Math.floor((Date.now() - this.chapterEntryTime) / 1000);
+    if (timeOnPageSeconds < 5) return; // Skip trivial clicks
+
+    // Send the read tracking event
+    this.http.post('http://localhost:5000/api/rewards/track-read', {
+      bookId: this.storyId,
+      chapterId: this.currentTrackedChapterId,
+      completionPercent: this.currentMaxScrollPercent,
+      timeOnPageSeconds
+    }).subscribe({
+      error: (err) => console.error('Failed to track read event for monetization', err)
+    });
   }
 
   processContent(html: string) {
@@ -707,6 +735,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
       clearInterval(this.scrollPoller);
     }
     this.stopAutoScroll();
+    this.trackReadEvent();
   }
 
   /** Block right-click context menu across the entire reader page */
@@ -749,6 +778,10 @@ export class ReaderComponent implements OnInit, OnDestroy {
     }
 
     percent = Math.max(0, Math.min(100, Math.round(percent)));
+    
+    // Track the max depth reached
+    this.currentMaxScrollPercent = Math.max(this.currentMaxScrollPercent, percent);
+    
     this.scrollSubject.next(percent);
     this.scrollPercentage.set(percent);
   }

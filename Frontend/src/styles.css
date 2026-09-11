@@ -52,7 +52,7 @@ body {
   overscroll-behavior-y: none;
 }
 html {
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth; Removed to fix Angular scrollPositionRestoration */
 }
 
 /* Global Loading Bar */

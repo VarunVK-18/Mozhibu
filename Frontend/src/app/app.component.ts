@@ -35,7 +35,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
     @if (!isStandaloneRoute) {
       <app-header></app-header>
     }
-    <main>
+    <main [class.with-header]="!isStandaloneRoute">
       <router-outlet></router-outlet>
     </main>
     @if (!isStandaloneRoute) {
@@ -57,6 +57,9 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
         flex: 1 0 auto;
         display: flex;
         flex-direction: column;
+      }
+      main.with-header {
+        padding-top: 73px;
       }
       app-header, app-footer {
         flex-shrink: 0;
@@ -164,9 +167,6 @@ export class AppComponent {
             this.router.navigate(['/account-suspended']);
           }
         }
-
-        // Force scroll to top on every route change after view initializes
-        setTimeout(() => this.viewportScroller.scrollToPosition([0, 0]), 50);
 
         // Check for new SW version on each navigation (catches deployments faster)
         if (this.swUpdate.isEnabled) {
