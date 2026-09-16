@@ -1,62 +1,58 @@
-<div style="font-family: Arial, sans-serif; color: black; background-color: white; padding: 20px;">
+<h1>2. Comprehensive Technologies Used & Justifications</h1>
 
-<h1 style="color: #0056b3; border-bottom: 2px solid #28a745; padding-bottom: 10px;">2. Comprehensive Technologies Used & Justifications</h1>
-
-<p style="font-size: 1.1em; line-height: 1.6;">
-The technological foundation of the <strong>Mozhibu - Story</strong> platform is carefully curated to achieve three primary goals: extreme high performance under heavy read load, rapid horizontal scalability, and unparalleled developer ergonomics. By maintaining a strict JavaScript/TypeScript ecosystem across both the frontend and backend, the project benefits from shared paradigms, unified tooling, and an extensive open-source package ecosystem. This document exhaustively details every technology chosen and the specific architectural reasoning behind those choices.
+<p>
+The technological foundation of the <strong>Mozhibu - Story</strong> platform is curated to achieve high performance, rapid horizontal scalability, and unparalleled developer ergonomics. By maintaining a strict JavaScript/TypeScript ecosystem across both the frontend and backend, the project benefits from shared paradigms, unified tooling, and an extensive open-source package ecosystem.
 </p>
 
 ---
 
-<h2 style="color: #28a745;">2.1 Frontend Technology Stack (Client-Side)</h2>
-<p style="line-height: 1.6;">
-The client-side application must deliver a highly interactive, fluid Single Page Application (SPA) experience. When a reader is deeply engrossed in a story, page reloads or jittery scrolling will instantly break immersion. Therefore, the architecture emphasizes modularity, aggressive caching, and reactive programming.
-</p>
+<h2>2.1 Frontend Technology Stack (Client-Side)</h2>
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+The frontend is a robust Single Page Application (SPA) utilizing modern reactive paradigms.
+
+<table>
   <thead>
-    <tr style="background-color: #0056b3; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Core Technology</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Version / Spec</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Deep Architectural Justification</th>
+    <tr>
+      <th>Core Technology</th>
+      <th>Version</th>
+      <th>Architectural Justification & Role</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Angular (Framework)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">15+</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        Unlike React (which is a library), Angular provides a rigid, opinionated, batteries-included framework perfect for large enterprise applications. 
-        <ul>
-          <li><strong>Dependency Injection:</strong> Allows for highly testable singleton services (e.g., `AuthService`).</li>
-          <li><strong>Lazy Loading:</strong> The `Author Dashboard` code is never downloaded by a user who is only a `Reader`, saving megabytes of bandwidth.</li>
-          <li><strong>AOT Compilation:</strong> Ahead-of-Time compilation ensures templates are parsed during build time, resulting in blazing fast rendering in the browser.</li>
-        </ul>
-      </td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">TypeScript</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Strict Mode Enabled</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        Ensures compile-time type safety across the massive frontend codebase. By strictly typing the API responses (using Interfaces like `IBook`, `IUser`, `IEarnings`), runtime errors are drastically reduced. If the backend changes a field from `views` to `viewCount`, the TypeScript compiler instantly flags the breaking change on the frontend.
+      <td>Angular</td>
+      <td>v18.0.0+</td>
+      <td>
+        Chosen for its opinionated, enterprise-grade architecture. Angular's adoption of Standalone Components (`standalone: true`) drastically reduces boilerplate by eliminating `NgModules`. 
+        <br><br><strong>Key Optimization:</strong> We heavily utilize Angular's new `Signals` API (`signal()`, `computed()`, `effect()`) for granular, Zone-free reactivity, drastically improving rendering performance when updating reading progress or coin balances.
       </td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">RxJS (Reactive Extensions)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">7.x</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        The backbone of asynchronous operations in Angular. RxJS is used extensively for:
-        <ul>
-          <li><strong>Debouncing:</strong> When a user types in the search bar, RxJS waits 300ms after they stop typing before hitting the API, preventing server overload.</li>
-          <li><strong>State Management:</strong> `BehaviorSubjects` hold the current user state and active theme, emitting changes instantly to all subscribed components without prop-drilling.</li>
-        </ul>
+      <td>TypeScript</td>
+      <td>v5.x</td>
+      <td>
+        Enforces strict typing across the vast data structures (User models, Book chapters, API responses). Prevents runtime errors during heavy refactoring. All services (like `ApiService`, `AuthService`) leverage generic typings.
       </td>
     </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">SCSS / SASS (Styling)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Preprocessor</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        CSS preprocessors enable variables, nesting, and mixins. This is absolutely critical for the platform's multi-theme reader interface. By defining `$bg-color` and `$text-color` as variables, switching from Light Mode to Dark Mode to Sepia Mode is handled effortlessly across hundreds of components.
+    <tr>
+      <td>RxJS</td>
+      <td>Native</td>
+      <td>
+        While Signals handle local state, RxJS is utilized for complex asynchronous streams (e.g., handling the `HttpClient` observable streams, debouncing search inputs in the Navbar, and combining API results using `forkJoin`).
+      </td>
+    </tr>
+    <tr>
+      <td>Google & Facebook SDKs</td>
+      <td>Latest</td>
+      <td>
+        Google (`@abacritt/angularx-social-login`) and custom Facebook SDK logic are utilized to streamline user onboarding securely, bypassing traditional password fatigue.
+      </td>
+    </tr>
+    <tr>
+      <td>CSS3 & Custom Variables</td>
+      <td>Vanilla</td>
+      <td>
+        We avoid heavy CSS frameworks (like Bootstrap) to minimize bundle size. The app relies on advanced CSS Grid/Flexbox layouts and heavily uses CSS Variables (`--ink`, `--surface`, etc.) to toggle the highly integrated <strong>Dark Mode</strong> seamlessly.
       </td>
     </tr>
   </tbody>
@@ -64,114 +60,138 @@ The client-side application must deliver a highly interactive, fluid Single Page
 
 ---
 
-<h2 style="color: #28a745;">2.2 Backend Technology Stack (Server-Side)</h2>
-<p style="line-height: 1.6;">
-The backend acts as the central brain of Mozhibu - Story. It processes thousands of concurrent requests ranging from simple JSON retrieval to executing complex, CPU-intensive algorithms for Author Payouts and Leaderboard ranking.
-</p>
+<h2>2.2 Backend Technology Stack (Server-Side)</h2>
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+The backend acts as the secure orchestrator and data gateway for the entire platform.
+
+<table>
   <thead>
-    <tr style="background-color: #28a745; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Core Technology</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Version / Spec</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Deep Architectural Justification</th>
+    <tr>
+      <th>Core Technology</th>
+      <th>Version</th>
+      <th>Architectural Justification & Role</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">Node.js (Runtime)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">18.x LTS</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        Node.js utilizes a non-blocking, event-driven architecture (the Event Loop). Because Mozhibu - Story is highly I/O bound (reading from DB, sending to client) rather than CPU bound, Node.js can handle tens of thousands of concurrent readers on a single server instance without thread starvation.
-      </td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">Express.js (Framework)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">4.x</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        A minimalist web framework providing robust routing and middleware support. We utilize Express to construct RESTful endpoints. Its middleware pipeline allows us to easily inject Authentication, Rate Limiting, and Error Handling globally before any business logic is executed.
+      <td>Node.js</td>
+      <td>v18+ LTS</td>
+      <td>
+        The V8-powered runtime environment. The event-driven, non-blocking I/O model is uniquely suited for an application dealing with thousands of simultaneous read requests (e.g., users fetching book chapters concurrently).
       </td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">Mongoose (ODM)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">8.x</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        Object Data Modeling (ODM) library for MongoDB and Node.js. Mongoose provides a straight-forward, schema-based solution to model application data. 
-        <ul>
-          <li><strong>Validation:</strong> Ensures a Book cannot be saved without an Author ID.</li>
-          <li><strong>Hooks:</strong> Automatically hashes user passwords `pre-save` to the database.</li>
-          <li><strong>Population:</strong> Easily replaces an `authorId` string with the full Author object in a single query.</li>
-        </ul>
+      <td>Express.js</td>
+      <td>v4.x</td>
+      <td>
+        A minimalist web framework providing the routing logic, middleware chaining (for auth and error handling), and HTTP response formatting. Selected over NestJS for raw speed and minimal overhead.
       </td>
     </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">JSON Web Tokens (JWT)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">RFC 7519</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        Used for stateless authentication. When a user logs in, the server generates a signed token containing their ID and Role. Because the token is self-contained, the backend servers don't need to look up session data in the database for every single request, enabling infinite horizontal scaling of the Node.js instances.
+    <tr>
+      <td>Mongoose</td>
+      <td>v8.x</td>
+      <td>
+        The Object Data Modeling (ODM) library for MongoDB. Enforces strict schema validation at the application level, handles complex `populate()` calls to resolve relational links (like resolving Author details on a Book document), and provides robust middleware hooks.
+      </td>
+    </tr>
+    <tr>
+      <td>JSON Web Tokens (JWT)</td>
+      <td>Standard</td>
+      <td>
+        Provides stateless authentication. Upon login, a JWT containing the user's ID and Role is signed using a highly secure `JWT_SECRET`. This token is passed via HTTP-only Cookies and the Authorization Bearer header.
+      </td>
+    </tr>
+    <tr>
+      <td>Bcrypt.js</td>
+      <td>Native</td>
+      <td>
+        Used for computationally heavy password hashing to prevent brute-force and rainbow table attacks.
       </td>
     </tr>
   </tbody>
 </table>
 
----
+### Backend Security & Optimization Middleware
 
-<h2 style="color: #28a745;">2.3 Database and Caching Layer (Persistence)</h2>
-<p style="line-height: 1.6;">
-Data persistence requires a system capable of handling highly variable, unstructured data (e.g., chapters of varying lengths, user settings) while maintaining strict performance SLAs.
-</p>
+To ensure the Express API is resilient against attacks, we implement a robust middleware chain:
 
-<div style="border-left: 5px solid #0056b3; padding-left: 15px; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #0056b3; margin-top: 0;">MongoDB (Primary NoSQL Store)</h3>
-  <p style="color: #333; line-height: 1.5;">
-    MongoDB was selected specifically due to its BSON document model. In a storytelling platform, documents (books) often embed arrays of sub-documents (reports, likes) or require deep linking (chapters). A traditional SQL database would require massive, slow `JOIN` tables for these operations. MongoDB's NoSQL structure accommodates rapid schema evolution without complex migration scripts locking the tables.
-  </p>
-</div>
+```mermaid
+graph LR
+    Req[Incoming HTTP Request] --> Helmet[Helmet: Secure Headers]
+    Helmet --> RateLimiter[Express Rate Limit]
+    RateLimiter --> CORS[CORS Validation]
+    CORS --> Parser[Body Parser]
+    Parser --> Sanitizer[Express Mongo Sanitize]
+    Sanitizer --> Auth[Auth Protect Middleware]
+    Auth --> Route[API Controller]
 
-<div style="border-left: 5px solid #28a745; padding-left: 15px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #28a745; margin-top: 0;">Redis (In-Memory Cache)</h3>
-  <p style="color: #333; line-height: 1.5;">
-    While MongoDB is fast, retrieving the same "Top 10 Books" leaderboard 5,000 times a minute would cripple the database. Redis acts as an ultra-high-speed, in-memory caching layer operating in microseconds.
-  </p>
-  <ul style="color: #333; line-height: 1.5;">
-    <li><strong>Token Blacklisting:</strong> Caching invalidated JWT tokens upon user logout.</li>
-    <li><strong>Rate Limiting:</strong> Preventing DDoS attacks by tracking API request counts per IP.</li>
-    <li><strong>Sorted Sets:</strong> Maintaining real-time leaderboards for Competitions.</li>
-  </ul>
-</div>
+    style Req fill:#ff9800,color:#fff
+    style Route fill:#4caf50,color:#fff
+```
+
+- **Helmet**: Secures Express apps by setting various HTTP headers (X-DNS-Prefetch-Control, X-Frame-Options).
+- **Express-Rate-Limit**: Prevents DoS attacks by restricting the number of requests an IP can make to APIs like `/api/auth/login`.
+- **Express-Mongo-Sanitize**: Strips out `$`, `.` from request payloads to prevent NoSQL injection attacks.
 
 ---
 
-<h2 style="color: #28a745;">2.4 Third-Party Cloud Integrations & SaaS</h2>
-<p style="line-height: 1.6;">
-To maintain enterprise-grade security, scalability, and compliance, Mozhibu - Story delegates specific specialized tasks to industry-leading SaaS providers.
-</p>
+<h2>2.3 Database Tier (MongoDB)</h2>
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #333; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">SaaS Provider</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Integration Depth & Purpose</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">Stripe (Payments API)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Handles all financial transactions. Mozhibu never stores raw credit card numbers. Stripe handles Reader subscription recurring billing (via Webhooks). Stripe Connect is utilized to programmatically route payouts to Author bank accounts globally.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">AWS S3 / Cloudinary</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Binary object storage for heavy media assets. Used for storing Book Cover images, User Avatars, and potentially future audio book files. These assets are served via a Global CDN to ensure fast load times in any country.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">Firebase Cloud Messaging (FCM)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Pushes real-time Web Push and Mobile Push notifications. Used to alert users immediately about new chapter releases from authors they follow, competition results, and moderation warnings.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">Nodemailer / SendGrid</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Transactional email service. Responsible for delivering critical communications that require guaranteed delivery, such as Welcome emails, secure Password Reset tokens, and monthly earnings breakdown reports to Authors.</td>
-    </tr>
-  </tbody>
-</table>
+MongoDB was chosen due to the highly variable nature of story data and the need for rapid read operations.
 
-</div>
+- **Document Structure**: Data is stored as BSON (Binary JSON), which maps perfectly to the JavaScript backend and frontend.
+- **Atlas Cloud**: We utilize MongoDB Atlas for fully managed, multi-zone availability.
+- **Indexing Strategy**: We utilize heavy indexing on fields frequently used in queries. For example, `Book.genre` and `Book.status` are indexed to ensure the trending/popular feeds load in under 10ms.
+
+---
+
+<h2>2.4 Cloud APIs & Third-Party Integrations</h2>
+
+The platform achieves a "larger than life" feature set by integrating with powerful external services:
+
+### 2.4.1 Google Gemini AI (Translation)
+We utilize the `@google/generative-ai` package to provide real-time translation of story chapters. 
+- **Workflow**: When a reader requests a chapter in a different language, the backend prompts the `gemini-1.5-flash` model to translate the text while strictly preserving HTML formatting and paragraph breaks. 
+- **Reasoning**: Cheaper and significantly more context-aware for literary prose than traditional APIs like Google Translate.
+
+### 2.4.2 Resend (Transactional Email)
+We use the `resend` Node SDK for all outbound communications.
+- **Workflow**: Used for sending OTPs, Password Reset links, and notifying Authors when their payout requests are approved.
+- **Reasoning**: Extremely fast delivery, developer-friendly API, and excellent templating support.
+
+### 2.4.3 Stripe (Payment Processing)
+- **Workflow**: Readers purchase Coin packages or Subscriptions via Stripe Checkout. Webhooks listen for `checkout.session.completed` to update the user's `wallet.coins` or `subscription` status securely on the backend without trusting the client.
+- **Reasoning**: Industry standard for secure, PCI-compliant payment handling.
+
+### 2.4.4 Cloudinary (Media Hosting)
+- **Workflow**: When an author uploads a book cover, the backend intercepts the `multer` buffer and pipes it directly to Cloudinary.
+- **Reasoning**: Cloudinary provides on-the-fly image transformations (resizing, webp conversion), drastically reducing bandwidth costs and speeding up the Angular UI.
+
+---
+
+<h2>2.5 DevOps & Deployment Pipeline</h2>
+
+While the application is currently capable of running locally via `npm run dev` and `npm start`, the production architecture is designed for modern cloud PaaS providers (like Render, Heroku, or Vercel).
+
+```mermaid
+flowchart TD
+    Dev[Developer Commits Code] --> GitHub[GitHub Repository]
+    GitHub -->|WebHook| Pipeline[CI/CD Pipeline]
+    
+    subgraph Pipeline
+        Test[Run Jest/Jasmine Tests]
+        BuildFront[Build Angular prod]
+        BuildBack[Build Node Backend]
+    end
+    
+    Test --> BuildFront
+    Test --> BuildBack
+    
+    BuildFront --> DeployFront[Deploy to CDN / Vercel]
+    BuildBack --> DeployBack[Deploy to Render / EC2]
+
+    style Dev fill:#0056b3,color:#fff
+    style GitHub fill:#0056b3,color:#fff
+```
+
+By decoupling the frontend static assets (served via CDN) from the backend dynamic API (served via a Node instance), the platform can handle immense traffic spikes during major story releases.

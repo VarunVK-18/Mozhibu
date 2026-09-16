@@ -141,6 +141,8 @@ const notificationRoutes = require("./src/routes/notifications");
 const competitionRoutes = require("./src/routes/competitions");
 const searchRoutes = require("./src/routes/search");
 const feedbackRoutes = require("./src/routes/feedback");
+const settingsRoutes = require("./src/routes/settings");
+const contactRoutes = require("./src/routes/contact");
 
 const subscriptionRoutes = require("./src/routes/subscriptions");
 const revenueRoutes = require("./src/routes/revenue");
@@ -154,6 +156,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/competitions", competitionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/revenue", revenueRoutes);
 app.use("/api", earningsRoutes);

@@ -1,147 +1,86 @@
-<div style="font-family: Arial, sans-serif; color: black; background-color: white; padding: 20px;">
+# 7. Exhaustive REST API Routing & Payloads
 
-<h1 style="color: #0056b3; border-bottom: 2px solid #28a745; padding-bottom: 10px;">7. Exhaustive API & Routing Architecture</h1>
+The backend acts as a highly structured communication gateway (REST API). Every route is meticulously designed to receive standard requests and return structured data, adhering to precise HTTP status codes (such as indicating Success, Bad Request, or Unauthorized). 
 
-<p style="font-size: 1.1em; line-height: 1.6;">
-The <strong>Mozhibu - Story</strong> Backend API is built strictly upon RESTful principles, utilizing predictable resource-oriented URLs, standard HTTP methods, and normalized JSON payloads. All endpoints are prefixed with `/api/v1/` to ensure backward compatibility for legacy mobile clients when future structural changes are inevitably introduced. This document exhaustively catalogs the routing architecture, protection levels, and expected payload models.
-</p>
+**Authentication Standard:** All protected features require a digital "Security Token" to be sent invisibly alongside the request. This token proves who the user is without requiring them to send their password repeatedly.
 
 ---
 
-<h2 style="color: #28a745;">7.1 Authentication, Identity, & User Management</h2>
-<p style="line-height: 1.6;">
-These endpoints are the gateway to the application. They handle user registration, OAuth handshakes, JWT issuance, and secure profile management.
-</p>
+## 7.1 Authentication & Onboarding Domain (`/api/auth`)
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #0056b3; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Method</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Endpoint Route & Parameters</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Protection Level</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Detailed Behavior & Constraints</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">POST</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/auth/register</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Public (Rate Limited)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Expects `email`, `password`, `mobile`. Hashes the password via bcrypt (Salt Rounds: 10). Generates a Verification Token and triggers SendGrid. Returns a signed JWT valid for 24 hours.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">POST</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/auth/login</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Public (Strict Rate Limit)</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Authenticates user against MongoDB. If successful, strips sensitive data from the user object and returns it alongside the JWT. If the account is marked `status: 'suspended'`, aborts with 403.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">GET</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/users/me</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Bearer Token</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Decodes the token's `_id`. Queries the DB to retrieve the authenticated user's profile, including their `isPremium` status and deep-populated arrays like `savedBooks` and `following`.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">PUT</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/users/me/monetization</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #0056b3;">Bearer Token + 'writer' Role</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Updates the encrypted payout bank details (`accountNumber`, `ifscCode`). Fails automatically if the JWT role is strictly 'reader'.</td>
-    </tr>
-  </tbody>
-</table>
+### 1. Registering a New User (POST)
+- **Data Sent to Server:** The user's requested Name, Email, highly secure Password, Mobile Number, and Date of Birth.
+- **Server Logic:** The system verifies the email doesn't already exist, scrambles the password for security, creates the user, and generates a Security Token.
+- **Data Returned to App:** The user's ID, Name, Email, and their new Security Token.
+
+### 2. Logging In (POST)
+- **Data Sent to Server:** Email and Password.
+- **Server Logic:** The system checks the database, unscrambles and verifies the password, and issues a new Security Token valid for 30 days. It also checks if the user finished setting up their profile.
+- **Data Returned to App:** The user's ID, Role (Reader/Author), Security Token, and a True/False flag indicating if their profile is fully completed.
+
+### 3. Google/Facebook Social Login (POST)
+- **Data Sent to Server:** The secure verification token provided directly by Google or Facebook.
+- **Server Logic:** The backend asks Google to verify the token is legitimate. If valid, it either logs the user in or creates a brand new account for them instantly. Crucially, social logins often lack Date of Birth and Phone Numbers.
+- **Data Returned to App:** The user's new Security Token and a True/False flag indicating if their profile is complete. If false, the frontend app will firmly force the user to the "Complete Profile" screen.
 
 ---
 
-<h2 style="color: #28a745;">7.2 Content Delivery (Books & Chapters)</h2>
-<p style="line-height: 1.6;">
-These endpoints form the core of the Reader experience. They are highly optimized, utilizing pagination and selective field projection to minimize database load.
-</p>
+## 7.2 Content Discovery & Reader Core (`/api/books`)
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #333; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Method</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Endpoint Route & Query Strings</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Protection Level</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Detailed Behavior & Constraints</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">GET</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/books?genre=SciFi&page=1&limit=20</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Public</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Fetches published books. Uses Mongoose `.skip()` and `.limit()` for pagination. Applies filters based on query parameters. Excludes books with status 'draft' or 'suspended'.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #28a745;">POST</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/books</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #0056b3;">Bearer Token + Multer</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Accepts `multipart/form-data`. Uploads the cover image to S3, retrieves the CDN URL, and creates a new Book document tied to the `req.user._id` as the author.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #333;">GET</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/books/:bookId/chapters/:chapterId</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Public / Premium Check</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Fetches the actual text content of a chapter. <strong>Critical Logic:</strong> If `chapter.isLocked == true`, the middleware checks the `req.user.isPremium` flag. If false, it strips the `content` field and returns 403.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">POST</td>
-      <td style="padding: 12px; border: 1px solid #ddd; font-family: monospace;">/api/v1/books/:id/like</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Bearer Token</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Executes an atomic `$addToSet` operation in MongoDB to push the `req.user._id` into the Book's `likes` array, preventing duplicate likes inherently. Updates the Engagement Score in the background.</td>
-    </tr>
-  </tbody>
-</table>
+### 1. Fetching the Library Feed (GET)
+- **Data Sent to Server:** Filtering instructions, such as asking for Page 1, requesting exactly 20 items, filtering by "Fantasy", and sorting by "Most Popular".
+- **Server Logic:** The database rapidly scans and sorts thousands of books, skipping the heavy story content and returning only lightweight covers.
+- **Data Returned to App:** A list of books containing their Titles, Cover Images, Author Names, Total Views, and total Chapter Count, along with pagination tracking (e.g., "You are on page 1 of 15").
+
+### 2. Fetching a Book's Table of Contents (GET)
+- **Data Sent to Server:** The unique ID of the Book.
+- **Server Logic:** The system retrieves all published chapters for that book, stripping out the heavy text content to save the user's internet bandwidth.
+- **Data Returned to App:** An ordered list of chapters containing their Titles, Sequence Order, whether they are Premium, and how much they cost to unlock.
+
+### 3. Saving Reading Progress (PUT)
+- **Security:** Requires a valid Security Token.
+- **Data Sent to Server:** The Book ID, Chapter ID, and the exact percentage of how far down the page the user has scrolled.
+- **Server Logic:** The system finds the user's existing bookmark for that specific book and overrides it with the new percentage.
+- **Data Returned to App:** A simple success confirmation.
 
 ---
 
-<h2 style="color: #28a745;">7.3 Exhaustive Request/Response Modeling</h2>
+## 7.3 Author Publishing Engine (`/api/author`)
+*Note: All routes in this domain strictly require the server to verify the user holds the "Author" or "Superadmin" role.*
 
-<p style="line-height: 1.6;">
-To ensure the Frontend TypeScript models match the Backend precisely, all responses are wrapped in a standard Envelope format (`success`, `data`, `message`).
-</p>
+### 1. Creating a New Book (POST)
+- **Data Sent to Server:** The Book Title, Synopsis, Genre, and the actual raw image file for the Book Cover.
+- **Server Logic:** The server catches the image file, securely uploads it to a cloud image host (Cloudinary), waits for the permanent image URL to be generated, and then saves the final book record to the database under the author's name.
+- **Data Returned to App:** The new Book ID and the permanent URL of the uploaded cover image.
 
-<div style="border-left: 5px solid #0056b3; padding-left: 15px; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #0056b3; margin-top: 0;">Example: GET `/api/v1/users/me`</h3>
-  <pre style="background-color: #fff; border: 1px solid #ddd; padding: 10px; color: #333;">
-{
-  "success": true,
-  "message": "Profile retrieved successfully",
-  "data": {
-    "_id": "64f9b8a3e4b0d...",
-    "email": "reader@example.com",
-    "role": "reader",
-    "isPremium": true,
-    "favoriteGenres": ["Fantasy", "Thriller"],
-    "savedBooks": [
-      {
-        "_id": "64fa12b...",
-        "title": "The Silent Echo",
-        "author": { "_id": "64fa88...", "username": "JohnDoe" }
-      }
-    ],
-    "createdAt": "2026-01-15T08:00:00Z"
-  }
-}
-  </pre>
-</div>
+### 2. Auto-Saving a Chapter (PUT)
+- **Data Sent to Server:** The rich-text HTML story content written by the author, and a status indicating it is a "draft".
+- **Server Logic:** The backend strictly checks that the user attempting to save the chapter is actually the legal owner of the parent book before overriding the text.
+- **Data Returned to App:** A success confirmation and a timestamp of the last save.
 
 ---
 
-<h2 style="color: #28a745;">7.4 HTTP Status Code & Error Standardization</h2>
-<p style="line-height: 1.6;">
-The API rigorously adheres to HTTP standards. The global `errorHandler.js` middleware ensures these codes are never deviated from, preventing the dreaded "200 OK with an error payload inside" anti-pattern.
-</p>
+## 7.4 Monetization & Financial Workflows (`/api/finance`)
 
-<ul style="color: #333; line-height: 1.6; font-size: 1.05em;">
-  <li><strong style="color: #28a745; background-color: #e6ffe6; padding: 2px 5px; border-radius: 3px;">200 OK / 201 Created:</strong> Successful operations. 201 is specifically reserved for POST requests that generate a new Database Document.</li>
-  <li><strong style="color: #0056b3; background-color: #e6f2ff; padding: 2px 5px; border-radius: 3px;">400 Bad Request:</strong> Validation failed. Sent when `express-validator` detects missing fields, or when business logic constraints are violated (e.g., trying to publish a book with 0 chapters).</li>
-  <li><strong style="color: #0056b3; background-color: #e6f2ff; padding: 2px 5px; border-radius: 3px;">401 Unauthorized:</strong> Missing, malformed, or expired JWT token. This status code acts as a strict signal for the Angular frontend to clear `localStorage` and route the user to `/login`.</li>
-  <li><strong style="color: #0056b3; background-color: #e6f2ff; padding: 2px 5px; border-radius: 3px;">403 Forbidden:</strong> The token is valid, but the user's `role` lacks privileges. (e.g., A Reader trying to access the `/admin/payouts` endpoint).</li>
-  <li><strong style="color: #333; background-color: #f2f2f2; padding: 2px 5px; border-radius: 3px;">404 Not Found:</strong> The requested resource (Book, Chapter, Competition) was deleted or the ObjectID provided is invalid.</li>
-  <li><strong style="color: #333; background-color: #f2f2f2; padding: 2px 5px; border-radius: 3px;">429 Too Many Requests:</strong> Redis rate limiter triggered, preventing brute-force and DDoS attacks.</li>
-  <li><strong style="color: red; background-color: #ffe6e6; padding: 2px 5px; border-radius: 3px;">500 Internal Server Error:</strong> A catastrophic backend failure (e.g., MongoDB connection dropped). Stack traces are stripped from the response in production.</li>
-</ul>
+### 1. Initiating a Coin Purchase (POST)
+- **Security:** Requires a valid Security Token.
+- **Data Sent to Server:** The ID of the Coin Package the user wants to buy (e.g., "1000 Coins for $10").
+- **Server Logic:** The backend communicates securely with Stripe's banking servers to generate a unique, one-time checkout session.
+- **Data Returned to App:** A secure URL pointing to Stripe's payment portal, which the frontend app uses to redirect the user.
 
-</div>
+### 2. The Stripe Webhook (POST)
+- **Security:** This is a public route, but the server cryptographically verifies a unique signature header to ensure the request is genuinely coming from Stripe.
+- **Data Sent to Server:** Raw transaction data sent directly from Stripe's servers in the background.
+- **Server Logic:** The system reads the transaction. If Stripe confirms the payment was successful, the system automatically finds the user and adds the purchased coins to their digital wallet.
+- **Data Returned to App:** A simple confirmation back to Stripe that the message was received.
+
+### 3. Unlocking a Premium Chapter (POST)
+- **Security:** Requires a valid Security Token.
+- **Data Sent to Server:** The ID of the Chapter the reader wants to read.
+- **Server Logic:** 
+  1. The server checks if the reader has enough coins. If not, it rejects the request.
+  2. It deducts the exact cost of the chapter from the reader's wallet.
+  3. It calculates the Author's revenue cut (e.g., 70%).
+  4. It adds those coins to the Author's wallet.
+  5. It creates an unchangeable transaction receipt for auditing.
+- **Data Returned to App:** The user's new lower wallet balance, and the full, unlocked text content of the chapter so they can begin reading.

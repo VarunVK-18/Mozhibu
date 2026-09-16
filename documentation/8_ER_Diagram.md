@@ -1,139 +1,216 @@
-<div style="font-family: Arial, sans-serif; color: black; background-color: white; padding: 20px;">
+<h1>8. Comprehensive Entity Relationship Diagram (ERD)</h1>
 
-<h1 style="color: #0056b3; border-bottom: 2px solid #28a745; padding-bottom: 10px;">8. Exhaustive ER Diagram & Data Modeling Deep Dive</h1>
-
-<p style="font-size: 1.1em; line-height: 1.6;">
-This section provides a granular, macroscopic look at the data architecture powering <strong>Mozhibu - Story</strong>. Unlike SQL, NoSQL requires careful consideration of access patterns to avoid devastating `$lookup` performance bottlenecks. Below is the master Entity Relationship diagram illustrating how the 20+ MongoDB collections interact via Mongoose `ObjectId` references, followed by a comprehensive breakdown of the core transactional models and their specific field constraints.
+<p>
+While MongoDB is fundamentally a NoSQL, schema-less document database, the Mozhibu platform architecture strictly enforces SQL-like relational integrity at the application layer using <strong>Mongoose `ObjectId` references</strong>. Because of the sheer size and complexity of the platform (spanning Content, Monetization, Subscriptions, Governance, and User Analytics), the relational mapping is extensive. 
+</p>
+<p>
+The following document provides an exhaustive, attribute-level mapping of every collection in the database, defining exactly how data intersects between the Reader, the Author, and the System.
 </p>
 
 ---
 
-<h2 style="color: #28a745;">8.1 Comprehensive Collection Relationships (The Global Map)</h2>
+<h2>8.1 Master System ER Diagram</h2>
+
+The diagram below maps all major collections. Pay close attention to the multiplicity (e.g., `||--o{` indicates a One-to-Many relationship, `||--o|` indicates a One-to-One or Zero).
 
 ```mermaid
 erDiagram
-    USERS ||--o{ BOOKS : "authors (1:N)"
-    USERS ||--o{ CHAPTERS : "reads/unlocks (M:N)"
-    USERS ||--o{ REVIEWS : "authors (1:N)"
-    USERS ||--o{ SUBSCRIPTION_PLANS : "subscribes via (1:1 per month)"
-    USERS ||--o{ READING_PROGRESS : "tracks progress of (1:N)"
-    USERS ||--o{ AUTHOR_EARNINGS : "receives payouts (1:N)"
-    USERS ||--o{ USERS : "follows (M:N via arrays)"
-    
-    BOOKS ||--o{ CHAPTERS : "contains (1:N)"
-    BOOKS ||--o{ REVIEWS : "receives (1:N)"
-    BOOKS ||--o{ READING_PROGRESS : "monitored by (1:N)"
-    
-    COMPETITIONS ||--o{ BOOKS : "winnerBookIds (1:N)"
-    COMPETITIONS ||--o{ COMPETITION_ENTRIES : "hosts (1:N)"
-    
-    COMPETITION_ENTRIES }o--|| BOOKS : "links to"
-    COMPETITION_ENTRIES }o--|| USERS : "submitted by"
+    %% Core Content Entities & Authorship
+    USER ||--o{ BOOK : "writes (authorId)"
+    USER ||--o{ CHAPTER : "authors (authorId)"
+    BOOK ||--|{ CHAPTER : "contains (bookId)"
 
-    BOOKS {
-        ObjectId _id PK
-        ObjectId author FK
-        string title
-        string genre
-        string status
-        boolean isPremium
-        number views
-        number likesCount
-        array tags
-    }
+    %% Reader Engagement
+    USER ||--o{ BOOK : "saves to library"
+    USER ||--o{ BOOK : "likes"
+    USER ||--o{ READING_PROGRESS : "generates"
+    BOOK ||--o{ READING_PROGRESS : "tracked_by"
+    CHAPTER ||--o| READING_PROGRESS : "last_read_position"
 
-    CHAPTERS {
-        ObjectId _id PK
-        ObjectId book FK
-        string title
-        text content
-        number wordCount
-        boolean isLocked
-        number orderIndex
-    }
+    %% Financial & Monetization Ecosystem
+    USER ||--o{ TRANSACTION : "initiates (userId)"
+    CHAPTER ||--o{ TRANSACTION : "unlocked_by (relatedChapterId)"
+    USER ||--o{ PAYOUT_REQUEST : "requests (authorId)"
+    USER ||--o| SUBSCRIPTION : "holds active (userId)"
 
-    USERS {
-        ObjectId _id PK
-        string username
-        string role
-        boolean isPremium
-        object monetization
-        array favoriteGenres
-        number followersCount
-    }
+    %% System & Governance
+    USER ||--o{ FEEDBACK : "submits (userId)"
 
-    AUTHOR_EARNINGS {
-        ObjectId _id PK
-        ObjectId author FK
-        number amount
-        string month
-        string status
-        ObjectId transactionId FK
-    }
+    %% ==========================================
+    %% Exhaustive Schema Attribute Definitions
+    %% ==========================================
 
-    SUBSCRIPTION_PLANS {
-        ObjectId _id PK
+    USER {
+        ObjectId _id PK "Auto-generated"
+        string email UK "Unique, Indexed, Lowercase"
+        string password "Encrypted via bcrypt (Select: false)"
+        string mobile UK "Unique, Sparse Index"
+        Date dob "Mandatory for monetization"
+        string role "Enum: reader, author, admin, superadmin"
+        string authProvider "Enum: local, google, facebook"
+        string providerId "OAuth Subject ID"
         string name
-        number price
-        number durationDays
-        boolean isActive
+        string penName UK "Unique Author Handle"
+        boolean isOnboarded "Flag for profile completion"
+        array savedBooks "Array of Book ObjectIds"
+        array likedBooks "Array of Book ObjectIds"
+        number coins "Wallet Balance (Min: 0)"
+        string stripeCustomerId "For Stripe Webhooks"
+        Date createdAt "Timestamp"
     }
-    
+
+    BOOK {
+        ObjectId _id PK
+        ObjectId authorId FK "Refers to USER"
+        string title "Indexed (Text)"
+        string synopsis "Indexed (Text)"
+        string coverImage "Cloudinary URL"
+        string language "Default: 'en'"
+        string genre "Indexed"
+        array tags "Array of Strings"
+        boolean isPublished "Default: false"
+        boolean isCompleted "Default: false"
+        number views "Atomic counter ($inc)"
+        number likes "Atomic counter ($inc)"
+        number chapterCount "Cached total"
+        Date createdAt "Timestamp"
+    }
+
+    CHAPTER {
+        ObjectId _id PK
+        ObjectId bookId FK "Refers to BOOK"
+        ObjectId authorId FK "Refers to USER"
+        number order "Sequence Number (e.g. 1, 2, 3)"
+        string title
+        string content "Rich HTML Payload (No Limit)"
+        number wordCount "Calculated on save"
+        boolean isPremium "Requires coins?"
+        number cost "Cost in coins (if Premium)"
+        string status "Enum: draft, published, archived"
+        Date publishedAt
+    }
+
     READING_PROGRESS {
         ObjectId _id PK
-        ObjectId user FK
-        ObjectId book FK
-        ObjectId lastReadChapter FK
-        number percentage
-        datetime lastUpdated
+        ObjectId userId FK "Refers to USER"
+        ObjectId bookId FK "Refers to BOOK"
+        ObjectId chapterId FK "Refers to CHAPTER"
+        number percentage "0 to 100"
+        Date lastReadAt "Timestamp for sorting"
+    }
+
+    TRANSACTION {
+        ObjectId _id PK
+        ObjectId userId FK "Refers to USER"
+        string type "Enum: purchase_coins, unlock_chapter, author_earnings, fiat_payout"
+        number amount "Number of coins or fiat currency"
+        string currency "Enum: COIN, USD, INR"
+        ObjectId relatedBookId FK "Optional"
+        ObjectId relatedChapterId FK "Optional"
+        string stripePaymentIntentId "External Reference"
+        string status "Enum: pending, completed, failed"
+        Date createdAt
+    }
+
+    PAYOUT_REQUEST {
+        ObjectId _id PK
+        ObjectId authorId FK "Refers to USER"
+        number coinsDeducted
+        number fiatAmountRequested
+        string currency
+        string status "Enum: pending, approved, rejected"
+        string adminNotes "Internal moderation note"
+        Date requestedAt
+    }
+
+    SUBSCRIPTION {
+        ObjectId _id PK
+        ObjectId userId FK "Refers to USER"
+        string stripeSubscriptionId UK
+        string tier "Enum: Standard, Premium"
+        Date currentPeriodStart
+        Date currentPeriodEnd
+        string status "Enum: active, canceled, past_due"
+    }
+
+    FEEDBACK {
+        ObjectId _id PK
+        ObjectId userId FK "Refers to USER"
+        string category "Enum: bug, suggestion, complaint"
+        string message
+        string status "Enum: open, resolved"
+        Date submittedAt
+    }
+
+    CONTACT_QUERY {
+        ObjectId _id PK
+        string name
+        string email
+        string message
+        string status "Enum: new, read"
+        Date createdAt
+    }
+
+    SETTINGS {
+        string _id PK "Hardcoded to 'singleton'"
+        string contactEmail
+        string contactPhone
+        number coinToUsdRate "E.g., 0.01"
+        number authorRevenueSharePercentage "E.g., 70"
+        number minimumPayoutThreshold "E.g., 5000"
     }
 ```
 
 ---
 
-<h2 style="color: #28a745;">8.2 Core Collections Deep Dive & Indexing Justifications</h2>
-
-<p style="line-height: 1.6;">
-Each model below represents a Mongoose Schema. Field definitions are strict, utilizing Mongoose validation to reject dirty data before it reaches the MongoDB BSON serialization layer.
+<h2>8.2 Relational Integrity & Mongoose Cascading Deletes</h2>
+<p>
+Because MongoDB does not natively support `ON DELETE CASCADE` constraints at the database engine level (unlike SQL), failing to clean up references results in "Orphaned Documents" and critical application errors (e.g., trying to read a Chapter whose parent Book no longer exists).
+</p>
+<p>
+Mozhibu solves this by implementing rigorous <strong>Mongoose Pre-Remove Hooks</strong>. When an entity is deleted, Mongoose intercepts the deletion and recursively triggers `$deleteMany` and `$pull` operations on all child entities.
 </p>
 
-<div style="border-left: 5px solid #0056b3; padding-left: 15px; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #0056b3; margin-top: 0;">1. The `ReadingProgress` Collection (High-Velocity Writes)</h3>
-  <p style="color: #333; line-height: 1.6;">
-    This is the most highly written-to collection in the entire database. It tracks exactly where a reader is within a book. It is crucial for two reasons: saving the user's place in the app, and calculating "Qualified Reads" which dictate complex author payouts.
-  </p>
-  <ul style="color: #333; line-height: 1.6;">
-    <li><strong>`user`</strong>: Reference to the User `ObjectId`. (Indexed)</li>
-    <li><strong>`book`</strong>: Reference to the Book `ObjectId`. (Indexed)</li>
-    <li><strong>`lastReadChapter`</strong>: Updates asynchronously via a debounced API call as the user scrolls through the frontend application.</li>
-    <li><strong>`percentage`</strong>: Used by the UI to render visual progress bars (e.g., "75% complete") on the Reader's library page.</li>
-    <li><strong>Compound Index:</strong> A unique compound index on `{ user: 1, book: 1 }` exists to ensure a single user can only have one progress tracker per book, triggering an `upsert` (Update or Insert) on the backend.</li>
-  </ul>
-</div>
+### The Cascade Deletion Flowchart
 
-<div style="border-left: 5px solid #28a745; padding-left: 15px; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #28a745; margin-top: 0;">2. The `AuthorEarnings` Collection (Analytical / Batch Processing)</h3>
-  <p style="color: #333; line-height: 1.6;">
-    Unlike the real-time `ReadingProgress`, this collection is populated via massive batch processing. It is calculated recursively by a Node.js Cron job running at the end of each month. It aggregates data from `ReadingProgress`, total `SubscriptionPlans` revenue pool, and active `MonthlyAdRevenue`.
-  </p>
-  <ul style="color: #333; line-height: 1.6;">
-    <li><strong>`author`</strong>: The User ID of the writer receiving the payout.</li>
-    <li><strong>`amount`</strong>: The precise calculated total stored as an integer (in cents/paise) to completely avoid JavaScript floating-point rounding errors (e.g., storing `10050` instead of `$100.50`).</li>
-    <li><strong>`status`</strong>: Enum (`calculated`, `pending_transfer`, `paid`, `failed`). This acts as a state machine for the payout workflow.</li>
-    <li><strong>`month`</strong>: Stored as a string (e.g., "2026-09") for rapid historical dashboard queries.</li>
-  </ul>
-</div>
+```mermaid
+flowchart TD
+    Trigger[Admin/User calls .remove() on Entity]
+    
+    Trigger --> IsUser{Is it a User?}
+    IsUser -->|Yes| UserCascade
+    
+    subgraph User Deletion Cascade
+        UserCascade[User.pre('remove')]
+        UserCascade -->|Delete| DeleteBooks[Delete All Books where authorId = User._id]
+        UserCascade -->|Delete| DeleteProgress[Delete All ReadingProgress for User]
+        UserCascade -->|Delete| DeleteFeedback[Delete All Feedback for User]
+        UserCascade -->|Nullify| NullifyPayouts[Set PayoutRequest.authorId = null (Keep for audits)]
+    end
+    
+    DeleteBooks --> IsBook[Book Deletion Triggered]
+    IsUser -->|No| CheckBook{Is it a Book?}
+    CheckBook -->|Yes| IsBook
+    
+    subgraph Book Deletion Cascade
+        IsBook[Book.pre('remove')]
+        IsBook -->|Delete| DeleteChapters[Delete All Chapters where bookId = Book._id]
+        IsBook -->|Delete| DeleteBookProgress[Delete All ReadingProgress where bookId = Book._id]
+        IsBook -->|Pull Array| RemoveSaved[UpdateMany Users: $pull Book._id from savedBooks]
+        IsBook -->|Pull Array| RemoveLiked[UpdateMany Users: $pull Book._id from likedBooks]
+    end
+    
+    CheckBook -->|No| Done[Action Completed]
+    DeleteChapters --> Done
+    UserCascade --> Done
+    
+    style Trigger fill:#0056b3,color:#fff
+    style UserCascade fill:#f44336,color:#fff
+    style IsBook fill:#ff9800,color:#fff
+    style Done fill:#4caf50,color:#fff
+```
 
-<div style="border-left: 5px solid #333; padding-left: 15px; margin-bottom: 20px; background-color: #f9f9f9; padding: 15px;">
-  <h3 style="color: #333; margin-top: 0;">3. The `User` Collection (The Central Hub)</h3>
-  <p style="color: #333; line-height: 1.6;">
-    The `User` collection manages the authorization and personalization context for every session. Due to MongoDB's flexibility, it utilizes embedded sub-documents heavily.
-  </p>
-  <ul style="color: #333; line-height: 1.6;">
-    <li><strong>`role`</strong>: Enforces strict RBAC (`reader`, `writer`, `superadmin`).</li>
-    <li><strong>`savedBooks` & `following`</strong>: Arrays of `ObjectIds`. Instead of a massive JOIN table to see who follows whom, MongoDB arrays allow for instant lookup. (e.g., `User.findById(id).populate('following')`).</li>
-    <li><strong>`monetization`</strong>: An embedded sub-document (`accountName`, `accountNumber`). In Mongoose, these fields are marked with `select: false` so that a standard `User.findOne()` never accidentally returns sensitive bank details to the frontend unless explicitly requested via `.select('+monetization')`.</li>
-  </ul>
-</div>
+### Critical Implementation Note (Transactions)
+Financial records (`Transactions`) are the **ONLY** entities in the database immune to cascading deletes. If a User is deleted, their `Transaction` ledger entries remain intact permanently. This is a strict requirement for financial compliance, tax auditing, and reconciling discrepancies with Stripe's external ledger. 
 
-</div>
+To handle this, when rendering an audit log, the application gracefully handles populated `userId` fields that return `null`, rendering them as "Deleted User" in the Admin Dashboard.

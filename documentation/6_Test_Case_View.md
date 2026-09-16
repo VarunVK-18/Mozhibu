@@ -1,140 +1,79 @@
-<div style="font-family: Arial, sans-serif; color: black; background-color: white; padding: 20px;">
+# 6. Exhaustive Quality Assurance & Testing Architecture
 
-<h1 style="color: #0056b3; border-bottom: 2px solid #28a745; padding-bottom: 10px;">6. Exhaustive Test Case View & Quality Assurance</h1>
-
-<p style="font-size: 1.1em; line-height: 1.6;">
-To maintain the stability, security, and reliability of the <strong>Mozhibu - Story</strong> platform, a comprehensive, multi-tiered testing strategy is strictly enforced before any code is deployed to production. This involves E2E (End-to-End) testing for the Angular frontend (using Cypress), Integration testing for the Express API routes (using Supertest), and Unit testing for the core business logic services (using Jest). The theoretical test cases below represent the standard Quality Assurance (QA) protocols executed in the CI/CD pipeline.
-</p>
+Ensuring the reliability of the **Mozhibu** platform is paramount, especially regarding core flows like User Authentication, Content Publishing, and Financial Transactions. The testing architecture is designed to validate the system at multiple layers: granular unit tests of Angular components, fully integrated backend API tests, and rigorous manual End-to-End (E2E) flows for third-party integrations.
 
 ---
 
-<h2 style="color: #28a745;">6.1 Authentication, Authorization, & Security Boundaries</h2>
-<p style="line-height: 1.6;">
-Testing the security boundaries is paramount. These tests ensure users can only access their permitted resources and that malicious actors cannot escalate their privileges.
-</p>
+## 6.1 Automated Backend Integration Testing (Node.js/Jest)
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #0056b3; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Test Case ID</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Exhaustive Scenario Description</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Expected System Behavior</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-AUTH-001</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">User attempts login with valid credentials (Email and correct password).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Server decrypts hash, matches password, returns 200 OK with a cryptographically signed JWT. Frontend saves token to `localStorage` and routes to Dashboard.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-AUTH-002</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">User attempts login with an invalid password (Brute force simulation: 15 attempts in 1 minute).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Server returns 401 Unauthorized for the first 5 attempts. After 5, the Redis Rate Limiter intercepts the request and returns 429 Too Many Requests. IP is temporarily banned.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-AUTH-003</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">A user with the 'Reader' role forcibly manipulates their browser URL to access the `/admin` moderation endpoint.</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Frontend Angular `RoleGuard` decodes the JWT, sees 'Reader', cancels the routing, and redirects to 403 Forbidden. The Admin JS chunk is never downloaded.</td>
-    </tr>
-  </tbody>
-</table>
+The backend relies on integration testing to ensure routes, middlewares, and database controllers function cohesively. We utilize testing frameworks (Jest and Supertest) that simulate network requests against a temporary, in-memory database to prevent polluting production data.
+
+### Example 1: Testing the Authentication & Onboarding Flow
+This test suite ensures that users cannot bypass the mandatory onboarding steps. 
+
+**Testing Logic:**
+1. **Setup:** The system generates a simulated "Google Login" user who has an email but is missing their Date of Birth and Mobile Number (meaning their profile is incomplete).
+2. **Restriction Check:** The simulated user attempts to access a protected feature, such as "Liking a Book". The system asserts that the request is firmly rejected with a `403 Forbidden` error and a message indicating the profile is incomplete.
+3. **Completion Check:** The simulated user then submits their Date of Birth and Mobile Number to the profile completion endpoint. The system verifies that the update is successful, the user's database record is permanently updated, and their secure access token is refreshed to grant them full access to the platform.
+
+### Example 2: Financial Ledger Integrity (Coins)
+Because the platform handles real money and digital currency, the financial endpoints must be watertight against race conditions and negative balances.
+
+**Testing Logic:**
+1. **Setup:** The system creates a test Reader with a wallet balance of exactly 10 Coins.
+2. **Insufficient Funds Check:** The Reader attempts to unlock a Premium Chapter that costs 50 Coins. 
+3. **Verification:** The system asserts that the transaction is immediately rejected with a `402 Payment Required` error. Most importantly, it queries the database again to absolutely verify that the Reader's wallet was not erroneously deducted and their balance remains at exactly 10 Coins, preventing negative balances.
 
 ---
 
-<h2 style="color: #28a745;">6.2 Content Publishing & Edge-Case Workflow</h2>
-<p style="line-height: 1.6;">
-Ensuring the authoring tools function flawlessly under edge-case conditions, as they are the lifeblood of the platform's content generation.
-</p>
+## 6.2 Frontend Component Testing (Angular 18 / Jasmine)
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #333; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Test Case ID</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Exhaustive Scenario Description</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Expected System Behavior</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-PUB-001</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Author submits a new Book payload missing the mandatory `genre` field (bypassing frontend validation via Postman).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Express-validator middleware catches the missing field before hitting the controller. Returns 400 Bad Request with an array of validation errors. Book is NOT saved to DB.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-PUB-002</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Author uploads a cover image that is actually a disguised `.exe` file masked as a `.png`.</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Multer upload middleware inspects the file's Magic Bytes (MIME type signature), realizes it is not an image, and rejects the upload with a 415 Unsupported Media Type error.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-PUB-003</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Author successfully publishes a Chapter containing 15,000 words.</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Chapter is saved. Mongoose `pre-save` hook calculates the exact word count and updates the parent Book's total word count. FCM push notification is triggered to all followers.</td>
-    </tr>
-  </tbody>
-</table>
+The frontend utilizes testing frameworks (Jasmine and Karma) to test individual visual components in isolation by mocking out external services.
+
+### Example 1: Testing the Reader's Progress Tracker
+
+**Testing Logic:**
+1. **Setup:** The testing framework loads the `ReaderComponent` in isolation and injects a fake story chapter so the component thinks it has real data to display.
+2. **Simulating User Behavior:** The framework programmaticly simulates a user scrolling exactly halfway down the webpage (50% scroll depth).
+3. **Verification:** The system asserts that the underlying data state (using Angular Signals) instantly updates the user's reading progress to `50%`. This guarantees that when a real user reads a book, their "Continue Reading" bookmark is accurately tracked.
 
 ---
 
-<h2 style="color: #28a745;">6.3 Monetization, Payouts, & Financial Integrity</h2>
-<p style="line-height: 1.6;">
-Testing the complex algorithms that handle financial transactions, ensuring authors are paid correctly and readers cannot bypass paywalls.
-</p>
+## 6.3 Critical E2E Test Flows (Cypress / Manual QA)
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #0056b3; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Test Case ID</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Exhaustive Scenario Description</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Expected System Behavior</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-MON-001</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Free Reader directly calls the API endpoint for Chapter 10 (which is marked `isPremium = true`).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Backend verifies the user's `isPremium` status in the JWT. Since it is false, the backend strips the `content` field from the JSON response and returns a 403 Forbidden with a "Paywall" flag.</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-MON-002</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Stripe Webhook fires indicating successful subscription payment, but the signature header is invalid or missing.</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Backend webhook controller fails cryptographically verifying the Stripe signature. Aborts the operation to prevent spoofed payments. Returns 400 Bad Request.</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-MON-003</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">End-of-month Cron job triggers the Payout Calculation for an author with zero valid bank details.</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Earnings are calculated correctly, but the `status` is set to `pending_setup`. The author receives an automated email requesting KYC completion. Funds are held in escrow.</td>
-    </tr>
-  </tbody>
-</table>
+Certain business-critical flows involve complex third-party state (like OAuth windows, Stripe checkout popups, or Gemini AI latency). These are rigorously tested via QA scenarios.
+
+### Flow 1: Stripe Webhook Asynchronous Fulfillment
+
+> **Scenario:** A user purchases coins, but closes their browser immediately after paying on Stripe.
+> 
+> 1. User initiates Stripe Checkout for 1000 Coins.
+> 2. User enters credit card on Stripe's hosted page and pays.
+> 3. User instantly closes the browser tab before Stripe redirects them back to Mozhibu.
+> 4. *Assertion:* Stripe fires a background webhook directly to the Mozhibu backend servers.
+> 5. *Assertion:* The backend securely validates the Stripe signature, finds the user by their Stripe ID, and credits the 1000 coins independently of the browser.
+> 6. User re-opens the app hours later and sees their 1000 coins successfully deposited. 
+> 
+> **Result:** Validates system does not rely on the client browser for financial fulfillment.
+
+### Flow 2: Gemini AI Translation Resilience
+
+> **Scenario:** The user requests a chapter translation, but the Google Gemini API is experiencing an outage.
+> 
+> 1. Reader clicks "Translate to Spanish" on a chapter.
+> 2. The Angular frontend shows a loading skeleton.
+> 3. The Node backend pings the Gemini API, which times out after 10 seconds (simulated by QA).
+> 4. *Assertion:* The Express backend catches the timeout error, logs it for developers, and returns a graceful "Service Unavailable" error.
+> 5. *Assertion:* The frontend clears the loading skeleton, displays a notification that the translation failed, and restores the original English text so the user's reading experience isn't permanently broken.
 
 ---
 
-<h2 style="color: #28a745;">6.4 High-Traffic Competitions Module</h2>
-<p style="line-height: 1.6;">
-Ensuring the high-traffic events operate without logic errors during critical deadlines.
-</p>
+## 6.4 Continuous Integration Pipeline
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-  <thead>
-    <tr style="background-color: #333; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Test Case ID</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Exhaustive Scenario Description</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Expected System Behavior</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-CMP-001</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Author attempts to submit a book exactly 1 second after the Competition `endDate` (Network latency simulation).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">Backend relies on standardized UTC Server Time, ignoring client-side timestamps. The submission is rejected. UI shows "Competition has ended".</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">TC-CMP-002</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Two users "Like" a competition entry at the exact same millisecond (Race condition simulation).</td>
-      <td style="padding: 12px; border: 1px solid #ddd; color: #28a745;">MongoDB's atomic `$addToSet` operator ensures both User IDs are appended to the `likes` array perfectly, and the total count reflects the correct number without overwriting.</td>
-    </tr>
-  </tbody>
-</table>
+To prevent developers from accidentally introducing bugs, an automated pipeline runs every time new code is submitted to the repository.
 
-</div>
+**Pipeline Logic:**
+1. The server provisions a fresh, isolated Ubuntu environment.
+2. It installs all required project dependencies.
+3. It boots up the backend and executes the entire suite of security, authentication, and financial tests. It enforces a strict rule that at least 80% of the codebase must be covered by automated tests, otherwise the new code is rejected.
+4. It boots up a headless Chrome browser and runs all frontend visual component tests to ensure no UI elements are broken.

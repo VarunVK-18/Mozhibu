@@ -204,12 +204,32 @@ import { ConfirmService } from '../../core/services/confirm.service';
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <path
-                    d="M5 3v4M19 3v4M5 11h14M5 15h14M5 19h14M3 3h18v18H3z"
-                  ></path>
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </span>
-              <span class="label">Competition Banner</span>
+              <span class="label">Competition</span>
+            </a>
+            <a
+              routerLink="/admin/contact-queries"
+              routerLinkActive="active"
+              class="nav-item"
+            >
+              <span class="icon">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </span>
+              <span class="label">Contact Queries</span>
             </a>
           </div>
 

@@ -1,219 +1,230 @@
-<div style="font-family: Arial, sans-serif; color: black; background-color: white; padding: 20px;">
+<h1>1. Project Overview & Comprehensive Scope</h1>
 
-<h1 style="color: #0056b3; border-bottom: 2px solid #28a745; padding-bottom: 10px;">1. Project Overview & Comprehensive Scope</h1>
-
-<p style="font-size: 1.1em; line-height: 1.6;">
-The <strong>Mozhibu - Story</strong> platform is a massive, multi-faceted digital ecosystem meticulously engineered to bridge the gap between passionate storytellers and avid readers across diverse linguistic landscapes. It is not merely a reading app; it is a full-fledged literary economy. At its core, the platform serves as a dynamic repository for original literature, fostering a thriving community through competitive events, sophisticated monetization opportunities, and deep user engagement metrics.
+<p>
+The <strong>Mozhibu - Story</strong> platform is a multi-faceted digital ecosystem engineered to bridge the gap between storytellers and readers across diverse languages. It serves as a dynamic repository for original literature, fostering a thriving community through sophisticated monetization opportunities, deep user engagement metrics, and a seamless reading experience. The architecture revolves exclusively around a high-performance Web Application designed using modern Web paradigms.
 </p>
 
 ---
 
-<h2 style="color: #28a745;">1.1 Executive Summary & Market Positioning</h2>
-<p style="line-height: 1.6;">
-In the modern digital era, the consumption of written content has shifted dramatically towards highly accessible, mobile-first platforms that offer immediate gratification and real-time community interaction. Traditional publishing gatekeepers are being bypassed in favor of direct-to-consumer serialized fiction. Mozhibu - Story capitalizes on this monumental shift by providing a highly scalable, full-stack web and mobile solution built upon cutting-edge technologies. 
+<h2>1.1 Executive Summary & Market Positioning</h2>
+<p>
+Mozhibu - Story capitalizes on the shift towards accessible web platforms by providing a highly scalable, full-stack web solution built upon cutting-edge technologies. The platform empowers independent authors to publish their work seamlessly, chapter by chapter, allowing them to build an audience organically.
 </p>
-<p style="line-height: 1.6;">
-The platform empowers independent authors to publish their work seamlessly, chapter by chapter, allowing them to build an audience organically. By participating in high-stakes, platform-sponsored writing competitions (such as the flagship "Twelve Tongues Prize"), writers can accelerate their discoverability. Furthermore, writers can earn a sustainable revenue stream through a sophisticated subscription and engagement-based payout system. 
-</p>
-<p style="line-height: 1.6;">
-For readers, Mozhibu - Story offers a highly personalized, frictionless reading experience. The platform goes beyond static text by enriching the reading experience with deep social features. Readers can follow authors, receive push notifications for new chapter releases, save books to customized offline libraries, and leave granular reviews that influence the platform's recommendation algorithms.
+<p>
+For readers, Mozhibu - Story offers a highly personalized, frictionless reading experience. The platform goes beyond static text by enriching the reading experience with deep social features. Readers can follow authors, save books to customized libraries, and interact directly with content. The addition of cutting-edge AI translation capabilities ensures that stories can transcend linguistic boundaries, allowing regional authors to reach global audiences.
 </p>
 
-<blockquote style="border-left: 5px solid #0056b3; padding-left: 15px; color: #333; background-color: #f9f9f9; padding-top: 10px; padding-bottom: 10px;">
+<blockquote>
 <strong>Core Mission Statement:</strong> To democratize global storytelling by providing a robust, equitable, and highly engaging technological platform where linguistic diversity is celebrated, raw creativity is financially rewarded, and the act of reading is elevated through seamless technology.
 </blockquote>
 
 ---
 
-<h2 style="color: #28a745;">1.2 Deep Dive: Core Platform Modules</h2>
+<h2>1.2 Deep Dive: Core Platform Modules & Subsystems</h2>
 
-<p style="line-height: 1.6;">
-The system is divided into several highly complex modules, each operating with its own set of business rules and database interactions.
-</p>
+The system is logically partitioned into multiple sub-modules, each serving distinct personas (Readers, Authors, and Superadmins).
 
-<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+<table>
   <thead>
-    <tr style="background-color: #0056b3; color: white;">
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Module</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Exhaustive Description & Workflows</th>
-      <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Primary Actor</th>
+    <tr>
+      <th>Module</th>
+      <th>Exhaustive Description & Workflows</th>
+      <th>Primary Actor</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Author Studio & Content Publishing</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        <p>A comprehensive Word-processor-like interface. Authors can:</p>
+      <td>Author Studio & Content Publishing</td>
+      <td>
+        <p>A comprehensive Web-based authoring interface. Authors can:</p>
         <ul>
           <li>Create book metadata (Title, Synopsis, Tags, Categorized Genres).</li>
-          <li>Upload Cover Art which is automatically compressed, cropped, and pushed to AWS S3.</li>
+          <li>Upload Cover Art which is automatically processed and optimized.</li>
           <li>Draft, auto-save, and publish individual Chapters.</li>
-          <li>Set content warnings (NSFW, Mature tags) to comply with App Store guidelines.</li>
-          <li>Track real-time analytics (Views per chapter, Drop-off rates, Likes, Comments).</li>
+          <li>Manage chapter settings, including deciding whether a chapter is "Free" or "Premium" (requiring coins to unlock).</li>
+          <li>View advanced analytics regarding reads, reader retention, and coin earnings.</li>
         </ul>
       </td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Verified Writers</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Reader Interface & Library Management</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        <p>An immersive, distraction-free reading UI. Features include:</p>
-        <ul>
-          <li>Customizable typography (Font size, Serif/Sans-serif toggles, Line height).</li>
-          <li>Theming (Light mode, Dark mode, Sepia, AMOLED black).</li>
-          <li>Continuous scrolling or paginated swiping based on user preference.</li>
-          <li>Automatic progress synchronization. If a user reads Chapter 3 on their phone on the train, their tablet will open to Chapter 3 at home.</li>
-          <li>Offline caching of 'Saved' books via Service Workers.</li>
-        </ul>
-      </td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Readers</td>
+      <td>Writers / Authors</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Monetization & The Subscription Engine</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        <p>A dual-tier financial system powering the creator economy:</p>
+      <td>Reader Core & Engagement</td>
+      <td>
         <ul>
-          <li><strong>Premium Subscription:</strong> Readers pay a monthly fee via Stripe to bypass ads, unlock 'Premium Only' chapters, and get early access to updates.</li>
-          <li><strong>Author Earnings Pool:</strong> The system tracks every 'Qualified Read' (e.g., user spends > 60 seconds on a chapter). At the end of the month, a Cron job aggregates total platform subscription revenue and distributes it to authors proportionally based on their share of total Qualified Reads.</li>
-          <li><strong>Direct Tipping/Coins:</strong> (Future feature) Readers purchasing digital currency to tip authors directly.</li>
+          <li><strong>Personalized Discovery:</strong> Suggesting content based on user's selected language and genres.</li>
+          <li><strong>Interactive Reading:</strong> Real-time bookmarking, progress tracking, and chapter completion metrics. The "Continue Reading" system automatically saves progress.</li>
+          <li><strong>Translation (Gemini AI):</strong> Real-time translation of chapters into the reader's preferred language using the integrated Google Gemini API.</li>
+          <li><strong>Social Interactions:</strong> Leaving comments, liking chapters, and following favorite authors.</li>
         </ul>
       </td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Readers & Writers</td>
-    </tr>
-    <tr style="background-color: #f2f2f2;">
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Competitions & Gamification Engine</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        <p>A robust system designed to drive user acquisition:</p>
-        <ul>
-          <li>Admins define time-bound contests with specific criteria (e.g., Language: Tamil, Theme: Sci-Fi, Min words: 5000).</li>
-          <li>Automated eligibility checks when an author attempts to submit a book to the contest.</li>
-          <li>Real-time leaderboards calculated via Redis based on a proprietary Engagement Algorithm (combining Views, Completion Rates, and Unique Likes).</li>
-        </ul>
-      </td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Writers & Admins</td>
+      <td>Readers</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; color: #0056b3;">Administration, Moderation, & Compliance</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">
-        <p>A secure internal tool for platform operators:</p>
+      <td>Authentication & Profiling</td>
+      <td>
         <ul>
-          <li><strong>Report Handling:</strong> Triaging user-submitted reports of plagiarism, hate speech, or inappropriate content.</li>
-          <li><strong>Author Verification:</strong> Reviewing KYC (Know Your Customer) or identity documents before allowing an author to receive bank payouts.</li>
-          <li><strong>System Config:</strong> Dynamically adjusting the 'Qualified Read' timer or the percentage of revenue split between the Platform and Authors without deploying code.</li>
+          <li><strong>Multi-Auth Pipeline:</strong> Traditional JWT-based local authentication paired with Google and Facebook OAuth integration.</li>
+          <li><strong>Onboarding Flow:</strong> Strict state checks ensuring users provide necessary demographic data (DOB, Mobile, Preferred Genres) before proceeding into the ecosystem.</li>
+          <li><strong>Role Management:</strong> Distinct roles (`user`, `author`, `superadmin`) dictating access levels across the system.</li>
         </ul>
       </td>
-      <td style="padding: 12px; border: 1px solid #ddd;">Super Admins</td>
+      <td>All Users</td>
+    </tr>
+    <tr>
+      <td>Monetization & Financials (Coins)</td>
+      <td>
+        <ul>
+          <li><strong>Virtual Currency:</strong> Readers purchase "Coins" which act as the platform's primary medium of exchange.</li>
+          <li><strong>Premium Chapters:</strong> Authors can lock chapters. Readers spend coins to unlock these chapters permanently for their account.</li>
+          <li><strong>Author Revenue:</strong> When a reader spends coins, the corresponding author earns revenue based on a defined conversion rate.</li>
+          <li><strong>Payout System:</strong> Authors can request real-world currency payouts once their wallet reaches a minimum threshold.</li>
+        </ul>
+      </td>
+      <td>Readers / Authors</td>
+    </tr>
+    <tr>
+      <td>Subscriptions (Mozhibu Premium)</td>
+      <td>
+        <ul>
+          <li><strong>Tiered Access:</strong> Users can subscribe to "Standard" or "Premium" tiers via Stripe integration.</li>
+          <li><strong>Benefits:</strong> Subscribers may receive monthly coin stipends, ad-free reading, and access to exclusive subscriber-only content.</li>
+        </ul>
+      </td>
+      <td>Readers</td>
+    </tr>
+    <tr>
+      <td>Superadmin Governance</td>
+      <td>
+        <ul>
+          <li><strong>Content Moderation:</strong> Admins can review, flag, or remove inappropriate books or chapters.</li>
+          <li><strong>Financial Oversight:</strong> Reviewing and approving author payout requests. Tracking total platform revenue.</li>
+          <li><strong>System Configuration:</strong> Managing global settings (contact emails, coin conversion rates, active banners, ad placements).</li>
+          <li><strong>Competitions:</strong> Creating and managing writing competitions to spur community engagement.</li>
+        </ul>
+      </td>
+      <td>Superadmins</td>
     </tr>
   </tbody>
 </table>
 
 ---
 
-<h2 style="color: #28a745;">1.3 Exhaustive User Journey Mapping</h2>
+<h2>1.3 System Architecture Topology & Traffic Flow</h2>
 
-<p style="line-height: 1.6;">
-To truly understand the system architecture, one must trace the exact paths users take through the application.
-</p>
+The system follows a modern decoupled architecture. The frontend is a Single Page Application (SPA) built with Angular 18, and the backend is a Node.js/Express REST API communicating with a MongoDB database.
 
-<div style="border: 1px solid #0056b3; padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #f0f8ff;">
-  <h3 style="color: #0056b3; margin-top: 0;">Journey A: The Reader Lifecycle</h3>
-  <ol style="color: #333; line-height: 1.6;">
-    <li><strong>Acquisition:</strong> User lands on the homepage via an SEO-optimized book link. They are prompted to download the app or continue on the web.</li>
-    <li><strong>Onboarding:</strong> User signs up using OAuth (Google/Facebook). The backend generates a JWT token and a fresh `User` document.</li>
-    <li><strong>Personalization:</strong> The user selects their `preferredLanguage` and `favoriteGenres`. The frontend saves this and queries the `/api/books/recommendations` endpoint.</li>
-    <li><strong>Engagement:</strong> The user finds a book, adds it to their Library (`savedBooks` array updated in DB). They open Chapter 1.</li>
-    <li><strong>Tracking:</strong> As they scroll, the Angular frontend sends debounced heartbeat pulses to the Node.js backend. Once a threshold is passed, the backend logs a `ReadingProgress` event.</li>
-    <li><strong>Conversion:</strong> At Chapter 10, the content is locked. A paywall appears. The user inputs their credit card. Stripe processes the payment, fires a webhook to the Node server, which upgrades the user to `isPremium: true`. Chapter 10 instantly unlocks.</li>
-  </ol>
-</div>
-
-<div style="border: 1px solid #28a745; padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #f0fff0;">
-  <h3 style="color: #28a745; margin-top: 0;">Journey B: The Writer to Earner Pipeline</h3>
-  <ol style="color: #333; line-height: 1.6;">
-    <li><strong>Application:</strong> A Reader decides to become a Writer. They fill out a form (Pen Name, Bio). This creates an `AuthorRequest`.</li>
-    <li><strong>Creation:</strong> Once approved, they access the Author Studio. They create a Book ("The Silent Echo") and draft Chapter 1.</li>
-    <li><strong>Publication:</strong> They click "Publish". The backend updates the Book status, generates search index tokens, and pushes a notification via FCM to all of the author's followers.</li>
-    <li><strong>Monetization Setup:</strong> The author submits their banking details (`accountNumber`, `ifscCode`). The backend encrypts this data before saving it to MongoDB to ensure strict data compliance.</li>
-    <li><strong>Payout:</strong> At 11:59 PM on the last day of the month, a Node.js Cron Job wakes up. It aggregates all reads for "The Silent Echo", calculates the revenue share, and generates a record in the `AuthorEarnings` collection.</li>
-  </ol>
-</div>
-
----
-
-<h2 style="color: #28a745;">1.4 System Architecture Topology & Traffic Flow</h2>
-<p style="line-height: 1.6;">
-To support a global audience with potentially massive spikes in read/write traffic (e.g., when a famous author drops a new chapter), the architecture is designed as a decoupled, service-oriented ecosystem. 
-</p>
-
-### 1.4.1 Detailed Component Diagram
+### Detailed Component Diagram
 
 ```mermaid
 graph TD
     subgraph "Client Tier (Presentation)"
-        A[Angular SPA - Browser]
-        B[Flutter/React Native Mobile App]
+        A[Angular 18 SPA - Browser]
         SEO[GoogleBot / Web Crawlers]
     end
 
     subgraph "Edge / Gateway Tier"
-        C[Cloudflare CDN & WAF]
-        D[AWS Application Load Balancer]
+        C[Cloudflare CDN & WAF / NGINX]
     end
 
     subgraph "Application Tier (Business Logic)"
-        E[Node.js Instance 1 - Express API]
-        F[Node.js Instance 2 - Express API]
-        G[Node.js Instance N - Express API]
-        H[Node.js Worker - Cron / Batch Jobs]
+        E[Node.js - Express API]
+        E_Auth[Authentication Controller]
+        E_Read[Reading Engine]
+        E_Fin[Financial Ledger]
     end
 
     subgraph "Data Persistence Tier (State)"
-        I[(MongoDB Primary Node)]
-        J[(MongoDB Secondary Replica A)]
-        K[(MongoDB Secondary Replica B)]
-        L[(Redis ElastiCache)]
+        I[(MongoDB - Atlas Cluster)]
+        I_Users[(Users Collection)]
+        I_Books[(Books & Chapters)]
+        I_Trans[(Transactions)]
     end
 
     subgraph "External Cloud Integrations"
-        M[AWS S3 Bucket - Media Assets]
-        N[Stripe - PCI Compliant Billing]
-        O[Firebase - Push Notifications]
-        P[SendGrid - Transactional Email]
+        M[Cloudinary - Image/Cover Assets]
+        N[Google / Facebook - OAuth API]
+        S[Stripe - Payment Gateway]
+        G[Google Gemini - AI Translation]
+        R[Resend - Transactional Emails]
     end
 
     A -->|HTTPS / REST| C
-    B -->|HTTPS / REST| C
     SEO -->|HTTPS Get| C
-    C -->|Proxy / Cache| D
-    D -->|Round Robin Route| E
-    D -->|Round Robin Route| F
-    D -->|Round Robin Route| G
+    C -->|Reverse Proxy| E
     
-    E & F & G -->|Write Ops| I
-    E & F & G -->|Read Ops| J
-    E & F & G -->|Read Ops| K
-    
-    E & F & G <-->|Session / Rate Limit| L
-    
-    H -->|Heavy Aggregations| J
-    H -->|Write Results| I
-    
-    E & F & G -->|Upload Object| M
-    E & F & G <-->|API Calls| N
-    H -->|Trigger Push| O
-    H -->|Trigger Email| P
+    E --> E_Auth
+    E --> E_Read
+    E --> E_Fin
 
-    style A fill:#0056b3,color:#fff,stroke:#28a745,stroke-width:2px
-    style B fill:#0056b3,color:#fff,stroke:#28a745,stroke-width:2px
-    style D fill:#333,color:#fff
-    style E fill:#28a745,color:#fff
-    style H fill:#28a745,color:#fff
+    E_Auth --> I_Users
+    E_Read --> I_Books
+    E_Fin --> I_Trans
+
+    E_Read -->|Translate Request| G
+    E_Auth -->|Verify Token| N
+    E_Fin -->|Process Payment| S
+    E -->|Upload Cover| M
+    E -->|Send Welcome Email| R
+
+    style A fill:#0056b3,color:#fff,stroke:#000,stroke-width:2px
+    style C fill:#0056b3,color:#fff
+    style E fill:#0056b3,color:#fff
     style I fill:#0056b3,color:#fff
-    style L fill:#0056b3,color:#fff
 ```
 
-<p style="line-height: 1.6;">
-<strong>Traffic Flow Explanation:</strong> All incoming requests first hit the Edge Tier (Cloudflare/ALB). Static assets (like Book Covers) are intercepted and served immediately by the CDN, reducing server load by up to 70%. API requests are balanced across multiple Node.js instances. If the request is a "Read" (e.g., fetch a chapter), Node.js routes the query to a MongoDB Secondary node. If it is a "Write" (e.g., save a bookmark), it routes to the MongoDB Primary node, which then replicates the data.
+<p>
+<strong>Traffic Flow Explanation:</strong> The web client (Angular) directly interfaces with the Edge/Proxy layer. Asset requests (like book covers) are served directly from Cloudinary or a CDN. Dynamic API calls are routed to the Express.js Backend which processes business logic. The backend acts as a central orchestrator, communicating with MongoDB Atlas via Mongoose models for data persistence, and interfacing with a suite of external APIs (Stripe for payments, Gemini for translation, Resend for emails) to execute complex workflows securely. Authentication tokens (JWT) are heavily utilized to secure endpoints across the Application Tier.
 </p>
 
-</div>
+---
+
+<h2>1.4 The Monetization Lifecycle</h2>
+
+A critical aspect of Mozhibu is how value flows through the system. This distinguishes it from simple reading platforms.
+
+### The Coin Economy Flow
+
+```mermaid
+flowchart TD
+    %% Reader Actions
+    R[Reader] -->|Buys Coins via Stripe| W_R[(Reader Wallet)]
+    
+    %% Premium Content
+    W_R -->|Spends 50 Coins| U[Unlock Premium Chapter]
+    
+    %% Revenue Split
+    U -->|70% Author Share| W_A[(Author Wallet)]
+    U -->|30% Platform Fee| W_P[(Platform Revenue)]
+    
+    %% Payouts
+    W_A -->|Wallet Reaches Threshold| Req[Author Requests Payout]
+    Req -->|Superadmin Reviews| App[Payout Approved]
+    App -->|Real-world Currency| A[Author Bank Account]
+    App -->|Deducts Coins| W_A
+
+    %% Styling
+    style R fill:#0056b3,color:#fff,stroke:#000
+    style W_R fill:#4caf50,color:#fff
+    style W_A fill:#4caf50,color:#fff
+    style W_P fill:#ff9800,color:#fff
+    style A fill:#0056b3,color:#fff
+```
+
+This sequence ensures that content creators are directly compensated for their engaging work, while readers have a seamless micro-transaction experience.
+
+---
+
+<h2>1.5 Technical Non-Functional Requirements</h2>
+
+To support the above features, the system is designed with strict adherence to several non-functional requirements (NFRs):
+
+1. **Scalability:** The Node.js API is stateless (relying on JWTs rather than session cookies), allowing horizontal scaling across multiple container instances. MongoDB Atlas supports automatic sharding and replica sets for data scaling.
+2. **Security:** 
+   - All passwords are hashed using bcrypt.
+   - API endpoints are protected against brute force attacks using Express Rate Limiters.
+   - Cross-Site Request Forgery (CSRF) tokens are implemented for sensitive state-changing operations.
+   - Input validation and sanitization are enforced using Mongoose schema validation and custom middleware to prevent NoSQL injection and XSS.
+3. **Performance:** 
+   - Heavy operations (like retrieving the home page feed of trending/popular books) are optimized using Mongoose `.lean()` queries and strategic database indexing on fields like `views`, `genre`, and `createdAt`.
+   - The Angular frontend utilizes Server-Side Rendering (SSR) via Angular Universal for faster First Contentful Paint (FCP) and critical SEO indexing.
+4. **Resilience:** External API failures (e.g., Gemini translation timeout) gracefully degrade, showing fallback messages to the user without crashing the core reading experience.

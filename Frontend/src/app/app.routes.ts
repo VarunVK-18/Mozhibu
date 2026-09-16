@@ -312,6 +312,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contact-queries',
+        loadComponent: () =>
+          import('./features/admin/contact-queries/contact-queries.component').then(
+            (m) => m.ContactQueriesComponent,
+          ),
+      },
+      {
         path: 'payouts',
         loadComponent: () =>
           import('./features/admin/payouts/payouts.component').then(

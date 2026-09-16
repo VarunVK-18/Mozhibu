@@ -42,7 +42,7 @@ export class ContinueReadingComponent implements OnInit {
           if (progressList && progressList.length > 0) {
             this.items = progressList
               .filter((p: any) => p.book)
-              .slice(0, 3)
+              .slice(0, 4)
               .map((p: any, index: number) => ({
                 id: p.book._id,
                 initials: p.book.title.substring(0, 2).toUpperCase(),

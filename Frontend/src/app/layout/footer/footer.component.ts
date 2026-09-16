@@ -13,7 +13,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         <div class="footer-brand">
           <div class="logo">
             <img
-              src="assets/logo.png"
+              src="assets/Mozhibu%20topbarcropednewLogo%20(1).png"
               alt="Mozhibu logo"
               class="logo-img"
             />Mozhibu

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AdminCouponService, Coupon } from '../../../core/services/admin-coupon.service';
 import { AdminRevenueComponent } from '../revenue/admin-revenue.component';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-admin-settings',
@@ -16,9 +17,38 @@ import { AdminRevenueComponent } from '../revenue/admin-revenue.component';
       </div>
 
       <div class="tabs">
+        <button [class.active]="activeTab === 'general'" (click)="activeTab = 'general'">General</button>
         <button [class.active]="activeTab === 'coupons'" (click)="activeTab = 'coupons'">Coupons</button>
         <button [class.active]="activeTab === 'revenue'" (click)="activeTab = 'revenue'">Revenue</button>
       </div>
+
+      <ng-container *ngIf="activeTab === 'general'">
+        <div class="card mt-4">
+          <div class="card-header">
+            <h2>Contact Information</h2>
+          </div>
+          <form [formGroup]="generalForm" (ngSubmit)="onSaveGeneral()" class="coupon-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Contact Email</label>
+                <input type="email" formControlName="contactEmail" class="form-control" placeholder="e.g. contact@mozhibu.com">
+              </div>
+              <div class="form-group">
+                <label>Contact Phone (with Country Code)</label>
+                <input type="text" formControlName="contactPhone" class="form-control" placeholder="e.g. +91 1234567890">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" [disabled]="generalForm.invalid || isSavingGeneral">
+                <div *ngIf="isSavingGeneral" class="btn-loader"></div>
+                {{ isSavingGeneral ? 'Saving...' : 'Save Settings' }}
+              </button>
+            </div>
+            <div *ngIf="generalSuccessMsg" class="success-msg">{{ generalSuccessMsg }}</div>
+            <div *ngIf="generalErrorMsg" class="error-msg">{{ generalErrorMsg }}</div>
+          </form>
+        </div>
+      </ng-container>
 
       <ng-container *ngIf="activeTab === 'coupons'">
         <div class="card mt-4">
@@ -315,9 +345,10 @@ import { AdminRevenueComponent } from '../revenue/admin-revenue.component';
 })
 export class AdminSettingsComponent implements OnInit {
   couponService = inject(AdminCouponService);
+  apiService = inject(ApiService);
   fb = inject(FormBuilder);
 
-  activeTab: 'coupons' | 'revenue' = 'coupons';
+  activeTab: 'general' | 'coupons' | 'revenue' = 'general';
   
   coupons: Coupon[] = [];
   
@@ -334,8 +365,50 @@ export class AdminSettingsComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  generalForm: FormGroup = this.fb.group({
+    contactEmail: ['', [Validators.required, Validators.email]],
+    contactPhone: ['', Validators.required]
+  });
+  isSavingGeneral = false;
+  generalSuccessMsg = '';
+  generalErrorMsg = '';
+
   ngOnInit() {
     this.loadCoupons();
+    this.loadGeneralSettings();
+  }
+
+  loadGeneralSettings() {
+    this.apiService.get<any>('/settings').subscribe({
+      next: (settings) => {
+        if (settings) {
+          this.generalForm.patchValue({
+            contactEmail: settings.contactEmail,
+            contactPhone: settings.contactPhone
+          });
+        }
+      },
+      error: (err) => console.error('Failed to load settings', err)
+    });
+  }
+
+  onSaveGeneral() {
+    if (this.generalForm.invalid) return;
+    this.isSavingGeneral = true;
+    this.generalSuccessMsg = '';
+    this.generalErrorMsg = '';
+
+    this.apiService.put<any>('/settings', this.generalForm.value).subscribe({
+      next: () => {
+        this.generalSuccessMsg = 'Settings saved successfully!';
+        this.isSavingGeneral = false;
+        setTimeout(() => this.generalSuccessMsg = '', 3000);
+      },
+      error: (err) => {
+        this.generalErrorMsg = err.error?.message || 'Failed to save settings';
+        this.isSavingGeneral = false;
+      }
+    });
   }
 
   loadCoupons() {

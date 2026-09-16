@@ -59,7 +59,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
         flex-direction: column;
       }
       main.with-header {
-        padding-top: 73px;
+        padding-top: 33px;
       }
       app-header, app-footer {
         flex-shrink: 0;
@@ -148,6 +148,7 @@ export class AppComponent {
       .subscribe((event: any) => {
         const url = event.urlAfterRedirects;
         this.currentUrl = url;
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         this.isStandaloneRoute =
           url.startsWith('/admin') ||
           url.startsWith('/read') ||

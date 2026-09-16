@@ -65,6 +65,9 @@ import { AuthService } from '../../../core/services/auth.service';
               <div *ngIf="profileForm.get('dob')?.touched && profileForm.get('dob')?.invalid" class="field-error">
                 Please enter your date of birth.
               </div>
+              <p style="font-size: 11px; color: #666; margin-top: 4px; line-height: 1.2;">
+                * Note: Date of Birth cannot be changed after you save it.
+              </p>
             </div>
           </div>
 
@@ -248,7 +251,7 @@ export class CompleteProfileComponent implements OnInit {
       this.googleData = navigation.extras.state['googleData'];
     } else {
       // Fallback, check local storage or redirect to login
-      const storedData = sessionStorage.getItem('pendingGoogleUser');
+      const storedData = sessionStorage.getItem('pendingSocialUser');
       if (storedData) {
         this.googleData = JSON.parse(storedData);
       } else {
@@ -285,7 +288,7 @@ export class CompleteProfileComponent implements OnInit {
     this.auth.completeGoogleProfile(formData).subscribe({
       next: () => {
         this.isLoading = false;
-        sessionStorage.removeItem('pendingGoogleUser');
+        sessionStorage.removeItem('pendingSocialUser');
         this.router.navigate(['/']);
       },
       error: (err) => {

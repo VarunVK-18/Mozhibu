@@ -198,7 +198,7 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
         width: 100%;
       }
       .logged-in-container {
-        padding-top: 48px;
+        padding-top: 16px;
       }
       .user-section,
       .announcement-section {

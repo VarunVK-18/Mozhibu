@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
@@ -219,15 +219,20 @@ import { debounceTime, switchMap, catchError } from 'rxjs/operators';
               </div>
             </div>
 
-            <div class="info-group">
-              <label>Date of Birth</label>
-              <input
-                type="date"
-                [(ngModel)]="dobDate"
-                class="form-control"
-                [max]="maxDobDate"
-              />
-            </div>
+              <div class="info-group">
+                <label>Date of Birth</label>
+                <input
+                  type="date"
+                  [(ngModel)]="dobDate"
+                  class="form-control"
+                  [max]="maxDobDate"
+                  [disabled]="isDobLocked()"
+                />
+                <p style="font-size: 11px; color: #666; margin-top: 4px; line-height: 1.2;">
+                  <span *ngIf="isDobLocked()">* Date of Birth cannot be changed once set.</span>
+                  <span *ngIf="!isDobLocked()">* Note: Date of Birth cannot be changed after you save it.</span>
+                </p>
+              </div>
 
             <div class="info-group">
               <label>Bio</label>
@@ -1220,6 +1225,10 @@ export class SettingsComponent implements OnInit {
   legalNameText = signal<string>('');
   dobDate = signal('');
   maxDobDate = new Date().toISOString().split('T')[0];
+  isDobLocked = computed(() => {
+    const d = this.auth.user()?.dob;
+    return !!d && !String(d).startsWith('2000-01-01');
+  });
   savingProfile = signal(false);
   profileUpdateError = signal<string | null>(null);
   profileUpdateSuccess = signal(false);
