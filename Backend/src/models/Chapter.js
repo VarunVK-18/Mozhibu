@@ -18,6 +18,8 @@ const ChapterSchema = new mongoose.Schema(
       default: "inherit",
     },
     viewers: [{ type: String }],
+    rating: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

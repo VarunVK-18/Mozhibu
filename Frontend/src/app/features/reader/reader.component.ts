@@ -20,12 +20,15 @@ import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StoryService } from '../../core/services/story.service';
 import { BookService } from '../../core/services/book.service';
+import { ApiService } from '../../core/services/api.service';
 import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
+
+import { CommentListComponent } from '../story/components/comment-list/comment-list.component';
 
 @Component({
   selector: 'app-reader',
   standalone: true,
-  imports: [CommonModule, RouterModule, NoCopyDirective],
+  imports: [CommonModule, RouterModule, NoCopyDirective, CommentListComponent],
   template: `
     <div class="reader-container" [class.dark-mode]="isDarkMode()">
       
@@ -92,6 +95,22 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
             Auto-scroll is disabled. The chapter content is too short to scroll.
           </div>
         }
+        
+        <div class="chapter-comments-section" style="margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--reader-border); padding-bottom: 48px;">
+          <app-comment-list
+            [comments]="comments()"
+            [currentUserAvatar]="getAvatarUrl(currentUser()?.avatar)"
+            [storyAuthorName]="story()?.author?.name || ''"
+            [hasMore]="storyService.commentsPage() < storyService.commentsTotalPages()"
+            [loadingMore]="storyService.loadingMoreComments()"
+            (postComment)="onPostComment($event)"
+            (likeComment)="onLikeComment($event)"
+            (pinCommentEvent)="onPinComment($event)"
+            (postReply)="onPostReply($event)"
+            (loadMore)="onLoadMoreComments()"
+            (editCommentEvent)="onEditComment($event)"
+          ></app-comment-list>
+        </div>
       </main>
 
       <!-- Bottom Toolbar -->
@@ -521,9 +540,10 @@ import { NoCopyDirective } from '../../shared/directives/no-copy.directive';
       background-color: var(--reader-border);
     }
     
-    @media (max-width: 600px) {
-      .reading-area { padding: 80px 20px; }
-      .chapter-title { font-size: 14px; }
+    @media (max-width: 768px) {
+      .reader-header, .reader-footer {
+        padding: 0 16px;
+      }.chapter-title { font-size: 14px; }
       .story-title { font-size: 10px; }
       .toolbar-content { padding: 0 16px; }
     }
@@ -550,12 +570,12 @@ export class ReaderComponent implements OnInit, OnDestroy {
   chapterContent = signal<SafeHtml>('');
   isTranslating = signal(false);
 
-  showScrollWarning = signal(false);
+  showScrollWarning = signal<boolean>(false);
   requiresSubscription = signal(false);
   currentHtml = '';
 
   private authService = inject(AuthService);
-  private storyService = inject(StoryService);
+  storyService = inject(StoryService);
   private bookService = inject(BookService);
   private document = inject(DOCUMENT);
   private http = inject(HttpClient);
@@ -616,6 +636,9 @@ export class ReaderComponent implements OnInit, OnDestroy {
               this.bookService.incrementBookViews(this.storyId, currentEp.id).subscribe({
                 error: (err) => console.error('Failed to increment views', err)
               });
+
+              // Load comments for the new chapter
+              this.storyService.loadCommentsForChapter(currentEp.id);
             }
 
             if (currentEp.isUnlocked && currentEp.content) {
@@ -1025,5 +1048,72 @@ export class ReaderComponent implements OnInit, OnDestroy {
           );
         },
       });
+  }
+
+  // --- Comment Methods ---
+  comments = this.storyService.getComments();
+  currentUser = this.authService.user;
+  story = this.storyService.getActiveStory();
+  
+  private apiService = inject(ApiService);
+  
+  getAvatarUrl(avatar: string | undefined): string {
+    if (!avatar) return 'assets/default-avatar.png';
+    if (avatar.startsWith('http') || avatar.startsWith('data:')) return avatar;
+    return this.apiService.getImageUrl(avatar);
+  }
+  
+  requireAuth(): boolean {
+    if (!this.currentUser()) {
+      alert('Please log in to perform this action.');
+      return false;
+    }
+    return true;
+  }
+
+  onPostComment(event: { text: string; rating: number }) {
+    if (this.requireAuth()) {
+      // Modify addComment to use currentChapter() id.
+      // Wait, storyService needs to know about chapterId. I'll pass currentTrackedChapterId.
+      this.storyService.addComment(
+        event.text,
+        this.currentUser(),
+        event.rating,
+        this.currentTrackedChapterId || undefined
+      );
+    }
+  }
+
+  onLikeComment(commentId: string) {
+    if (this.requireAuth()) {
+      this.storyService.toggleCommentLike(commentId);
+    }
+  }
+
+  onPinComment(commentId: string) {
+    if (this.requireAuth()) {
+      this.storyService.toggleCommentPin(commentId);
+    }
+  }
+
+  onPostReply(event: { parentId: string; text: string }) {
+    if (this.requireAuth()) {
+      this.storyService.replyToComment(
+        event.parentId,
+        event.text,
+        this.currentUser(),
+        this.currentTrackedChapterId || undefined
+      );
+    }
+  }
+
+  onLoadMoreComments() {
+    this.storyService.loadMoreComments(this.currentTrackedChapterId || undefined);
+  }
+
+  onEditComment(event: { commentId: string; text: string; rating?: number }) {
+    if (this.requireAuth()) {
+      this.storyService.editComment(event.commentId, event.text, event.rating);
+    }
   }
 }

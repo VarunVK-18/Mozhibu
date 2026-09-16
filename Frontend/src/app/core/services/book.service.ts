@@ -116,16 +116,18 @@ export class BookService {
     bookId: string,
     page: number = 1,
     limit: number = 20,
+    chapterId?: string
   ): Observable<any> {
-    return this.api.get(`/books/${bookId}/reviews?page=${page}&limit=${limit}`);
+    return this.api.get(`/books/${bookId}/reviews?page=${page}&limit=${limit}${chapterId ? '&chapterId=' + chapterId : ''}`);
   }
 
   addReview(
     bookId: string,
     content: string,
     rating: number = 5,
+    chapterId?: string
   ): Observable<any> {
-    return this.api.post(`/books/${bookId}/reviews`, { content, rating });
+    return this.api.post(`/books/${bookId}/reviews`, { content, rating, chapterId });
   }
 
   editReview(

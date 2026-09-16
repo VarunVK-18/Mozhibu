@@ -21,134 +21,87 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="comments-section" id="reviews-section">
-      <div class="comments-section-grid">
-        <div class="ratings-column">
-          <!-- Ratings Dashboard -->
-          <div class="ratings-dashboard">
-        <div class="dashboard-left">
-          <h2>Ratings</h2>
-          <div class="avg-score">
-            <span class="big-number">{{ averageRating }}</span>
-            <div class="stars-display">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <svg
-                  viewBox="0 0 24 24"
-                  [attr.fill]="
-                    star <= roundedAverageRating ? 'currentColor' : 'none'
-                  "
-                  [attr.stroke]="
-                    star <= roundedAverageRating ? 'none' : 'currentColor'
-                  "
-                  stroke-width="2"
-                  class="avg-star-icon"
-                >
-                  <path
-                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  ></path>
-                </svg>
-              }
-            </div>
-          </div>
-          <p class="total-reviews">{{ totalReviewsCount }} reviews</p>
-        </div>
-
-        <div class="dashboard-right">
-          <div class="rating-bars">
-            @for (dist of ratingDistribution; track dist.stars) {
-              <div class="bar-row">
-                <span class="star-label">{{ dist.stars }}</span>
-                <svg
-                  class="mini-star-icon"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                  ></path>
-                </svg>
-                <div class="progress-bar-bg">
-                  <div
-                    class="progress-bar-fill"
-                    [style.width.%]="dist.percent"
-                  ></div>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-        </div>
-
-        <!-- Quick Rate Section -->
-        @if (!isStoryAuthor) {
-          <div class="quick-rate-box">
-            <p class="quick-rate-label">Rate this book:</p>
-            <div class="quick-rate-stars">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <svg
-                  viewBox="0 0 24 24"
-                  [attr.fill]="star <= (hoverRating || quickRating) ? 'currentColor' : 'none'"
-                  [attr.stroke]="star <= (hoverRating || quickRating) ? 'none' : 'currentColor'"
-                  stroke-width="2"
-                  class="quick-star-icon"
-                  (mouseenter)="hoverRating = star"
-                  (mouseleave)="hoverRating = 0"
-                  (click)="submitQuickRating(star)"
-                >
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                </svg>
-              }
-            </div>
-            @if (quickRatingSubmitted) {
-              <p class="quick-rate-thanks">Thanks for rating! ⭐</p>
-            }
-          </div>
-        }
-      </div>
-      
-      <div class="reviews-column">
-      <!-- Write Review Input - text only, rating optional -->
-      @if (!isStoryAuthor) {
-        <div class="comment-input-area write-review-box">
-          <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
-        <div class="input-wrapper">
-          <textarea
-            [(ngModel)]="newCommentText"
-            [placeholder]="'Write a review (optional)...'"
-            rows="1"
-            (focus)="isFocused = true"
-            (blur)="onBlur()"
-          ></textarea>
-
-          @if (isFocused || newCommentText.trim().length > 0) {
-            <div class="input-footer">
-              <div class="emoji-picker">
-                @for (emoji of quickEmojis; track emoji) {
-                  <button
-                    class="emoji-btn"
-                    (mousedown)="addEmojiToComment(emoji); $event.preventDefault()"
-                    type="button"
+      <div class="review-submission-row">
+        <div class="quick-rate-col">
+          @if (!isStoryAuthor) {
+            <div class="quick-rate-box">
+              <p class="quick-rate-label">Rate this book:</p>
+              <div class="quick-rate-stars">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    [attr.fill]="star <= (hoverRating || quickRating) ? 'currentColor' : 'none'"
+                    [attr.stroke]="star <= (hoverRating || quickRating) ? 'none' : 'currentColor'"
+                    stroke-width="2"
+                    class="quick-star-icon"
+                    (mouseenter)="hoverRating = star"
+                    (mouseleave)="hoverRating = 0"
+                    (click)="submitQuickRating(star)"
                   >
-                    {{ emoji }}
-                  </button>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
                 }
               </div>
-              <div class="input-actions">
-                <button class="btn-cancel" (click)="cancelComment()">
-                  Cancel
-                </button>
-                <button
-                  class="btn-submit"
-                  [disabled]="!newCommentText.trim()"
-                  (click)="submitComment()"
-                >
-                  Post Review
-                </button>
+              @if (quickRatingSubmitted) {
+                <p class="quick-rate-thanks">Thanks for rating! ⭐</p>
+              }
+            </div>
+          }
+          <div style="margin-top: 12px; text-align: left;">
+            <button class="comments-text-toggle-btn" (click)="toggleComments('ratings')">
+              {{ showCommentsList && activeTab === 'ratings' ? 'Hide' : 'View' }} Reviews ({{ ratingOnlyReviews.length }})
+            </button>
+          </div>
+        </div>
+        
+        <div class="write-review-col">
+          @if (!isStoryAuthor) {
+            <div class="comment-input-area write-review-box">
+              <img loading="lazy" [src]="currentUserAvatar" alt="You" class="avatar" />
+              <div class="input-wrapper">
+                <textarea
+                  [(ngModel)]="newCommentText"
+                  [placeholder]="'Write a review (optional)...'"
+                  rows="1"
+                  (focus)="isFocused = true"
+                  (blur)="onBlur()"
+                ></textarea>
+
+                @if (isFocused || newCommentText.trim().length > 0) {
+                  <div class="input-footer">
+                    <div class="emoji-picker">
+                      @for (emoji of quickEmojis; track emoji) {
+                        <button
+                          class="emoji-btn"
+                          (mousedown)="addEmojiToComment(emoji); $event.preventDefault()"
+                          type="button"
+                        >
+                          {{ emoji }}
+                        </button>
+                      }
+                    </div>
+                    <div class="input-actions">
+                      <button class="btn-cancel" (click)="cancelComment()">Cancel</button>
+                      <button
+                        class="btn-submit"
+                        [disabled]="!newCommentText.trim()"
+                        (click)="submitComment()"
+                      >Post Review</button>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           }
+          <div style="margin-top: 12px; text-align: left; margin-left: 56px;">
+            <button class="comments-text-toggle-btn" (click)="toggleComments('comments')">
+              {{ showCommentsList && activeTab === 'comments' ? 'Hide' : 'View' }} Comments ({{ textComments.length }})
+            </button>
+          </div>
         </div>
       </div>
-      }
+
+      <div class="comments-list-section" [class.show]="showCommentsList" style="margin-top: 32px;">
 
       <!-- Comment Thread Template -->
       <ng-template #commentThread let-comment>
@@ -728,12 +681,67 @@ import { RouterModule } from '@angular/router';
           </button>
         </div>
       }
-      </div>
-      </div>
-    </div>
+      </div> <!-- Closing comments-list-section -->
+    </div> <!-- Closing comments-section -->
   `,
   styles: [
     `
+      .comments-list-section {
+        opacity: 0;
+        visibility: hidden;
+        max-height: 0;
+        overflow: hidden;
+        transition: opacity 0.5s ease, visibility 0.5s ease, max-height 0.8s ease;
+      }
+      .comments-list-section.show {
+        opacity: 1;
+        visibility: visible;
+        max-height: 5000px;
+      }
+
+      .review-submission-row {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+        align-items: flex-start;
+        justify-content: center;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .quick-rate-col {
+        flex: 0 0 auto;
+        min-width: 250px;
+      }
+      .write-review-col {
+        flex: 1 1 auto;
+      }
+
+      .comments-text-toggle-btn {
+        background: transparent;
+        border: none;
+        color: var(--reader-text, #666);
+        opacity: 0.6;
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.2s ease, text-decoration 0.2s ease;
+      }
+      .comments-text-toggle-btn:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        .review-submission-row {
+          flex-direction: column;
+        }
+        .quick-rate-col {
+          width: 100%;
+          text-align: center;
+        }
+        .quick-rate-box {
+          align-items: center;
+        }
+      }
       .comments-section {
         margin-top: 48px;
       }
@@ -1480,7 +1488,18 @@ export class CommentListComponent {
 
   sortOrder: 'newest' | 'popular' = 'popular';
 
+  showCommentsList = false;
   activeTab: 'comments' | 'ratings' = 'comments';
+  
+  toggleComments(tab: 'comments' | 'ratings') {
+    if (this.showCommentsList && this.activeTab === tab) {
+      this.showCommentsList = false;
+    } else {
+      this.activeTab = tab;
+      this.showCommentsList = true;
+    }
+  }
+
   expandedTexts: Set<string> = new Set();
 
   get textComments() {

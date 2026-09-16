@@ -131,21 +131,6 @@ import { OfflineService } from '../../../core/services/offline.service';
             (chapterClick)="onReadClicked($event)"
           ></app-chapter-list>
 
-          <app-comment-list
-            [comments]="comments()"
-            [currentUserAvatar]="getAvatarUrl(currentUser()?.avatar)"
-            [storyAuthorName]="story()?.author?.name || ''"
-            [hasMore]="
-              storyService.commentsPage() < storyService.commentsTotalPages()
-            "
-            [loadingMore]="storyService.loadingMoreComments()"
-            (postComment)="onPostComment($event)"
-            (likeComment)="onLikeComment($event)"
-            (pinCommentEvent)="onPinComment($event)"
-            (postReply)="onPostReply($event)"
-            (loadMore)="onLoadMoreComments()"
-            (editCommentEvent)="onEditComment($event)"
-          ></app-comment-list>
 
           <!-- Related Stories -->
           <div class="related-section">

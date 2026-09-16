@@ -390,6 +390,9 @@ router.get("/:id/reviews", async (req, res) => {
       status: "approved",
       parentReview: { $exists: false },
     };
+    if (req.query.chapterId) {
+      query.chapter = req.query.chapterId;
+    }
 
     const reviews = await Review.find(query)
       .populate("user", "username avatar isPremium")
@@ -427,20 +430,26 @@ router.post("/:id/reviews", protect, async (req, res) => {
       return res.status(403).json({ msg: "You cannot write a review for your own book" });
     }
 
-    // If this is a review (has a rating), ensure the user hasn't already reviewed the book
+    if (!req.body.chapterId) {
+      return res.status(400).json({ msg: "chapterId is required to post a review" });
+    }
+
+    // If this is a review (has a rating), ensure the user hasn't already reviewed the chapter
     if (req.body.rating && req.body.rating > 0) {
       const existingReview = await Review.findOne({
         book: req.params.id,
+        chapter: req.body.chapterId,
         user: req.user.id,
         rating: { $gt: 0 },
         parentReview: { $exists: false }
       });
       if (existingReview) {
-        return res.status(400).json({ msg: "You have already reviewed this book. You can only leave one review, but you may leave multiple comments." });
+        return res.status(400).json({ msg: "You have already reviewed this chapter. You can only leave one review per chapter, but you may leave multiple comments." });
       }
     }
     const newReview = new Review({
       book: req.params.id,
+      chapter: req.body.chapterId,
       user: req.user.id,
       rating: req.body.rating,
       comment: req.body.content,
@@ -449,19 +458,28 @@ router.post("/:id/reviews", protect, async (req, res) => {
 
     const review = await newReview.save();
 
-    // Update book rating
-    const reviews = await Review.find({
-      book: req.params.id,
+    // Update chapter rating
+    const Chapter = require("../models/Chapter");
+    const chapterReviews = await Review.find({
+      chapter: req.body.chapterId,
       status: "approved",
       parentReview: { $exists: false },
+      rating: { $gt: 0 }
     });
-    let avgRating = 0;
-    if (reviews.length > 0) {
-      avgRating =
-        reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) /
-        reviews.length;
+    
+    let chapterAvgRating = 0;
+    if (chapterReviews.length > 0) {
+      chapterAvgRating = chapterReviews.reduce((acc, item) => item.rating + acc, 0) / chapterReviews.length;
     }
-    await Book.updateOne({ _id: book._id }, { $set: { rating: avgRating } });
+    await Chapter.updateOne({ _id: req.body.chapterId }, { $set: { rating: chapterAvgRating, reviewCount: chapterReviews.length } });
+
+    // Update book rating based on all chapters
+    const chapters = await Chapter.find({ book: req.params.id, reviewCount: { $gt: 0 } });
+    let bookAvgRating = 0;
+    if (chapters.length > 0) {
+      bookAvgRating = chapters.reduce((acc, ch) => ch.rating + acc, 0) / chapters.length;
+    }
+    await Book.updateOne({ _id: book._id }, { $set: { rating: bookAvgRating } });
 
     if (book.author.toString() !== req.user.id) {
       await Notification.create({
@@ -562,22 +580,29 @@ router.put("/:id/reviews/:reviewId", protect, async (req, res) => {
     review.isEdited = true;
     await review.save();
 
-    // If it's a top level review, we need to recalculate the book's average rating
-    if (!review.parentReview) {
-      const book = await Book.findById(req.params.id);
-      if (book) {
-        const allReviews = await Review.find({
-          book: req.params.id,
-          status: "approved",
-          parentReview: { $exists: false },
-        });
-        
-        let avgRating = 0;
-        if (allReviews.length > 0) {
-          avgRating = allReviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / allReviews.length;
-        }
-        await Book.updateOne({ _id: book._id }, { $set: { rating: avgRating } });
+    // If it's a top level review, we need to recalculate ratings
+    if (!review.parentReview && review.chapter) {
+      const Chapter = require("../models/Chapter");
+      
+      const chapterReviews = await Review.find({
+        chapter: review.chapter,
+        status: "approved",
+        parentReview: { $exists: false },
+        rating: { $gt: 0 }
+      });
+      
+      let chapterAvgRating = 0;
+      if (chapterReviews.length > 0) {
+        chapterAvgRating = chapterReviews.reduce((acc, item) => item.rating + acc, 0) / chapterReviews.length;
       }
+      await Chapter.updateOne({ _id: review.chapter }, { $set: { rating: chapterAvgRating, reviewCount: chapterReviews.length } });
+
+      const chapters = await Chapter.find({ book: req.params.id, reviewCount: { $gt: 0 } });
+      let bookAvgRating = 0;
+      if (chapters.length > 0) {
+        bookAvgRating = chapters.reduce((acc, ch) => ch.rating + acc, 0) / chapters.length;
+      }
+      await Book.updateOne({ _id: req.params.id }, { $set: { rating: bookAvgRating } });
     }
 
     // Populate user to return exactly what frontend expects

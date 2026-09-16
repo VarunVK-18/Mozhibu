@@ -4,6 +4,7 @@ const ReviewSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     book: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
+    chapter: { type: mongoose.Schema.Types.ObjectId, ref: "Chapter", required: true },
     rating: { type: Number, min: 0, max: 5 },
     comment: { type: String },
     status: {
