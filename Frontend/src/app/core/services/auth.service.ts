@@ -130,6 +130,20 @@ export class AuthService {
     );
   }
 
+  loginWithFacebook(token: string, dob?: string): Observable<any> {
+    const payload: any = { token };
+    if (dob) {
+      payload.dob = dob;
+    }
+    return this.api.post('/auth/facebook', payload).pipe(
+      tap((res: any) => {
+        if (!res.isNewUser) {
+          this.handleAuthResponse(res);
+        }
+      }),
+    );
+  }
+
   completeGoogleProfile(userData: any): Observable<any> {
     return this.api
       .post('/auth/complete-profile', userData)

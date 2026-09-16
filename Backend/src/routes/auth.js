@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const { OAuth2Client } = require("google-auth-library");
+const axios = require("axios");
 const User = require("../models/User");
 const mongoose = require("mongoose");
 const { protect } = require("../middleware/auth");
@@ -317,7 +318,8 @@ router.post("/google", async (req, res) => {
           const isProfileComplete = !!(
             user.mobile &&
             user.preferredLanguage &&
-            user.mobile !== "Not Provided"
+            user.mobile !== "Not Provided" &&
+            user.dob
           );
           res.cookie("token", token, getCookieOptions(req)).json({
             token,
@@ -392,6 +394,141 @@ router.post("/google", async (req, res) => {
   } catch (err) {
     console.error("Google auth error:", err);
     res.status(400).json({ msg: "Invalid Google token" });
+  }
+});
+
+// @route   POST /api/auth/facebook
+// @desc    Authenticate user with Facebook
+// @access  Public
+router.post("/facebook", async (req, res) => {
+  try {
+    const { token, dob } = req.body;
+
+    // Verify Facebook token
+    const fbResponse = await axios.get(`https://graph.facebook.com/me?access_token=${token}&fields=id,name,email,picture.type(large)`);
+    const payloadData = fbResponse.data;
+    
+    const email = payloadData.email;
+    const name = payloadData.name;
+    const picture = payloadData.picture?.data?.url;
+
+    if (!email) {
+       return res.status(400).json({ msg: "Email permission is required from Facebook" });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      const suspensionCheck = await checkUserSuspension(user);
+      if (suspensionCheck.isSuspended) {
+        return res.status(403).json({
+          code: "ACCOUNT_SUSPENDED",
+          status: "suspended",
+          msg: suspensionCheck.msg,
+          remaining: suspensionCheck.remaining,
+          suspendedUntil: suspensionCheck.suspendedUntil,
+        });
+      }
+      if (user.status === "deactivated") {
+        user.status = "active";
+        await user.save();
+      }
+
+      // Update auth provider if they previously used normal login but now use facebook
+      if (user.authProvider !== "facebook") {
+        user.authProvider = "facebook";
+        if (picture) user.avatar = picture;
+        await user.save();
+      }
+
+      const activeSub = await getActiveSubscription(user.id);
+      const isPremium = !!activeSub;
+      const payload = { user: { id: user.id, role: user.role } };
+      return jwt.sign(
+        payload,
+        JWT_SECRET,
+        { expiresIn: "5d" },
+        (err, token) => {
+          if (err) throw err;
+          const isProfileComplete = !!(
+            user.mobile &&
+            user.preferredLanguage &&
+            user.mobile !== "Not Provided" &&
+            user.dob
+          );
+          res.cookie("token", token, getCookieOptions(req)).json({
+            token,
+            isProfileComplete,
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              mobile: user.mobile,
+              role: user.role,
+              authorStatus: user.authorStatus,
+              avatar: user.avatar,
+              isPremium,
+              isOnboarded: user.isOnboarded,
+              penName: user.penName,
+              legalName: user.legalName,
+            },
+          });
+        },
+      );
+    }
+
+    // User does not exist, directly create them in the database
+    let baseUsername =
+      name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "user";
+    let username = baseUsername;
+    let userExists = await User.findOne({ username });
+    let counter = 1;
+    while (userExists) {
+      username = baseUsername + counter;
+      userExists = await User.findOne({ username });
+      counter++;
+    }
+
+    user = new User({
+      username: username,
+      email: email,
+      mobile: "Not Provided",
+      preferredLanguage: "en",
+      favoriteGenres: [],
+      avatar: picture,
+      authProvider: "facebook",
+      role: "reader",
+      authorStatus: "none",
+      dob: dob || new Date(2000, 0, 1),
+    });
+
+    await user.save();
+
+    const payload = { user: { id: user.id, role: user.role } };
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: "5d" }, (err, token) => {
+      if (err) throw err;
+      res.cookie("token", token, getCookieOptions(req)).json({
+        token,
+        isProfileComplete: false,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          authorStatus: user.authorStatus,
+          avatar: user.avatar,
+          isPremium: false,
+          isOnboarded: user.isOnboarded,
+          penName: user.penName,
+          legalName: user.legalName,
+        },
+      });
+    });
+  } catch (err) {
+    console.error("Facebook auth error:", err);
+    res.status(400).json({ msg: "Invalid Facebook token" });
   }
 });
 
@@ -645,6 +782,57 @@ router.post("/onboard", protect, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
+  }
+});
+
+// @route   POST /api/auth/complete-profile
+// @desc    Complete profile for social login users
+// @access  Private
+router.post("/complete-profile", protect, async (req, res) => {
+  try {
+    const { mobile, dob, preferredLanguage, favoriteGenres, role } = req.body;
+    
+    let user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    if (mobile) user.mobile = mobile;
+    if (dob) user.dob = dob;
+    if (preferredLanguage) user.preferredLanguage = preferredLanguage;
+    if (favoriteGenres) user.favoriteGenres = favoriteGenres;
+    
+    if (role === "writer" || role === "reader") {
+      user.role = role;
+      if (role === "writer" && user.authorStatus === "none") {
+        user.authorStatus = "approved"; 
+      }
+    }
+
+    await user.save();
+
+    const activeSub = await getActiveSubscription(user.id);
+    const isPremium = !!activeSub;
+
+    res.json({
+      msg: "Profile completed successfully",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        authorStatus: user.authorStatus,
+        avatar: user.avatar,
+        isPremium,
+        isOnboarded: user.isOnboarded,
+        penName: user.penName,
+        legalName: user.legalName,
+      }
+    });
+  } catch (err) {
+    console.error("Complete profile error:", err.message);
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 

@@ -573,38 +573,55 @@ export class SignupComponent implements OnInit {
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
 
     this.socialAuthService.authState.subscribe((user) => {
-      console.log('Google Auth State Emitted:', user);
-      if (user && user.idToken) {
-        this.isLoading = true;
-        this.auth.loginWithGoogle(user.idToken, this.signupForm.get('dob')?.value).subscribe({
-          next: (res) => {
-            console.log('Backend response:', res);
-            this.isLoading = false;
-            if (res.isNewUser) {
-              sessionStorage.setItem(
-                'pendingGoogleUser',
-                JSON.stringify(res.googleData),
-              );
-              this.router.navigate(['/complete-profile']);
-            } else if (res.user && res.user.role === 'superadmin') {
-              this.router.navigate(['/admin']);
-            } else {
-              this.router.navigateByUrl(this.returnUrl);
-            }
-          },
-          error: (err) => {
-            console.error('Backend Error:', err);
-            this.isLoading = false;
-            this.errorMessage =
-              err.error?.msg ||
-              err.message ||
-              'An error occurred during Google sign up.';
-            alert('Error from backend: ' + this.errorMessage);
-          },
-        });
-      } else if (user) {
-        console.warn('User emitted but no idToken present!', user);
-        alert('Google popup closed, but no ID token was received.');
+      console.log('Social Auth State Emitted:', user);
+      if (user) {
+        if (user.provider === 'GOOGLE' && user.idToken) {
+          this.isLoading = true;
+          this.auth.loginWithGoogle(user.idToken, this.signupForm.get('dob')?.value).subscribe({
+            next: (res) => {
+              console.log('Backend response:', res);
+              this.isLoading = false;
+              if (res.isNewUser || res.isProfileComplete === false) {
+                sessionStorage.setItem('pendingSocialUser', JSON.stringify(res.googleData || res.user));
+                this.router.navigate(['/complete-profile']);
+              } else if (res.user && res.user.role === 'superadmin') {
+                this.router.navigate(['/admin']);
+              } else {
+                this.router.navigateByUrl(this.returnUrl);
+              }
+            },
+            error: (err) => {
+              console.error('Backend Error:', err);
+              this.isLoading = false;
+              this.errorMessage = err.error?.msg || err.message || 'An error occurred during Google sign up.';
+              alert('Error from backend: ' + this.errorMessage);
+            },
+          });
+        } else if (user.provider === 'FACEBOOK' && user.authToken) {
+          this.isLoading = true;
+          this.auth.loginWithFacebook(user.authToken, this.signupForm.get('dob')?.value).subscribe({
+            next: (res) => {
+              console.log('Backend response:', res);
+              this.isLoading = false;
+              if (res.isNewUser || res.isProfileComplete === false) {
+                sessionStorage.setItem('pendingSocialUser', JSON.stringify(res.user));
+                this.router.navigate(['/complete-profile']);
+              } else if (res.user && res.user.role === 'superadmin') {
+                this.router.navigate(['/admin']);
+              } else {
+                this.router.navigateByUrl(this.returnUrl);
+              }
+            },
+            error: (err) => {
+              console.error('Backend Error:', err);
+              this.isLoading = false;
+              this.errorMessage = err.error?.msg || err.message || 'An error occurred during Facebook sign up.';
+              alert('Error from backend: ' + this.errorMessage);
+            },
+          });
+        } else {
+          console.warn('User emitted but no valid token present!', user);
+        }
       }
     });
   }
@@ -817,6 +834,6 @@ export class SignupComponent implements OnInit {
   }
 
   onFacebookLoginClick() {
-    alert('Facebook Login UI added! Waiting for App ID to finish integration.');
+    this.socialAuthService.signIn('FACEBOOK');
   }
 }
