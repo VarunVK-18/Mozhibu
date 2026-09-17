@@ -78,10 +78,10 @@ router.put("/upgrade-role", protect, async (req, res) => {
 // @desc Get current user's full profile
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id).select("-password").lean();
     if (!user) return res.status(404).json({ msg: "User not found" });
-    const activeSub = await getActiveSubscription(user.id);
-    const userObj = user.toObject();
+    const activeSub = await getActiveSubscription(user._id);
+    const userObj = user;
     userObj.isPremium = !!activeSub;
     
     // Decrypt and mask monetization data if it exists

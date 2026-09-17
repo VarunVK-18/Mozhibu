@@ -142,6 +142,23 @@ import { OfflineService } from '../../../core/services/offline.service';
             </div>
           </div>
         </div>
+      } @else {
+        <!-- Skeleton Loader -->
+        <div class="skeleton-container">
+          <div class="skeleton-hero shimmer"></div>
+          <div class="content-wrapper">
+            <div class="skeleton-meta shimmer"></div>
+            <div class="skeleton-actions shimmer"></div>
+            <div class="skeleton-synopsis">
+              <div class="skeleton-line shimmer"></div>
+              <div class="skeleton-line shimmer"></div>
+              <div class="skeleton-line shimmer" style="width: 70%"></div>
+            </div>
+            <div class="skeleton-chapter shimmer"></div>
+            <div class="skeleton-chapter shimmer"></div>
+            <div class="skeleton-chapter shimmer"></div>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -306,12 +323,65 @@ import { OfflineService } from '../../../core/services/offline.service';
 
       @media (max-width: 768px) {
         .content-wrapper {
-          padding: 0 20px 40px;
+          padding: 0 20px 80px;
         }
         .related-grid {
           grid-template-columns: repeat(2, 1fr);
           gap: 16px;
         }
+      }
+
+      /* Skeleton Loader Styles */
+      .skeleton-container {
+        width: 100%;
+      }
+      .shimmer {
+        background: #f6f7f8;
+        background-image: linear-gradient(
+          to right,
+          #f6f7f8 0%,
+          #edeef1 20%,
+          #f6f7f8 40%,
+          #f6f7f8 100%
+        );
+        background-repeat: no-repeat;
+        background-size: 800px 100%;
+        animation: placeholderShimmer 1.5s linear infinite forwards;
+      }
+      @keyframes placeholderShimmer {
+        0% { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+      }
+      .skeleton-hero {
+        width: 100%;
+        height: 400px;
+        background-color: #eee;
+      }
+      .skeleton-meta {
+        height: 80px;
+        border-radius: 12px;
+        margin-top: -40px;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 24px;
+      }
+      .skeleton-actions {
+        height: 60px;
+        border-radius: 12px;
+        margin-bottom: 40px;
+      }
+      .skeleton-synopsis {
+        margin-bottom: 40px;
+      }
+      .skeleton-line {
+        height: 16px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+      }
+      .skeleton-chapter {
+        height: 70px;
+        border-radius: 12px;
+        margin-bottom: 16px;
       }
 
       .download-toast {

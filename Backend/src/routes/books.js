@@ -17,6 +17,9 @@ const {
   translateChapters,
 } = require("../services/translationService");
 
+const NodeCache = require("node-cache");
+const bookCache = new NodeCache({ stdTTL: 60 }); // Cache books for 60 seconds (auto-invalidates)
+
 const router = express.Router();
 
 const storage = multer.memoryStorage();
@@ -137,8 +140,19 @@ router.put("/:id/status", protect, author, async (req, res) => {
 // @desc Get all published books (paginated)
 router.get("/", async (req, res) => {
   try {
-    // Get all active users
-    const activeUsers = await User.find({ status: "active" }).select("_id");
+    const targetLang = req.headers["x-app-language"] || "en";
+    
+    // Create a unique cache key based on query parameters and language
+    const cacheKey = `books_${req.query.q || ""}_${req.query.isAudio || ""}_${req.query.genre || ""}_${req.query.sort || ""}_${req.query.page || 1}_${req.query.limit || 20}_${targetLang}`;
+    
+    // Return cached response if available
+    const cachedData = bookCache.get(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
+    // Get all active users - use lean for speed
+    const activeUsers = await User.find({ status: "active" }).select("_id").lean();
     const activeUserIds = activeUsers.map((u) => u._id);
 
     let query = { status: "published", author: { $in: activeUserIds } };
@@ -177,17 +191,22 @@ router.get("/", async (req, res) => {
       .populate("author", "username avatar isPremium")
       .sort(sortObj)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    const targetLang = req.headers["x-app-language"] || "en";
     const translatedBooks = await translateBooks(books, targetLang);
 
-    res.json({
+    const responseData = {
       books: translatedBooks,
       currentPage: page,
       totalPages: Math.ceil(totalBooks / limit),
       totalBooks,
-    });
+    };
+
+    // Cache the response
+    bookCache.set(cacheKey, responseData);
+
+    res.json(responseData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server Error" });
@@ -198,10 +217,9 @@ router.get("/", async (req, res) => {
 // @desc Get a single published book (or unpublished if requested by author)
 router.get("/:id", protectOptional, async (req, res) => {
   try {
-    const book = await Book.findById(req.params.id).populate(
-      "author",
-      "username avatar status isPremium",
-    );
+    const book = await Book.findById(req.params.id)
+      .populate("author", "username avatar status isPremium")
+      .lean();
 
     if (!book) return res.status(404).json({ msg: "Book not found" });
 
@@ -339,7 +357,7 @@ router.get("/:id/chapters", protectOptional, async (req, res) => {
       query.status = "published";
     }
 
-    const chapters = await Chapter.find(query).sort({ order: 1 });
+    const chapters = await Chapter.find(query).sort({ order: 1 }).lean();
 
     // Apply access control before returning
     const chaptersWithAccess = chapters.map((chapter) => {
@@ -347,7 +365,7 @@ router.get("/:id/chapters", protectOptional, async (req, res) => {
         chapter.accessType === "premium" ||
         (chapter.accessType === "inherit" && book.accessType === "premium");
 
-      const chapObj = chapter.toObject();
+      const chapObj = chapter;
 
       // Privileged users (author or admin) can always read all chapters
       if (isPrivileged) {
