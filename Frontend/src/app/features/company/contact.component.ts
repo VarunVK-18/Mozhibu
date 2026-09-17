@@ -2,6 +2,8 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-contact',
@@ -398,6 +400,7 @@ import { ApiService } from '../../core/services/api.service';
 export class ContactComponent implements OnInit {
   private apiService = inject(ApiService);
   private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
   contactForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
@@ -422,6 +425,14 @@ export class ContactComponent implements OnInit {
       },
       error: (err: any) => console.error('Failed to load contact settings:', err)
     });
+
+    const user = this.authService.user();
+    if (user) {
+      this.contactForm.patchValue({
+        name: user.legalName || user.username || '',
+        email: user.email || ''
+      });
+    }
   }
 
   onSubmit() {
@@ -435,13 +446,26 @@ export class ContactComponent implements OnInit {
     this.errorMsg.set('');
 
     const { name, email, message } = this.contactForm.value;
+    const user = this.authService.user();
+    const payload: any = { name, email, message };
+    
+    if (user && user.id) {
+      payload.userId = user.id;
+    }
 
-    this.apiService.post<any>('/contact', { name, email, message }).subscribe({
+    this.apiService.post<any>('/contact', payload).subscribe({
       next: (res) => {
         this.isSubmitting.set(false);
         this.successMsg.set('Thank you! Your message has been sent successfully.');
         this.contactForm.reset();
         
+        // Repopulate user info after reset
+        if (user) {
+          this.contactForm.patchValue({
+            name: user.legalName || user.username || '',
+            email: user.email || ''
+          });
+        }
         setTimeout(() => {
           this.successMsg.set('');
         }, 5000);

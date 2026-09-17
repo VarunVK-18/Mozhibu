@@ -17,9 +17,19 @@ const contactQuerySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  adminReply: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   status: {
     type: String,
-    enum: ['new', 'read'],
+    enum: ['new', 'read', 'replied', 'solved'],
     default: 'new'
   }
 }, {

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 
 interface ContactQuery {
@@ -7,14 +8,16 @@ interface ContactQuery {
   name: string;
   email: string;
   message: string;
-  status: 'new' | 'read';
+  status: 'new' | 'read' | 'replied' | 'solved';
+  adminReply?: string;
+  userId?: string;
   createdAt: string;
 }
 
 @Component({
   selector: 'app-contact-queries',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page-container">
       <div class="header">
@@ -38,20 +41,26 @@ interface ContactQuery {
             <tbody>
               <tr *ngFor="let query of queries()" [class.unread]="query.status === 'new'">
                 <td class="text-nowrap">{{ query.createdAt | date:'mediumDate' }}</td>
-                <td class="font-medium">{{ query.name }}</td>
+                <td class="font-medium">
+                  {{ query.name }}
+                  <span *ngIf="query.userId" class="badge badge-user ml-2">User</span>
+                </td>
                 <td>{{ query.email }}</td>
                 <td class="message-cell" [title]="query.message">
                   {{ query.message.length > 50 ? (query.message | slice:0:50) + '...' : query.message }}
                 </td>
                 <td>
-                  <span class="badge" [class.badge-new]="query.status === 'new'" [class.badge-read]="query.status === 'read'">
+                  <span class="badge" 
+                        [class.badge-new]="query.status === 'new'" 
+                        [class.badge-read]="query.status === 'read'"
+                        [class.badge-replied]="query.status === 'replied' || query.status === 'solved'">
                     {{ query.status | titlecase }}
                   </span>
                 </td>
                 <td>
                   <div class="actions">
                     <button class="btn btn-sm btn-outline" (click)="viewQuery(query)">
-                      View
+                      View & Reply
                     </button>
                     <button 
                       *ngIf="query.status === 'new'"
@@ -90,7 +99,7 @@ interface ContactQuery {
           <div class="modal-body">
             <div class="detail-row">
               <span class="detail-label">Name:</span>
-              <span class="detail-value">{{ selectedQuery()?.name }}</span>
+              <span class="detail-value">{{ selectedQuery()?.name }} <span *ngIf="selectedQuery()?.userId" class="badge badge-user text-xs">Registered User</span></span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Email:</span>
@@ -104,9 +113,36 @@ interface ContactQuery {
               <span class="detail-label">Message:</span>
               <div class="full-message">{{ selectedQuery()?.message }}</div>
             </div>
+            
+            <div class="reply-section" *ngIf="selectedQuery()?.adminReply">
+              <span class="detail-label">Admin Reply:</span>
+              <div class="full-reply">{{ selectedQuery()?.adminReply }}</div>
+            </div>
+            
+            <div class="reply-input-section" *ngIf="!selectedQuery()?.adminReply">
+              <span class="detail-label">Write Reply:</span>
+              <textarea 
+                class="reply-textarea" 
+                rows="4" 
+                placeholder="Type your response to the user here..."
+                [(ngModel)]="replyMessage"
+              ></textarea>
+              <div class="reply-help" *ngIf="selectedQuery()?.userId">
+                This user is registered. They will receive a notification with this reply.
+              </div>
+            </div>
+            
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary" (click)="closeModal()">Close</button>
+            <button class="btn btn-outline mr-2" (click)="closeModal()">Close</button>
+            <button 
+              *ngIf="!selectedQuery()?.adminReply"
+              class="btn btn-primary" 
+              (click)="submitReply()"
+              [disabled]="!replyMessage || isReplying()"
+            >
+              {{ isReplying() ? 'Sending...' : 'Send Reply' }}
+            </button>
           </div>
         </div>
       </div>
@@ -211,6 +247,18 @@ interface ContactQuery {
       background: #f1f3f5;
       color: #6c757d;
     }
+    .badge-replied {
+      background: #e6f4ea;
+      color: #1e8e3e;
+    }
+    .badge-user {
+      background: #fff3e0;
+      color: #f57c00;
+      margin-left: 8px;
+    }
+    .text-xs {
+      font-size: 10px;
+    }
     
     .btn {
       padding: 6px 12px;
@@ -257,6 +305,10 @@ interface ContactQuery {
     .actions {
       display: flex;
       gap: 8px;
+    }
+    
+    .mr-2 {
+      margin-right: 8px;
     }
 
     /* Modal Styles */
@@ -315,7 +367,7 @@ interface ContactQuery {
       display: flex;
     }
     .detail-label {
-      width: 80px;
+      width: 100px;
       font-weight: 600;
       color: #555;
       font-size: 14px;
@@ -324,8 +376,10 @@ interface ContactQuery {
       flex: 1;
       color: #111;
       font-size: 14px;
+      display: flex;
+      align-items: center;
     }
-    .message-section {
+    .message-section, .reply-section, .reply-input-section {
       margin-top: 24px;
     }
     .full-message {
@@ -337,6 +391,36 @@ interface ContactQuery {
       line-height: 1.6;
       color: #333;
       white-space: pre-wrap;
+    }
+    .full-reply {
+      margin-top: 8px;
+      padding: 16px;
+      background: #e6f4ea;
+      border: 1px solid #cce8d6;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e8e3e;
+      white-space: pre-wrap;
+    }
+    .reply-textarea {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+    .reply-textarea:focus {
+      outline: none;
+      border-color: #111;
+    }
+    .reply-help {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #666;
     }
     .modal-footer {
       padding: 16px 24px;
@@ -371,6 +455,9 @@ export class ContactQueriesComponent implements OnInit {
   queries = signal<ContactQuery[]>([]);
   isLoading = signal<boolean>(true);
   selectedQuery = signal<ContactQuery | null>(null);
+  
+  replyMessage = '';
+  isReplying = signal<boolean>(false);
 
   ngOnInit() {
     this.loadQueries();
@@ -392,6 +479,7 @@ export class ContactQueriesComponent implements OnInit {
 
   viewQuery(query: ContactQuery) {
     this.selectedQuery.set(query);
+    this.replyMessage = '';
     if (query.status === 'new') {
       this.markAsRead(query._id);
     }
@@ -399,6 +487,7 @@ export class ContactQueriesComponent implements OnInit {
 
   closeModal() {
     this.selectedQuery.set(null);
+    this.replyMessage = '';
   }
 
   markAsRead(id: string) {
@@ -410,6 +499,24 @@ export class ContactQueriesComponent implements OnInit {
         }
       },
       error: (err) => console.error('Failed to mark as read', err)
+    });
+  }
+
+  submitReply() {
+    const query = this.selectedQuery();
+    if (!query || !this.replyMessage.trim()) return;
+
+    this.isReplying.set(true);
+    this.apiService.put<any>(`/contact/${query._id}/reply`, { replyMessage: this.replyMessage }).subscribe({
+      next: (res) => {
+        this.isReplying.set(false);
+        this.queries.update(qs => qs.map(q => q._id === query._id ? { ...q, status: 'replied', adminReply: this.replyMessage } : q));
+        this.selectedQuery.update(q => q ? { ...q, status: 'replied', adminReply: this.replyMessage } : null);
+      },
+      error: (err) => {
+        console.error('Failed to send reply', err);
+        this.isReplying.set(false);
+      }
     });
   }
 }

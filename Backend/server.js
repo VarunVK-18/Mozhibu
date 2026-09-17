@@ -1,5 +1,5 @@
 // Increase thread pool size for heavy concurrent crypto operations (like bcrypt during load testing)
-process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "64";
+process.env.UV_THREADPOOL_SIZE = '50';
 require("dotenv").config();
 const express = require("express");
 const http = require("http");

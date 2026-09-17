@@ -770,12 +770,10 @@ export class ReaderComponent implements OnInit, OnDestroy {
   @HostListener('window:scroll', [])
   @HostListener('document:scroll', [])
   onWindowScroll() {
-    // Check all possible scrolling elements
     const body = this.document.body;
     const html = this.document.documentElement;
-    
-    // Sometimes Angular apps scroll inside the <main> or <app-root> wrapper
     const mainWrapper = this.document.querySelector('main');
+    const contentEl = this.document.querySelector('.content-wrapper') as HTMLElement;
     
     const scrollOffset = 
       window.scrollY || 
@@ -784,23 +782,39 @@ export class ReaderComponent implements OnInit, OnDestroy {
       (mainWrapper ? mainWrapper.scrollTop : 0) || 
       0;
     
-    // Calculate full document height accurately
-    const scrollHeight = Math.max(
-      body.scrollHeight, body.offsetHeight,
-      html.clientHeight, html.scrollHeight, html.offsetHeight,
-      mainWrapper ? mainWrapper.scrollHeight : 0
-    );
-    
     const clientHeight = html.clientHeight || window.innerHeight || (mainWrapper ? mainWrapper.clientHeight : 0) || 0;
 
     let percent = 0;
-    if (scrollHeight <= clientHeight) {
-      percent = 100;
+
+    if (contentEl) {
+      // Calculate reading progress based purely on the text content of the chapter
+      const rect = contentEl.getBoundingClientRect();
+      // The distance from the top of the page to the bottom of the chapter text
+      const contentBottom = scrollOffset + rect.bottom;
+      // Total scrollable distance to reach the end of the text
+      const scrollableDistance = contentBottom - clientHeight;
+
+      if (scrollableDistance <= 0) {
+        percent = 100;
+      } else {
+        percent = (scrollOffset / scrollableDistance) * 100;
+      }
     } else {
-      percent = (scrollOffset / (scrollHeight - clientHeight)) * 100;
+      // Fallback if content wrapper isn't found (e.g. paywall)
+      const scrollHeight = Math.max(
+        body.scrollHeight, body.offsetHeight,
+        html.clientHeight, html.scrollHeight, html.offsetHeight,
+        mainWrapper ? mainWrapper.scrollHeight : 0
+      );
+      
+      if (scrollHeight <= clientHeight) {
+        percent = 100;
+      } else {
+        percent = (scrollOffset / (scrollHeight - clientHeight)) * 100;
+      }
     }
 
-    percent = Math.max(0, Math.min(100, Math.round(percent)));
+    percent = Math.min(Math.max(Math.round(percent), 0), 100);
     
     // Track the max depth reached
     this.currentMaxScrollPercent = Math.max(this.currentMaxScrollPercent, percent);
