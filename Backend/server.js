@@ -95,13 +95,29 @@ const globalLimiter = rateLimit({
 });
 app.use("/api/", globalLimiter);
 
-// Stricter Rate Limiting for Auth routes
+// Auth Rate Limiting — raised to 500 to support shared IPs (offices, colleges, hotspots)
+// Real brute-force protection is handled per-account in the login route below
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 login/register requests per window
-  message: { msg: "Too many authentication attempts, please try again later" },
+  max: 500, // Allow 500 auth requests per IP per 15 min (handles shared office/college networks)
+  message: { msg: "Too many authentication attempts from this network, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use("/api/auth", authLimiter);
+
+// Strict brute-force limiter — only triggers on repeated FAILURES from same IP
+// Limits to 10 failed attempts per 15 min before hard-blocking
+const bruteForceLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true, // ← Only counts FAILED logins (4xx/5xx responses)
+  message: { msg: "Too many failed login attempts. Please wait 15 minutes before trying again." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// Applied only to the login endpoint, not register/google/facebook
+app.use("/api/auth/login", bruteForceLoginLimiter);
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ limit: "5mb", extended: true }));
