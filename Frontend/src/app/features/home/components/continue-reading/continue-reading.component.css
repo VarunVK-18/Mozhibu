@@ -143,3 +143,69 @@
     font-weight: 500;
   }
 }
+
+/* Skeleton Styles */
+.skeleton-card {
+  pointer-events: none;
+  border-color: rgba(0,0,0,0.03);
+}
+
+.skeleton-cover {
+  background: #eee;
+}
+
+.skeleton-title {
+  height: 16px;
+  width: 80%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  margin-top: 4px;
+  background: #eee;
+}
+
+.skeleton-meta {
+  height: 12px;
+  width: 60%;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: #eee;
+}
+
+.skeleton-progress {
+  height: 10px;
+  width: 100%;
+  border-radius: 4px;
+  margin-top: 6px;
+  background: #eee;
+}
+
+.shimmer {
+  background: #f6f7f8;
+  background-image: linear-gradient(
+    to right,
+    #f6f7f8 0%,
+    #edeef1 20%,
+    #f6f7f8 40%,
+    #f6f7f8 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 800px 100%;
+  animation: placeholderShimmer 1.5s linear infinite forwards;
+}
+
+:host-context(.dark-mode) .shimmer,
+.dark-mode .shimmer {
+  background: #333;
+  background-image: linear-gradient(
+    to right,
+    #333 0%,
+    #444 20%,
+    #333 40%,
+    #333 100%
+  );
+}
+
+@keyframes placeholderShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}

@@ -30,6 +30,7 @@ export class ContinueReadingComponent implements OnInit {
   api = inject(ApiService);
   router = inject(Router);
   items: ReadingItem[] = [];
+  loading = true;
 
   onCoverError(event: any) {
     event.target.src = this.api.getFallbackCover();
@@ -39,6 +40,7 @@ export class ContinueReadingComponent implements OnInit {
     if (this.authService.user()) {
       this.authService.getReadingProgress().subscribe({
         next: (progressList) => {
+          this.loading = false;
           if (progressList && progressList.length > 0) {
             this.items = progressList
               .filter((p: any) => p.book)
@@ -57,10 +59,12 @@ export class ContinueReadingComponent implements OnInit {
           }
         },
         error: () => {
+          this.loading = false;
           this.items = [];
         },
       });
     } else {
+      this.loading = false;
       this.items = [];
     }
   }

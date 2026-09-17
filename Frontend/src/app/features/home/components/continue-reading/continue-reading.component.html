@@ -1,4 +1,25 @@
-@if (items.length > 0) {
+@if (loading) {
+  <div class="cr-section">
+    <div class="section-head">
+      <div>
+        <h2>{{ "continueReading.title" | translate }}</h2>
+        <p>{{ "continueReading.subtitle" | translate }}</p>
+      </div>
+    </div>
+    <div class="cr-row">
+      @for (dummy of [1, 2, 3, 4]; track dummy) {
+        <div class="cr-card skeleton-card">
+          <div class="cr-cover skeleton-cover shimmer"></div>
+          <div class="cr-info">
+            <div class="skeleton-title shimmer"></div>
+            <div class="skeleton-meta shimmer"></div>
+            <div class="skeleton-progress shimmer"></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+} @else if (items.length > 0) {
   <div class="cr-section">
     <div class="section-head">
       <div>
@@ -37,7 +58,7 @@
               <div class="progress-fill" [style.width.%]="item.progress"></div>
             </div>
             <div class="progress-pct">
-              {{ item.progress }}{{ "continueReading.complete" | translate }}
+              {{ item.progress }}% {{ "continueReading.complete" | translate }}
             </div>
           </div>
         </div>
