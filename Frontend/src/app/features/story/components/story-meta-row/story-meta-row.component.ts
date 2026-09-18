@@ -72,7 +72,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
             d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
           ></path>
         </svg>
-        <span>{{ chapterCount }} Chapters</span>
+        <span>{{ chapterCount }} Chapter{{ chapterCount === 1 ? '' : 's' }}</span>
       </div>
 
       <div class="meta-divider hide-mobile"></div>

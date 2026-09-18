@@ -87,17 +87,7 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
               <div class="ep-title-row">
                 <h4 class="ep-title">{{ ep.title }}</h4>
                 <div class="ep-duration-wrapper">
-                  @if (isDownloaded(ep.id)) {
-                    <svg
-                      class="download-check"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="3"
-                    >
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  }
+
                   <span class="ep-duration">{{ ep.readingTime }}</span>
                 </div>
               </div>
@@ -280,9 +270,20 @@ import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
         .episode-card {
           gap: 16px;
           flex-direction: column;
+          position: relative;
         }
         .ep-number {
-          display: none;
+          position: absolute;
+          top: 24px;
+          left: 24px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          font-size: 16px;
+          z-index: 10;
+          backdrop-filter: blur(4px);
         }
         .ep-thumbnail-wrapper {
           width: 100%;

@@ -59,7 +59,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
         flex-direction: column;
       }
       main.with-header {
-        padding-top: 33px;
+        padding-top: 0;
       }
       app-header, app-footer {
         flex-shrink: 0;

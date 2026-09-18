@@ -21,19 +21,27 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (
         !req.url.includes('/auth/login') &&
-        !req.url.includes('/auth/google') &&
-        error.status === 403 &&
-        (error.error?.code === 'ACCOUNT_SUSPENDED' ||
-          error.error?.status === 'suspended' ||
-          (typeof error.error?.msg === 'string' &&
-            error.error.msg.toLowerCase().includes('account has been suspended')))
+        !req.url.includes('/auth/google')
       ) {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        if (error.error?.suspendedUntil) {
-          router.navigate(['/suspended'], { queryParams: { until: error.error.suspendedUntil } });
-        } else {
-          router.navigate(['/suspended']);
+        if (error.status === 401) {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          alert('Your session has expired. Please log in again.');
+          router.navigate(['/login']);
+        } else if (
+          error.status === 403 &&
+          (error.error?.code === 'ACCOUNT_SUSPENDED' ||
+            error.error?.status === 'suspended' ||
+            (typeof error.error?.msg === 'string' &&
+              error.error.msg.toLowerCase().includes('account has been suspended')))
+        ) {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          if (error.error?.suspendedUntil) {
+            router.navigate(['/suspended'], { queryParams: { until: error.error.suspendedUntil } });
+          } else {
+            router.navigate(['/suspended']);
+          }
         }
       }
       return throwError(() => error);

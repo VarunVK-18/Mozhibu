@@ -853,14 +853,7 @@ router.post("/:id/chapters", protect, author, async (req, res) => {
     // Sanitize HTML content
     const sanitizedContent = req.body.content ? xss(req.body.content) : "";
 
-    // Validate minimum word count for published chapters
-    if (req.body.status === "published") {
-      const text = sanitizedContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      const wordCount = text ? text.split(' ').length : 0;
-      if (wordCount < 500) {
-        return res.status(400).json({ msg: "A chapter must have at least 500 words to be published." });
-      }
-    }
+
 
     const newChapter = new Chapter({
       ...req.body,
@@ -966,14 +959,7 @@ router.put("/:id/chapters/:chapterId", protect, author, async (req, res) => {
     const contentToCheck = req.body.content !== undefined ? req.body.content : existingChapter.content;
     const statusToCheck = req.body.status !== undefined ? req.body.status : existingChapter.status;
     
-    // Validate minimum word count for published chapters
-    if (statusToCheck === "published") {
-      const text = (contentToCheck || "").replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      const wordCount = text ? text.split(' ').length : 0;
-      if (wordCount < 500) {
-        return res.status(400).json({ msg: "A chapter must have at least 500 words to be published." });
-      }
-    }
+
 
     const chapter = await Chapter.findOneAndUpdate(
       { _id: req.params.chapterId, book: req.params.id },

@@ -23,6 +23,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/company/privacy-policy.component').then(
+        (m) => m.PrivacyPolicyComponent,
+      ),
+  },
+  {
     path: 'signup',
     loadComponent: () =>
       import('./features/auth/signup/signup.component').then(
@@ -372,6 +379,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/company/privacy-policy.component').then(
+        (m) => m.PrivacyPolicyComponent,
+      ),
+  },
+  {
     path: 'guidelines',
     loadComponent: () =>
       import('./features/company/community.component').then(
@@ -390,10 +404,9 @@ export const routes: Routes = [
   {
     path: 'terms',
     loadComponent: () =>
-      import('./features/info/info-page.component').then(
-        (m) => m.InfoPageComponent,
+      import('./features/company/terms-of-service.component').then(
+        (m) => m.TermsOfServiceComponent,
       ),
-    data: { title: 'Terms of Service' },
   },
   {
     path: 'privacy',
@@ -449,10 +462,9 @@ export const routes: Routes = [
   {
     path: 'cookies',
     loadComponent: () =>
-      import('./features/info/info-page.component').then(
-        (m) => m.InfoPageComponent,
+      import('./features/company/cookie-policy.component').then(
+        (m) => m.CookiePolicyComponent,
       ),
-    data: { title: 'Cookie Policy' },
   },
   {
     path: 'copyright',

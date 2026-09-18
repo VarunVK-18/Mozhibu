@@ -380,6 +380,7 @@ import { CommentListComponent } from '../story/components/comment-list/comment-l
       max-width: 680px;
       margin: 0 auto;
       line-height: 1.8;
+      text-align: justify;
     }
 
     .content-wrapper p {

@@ -730,7 +730,7 @@ export class SignupComponent implements OnInit {
 
   getErrorMessage(field: string): string {
     const control = this.signupForm.get(field);
-    if (!control || !control.touched) return '';
+    if (!control || (!control.touched && !control.dirty)) return '';
 
     if (field === 'confirmPassword' && this.signupForm.hasError('passwordMismatch')) {
       return 'Passwords do not match.';

@@ -156,11 +156,13 @@ import { ApiService } from '../../../../core/services/api.service';
 
       @media (max-width: 768px) {
         .hero-container {
-          height: 50vh;
-          min-height: 300px;
+          min-height: 220px;
+          height: auto;
+          align-items: center;
         }
         .hero-content {
-          padding: 20px;
+          padding: 24px 20px;
+          margin-top: 20px;
         }
         .title {
           font-size: 24px;

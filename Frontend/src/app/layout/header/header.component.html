@@ -504,6 +504,7 @@
   </div>
 
   <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-backdrop" [class.open]="mobileMenuOpen()" (click)="mobileMenuOpen.set(false)"></div>
   <div class="mobile-menu-container" [class.open]="mobileMenuOpen()">
     <nav class="mobile-nav">
       <a

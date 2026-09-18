@@ -29,18 +29,10 @@ import { OfflineService } from '../../../core/services/offline.service';
     ChapterListComponent,
     CommentListComponent,
     StoryCardComponent,
-    DownloadModalComponent,
     TranslatePipe,
   ],
   template: `
     <div class="story-detail-page">
-      @if (showDownloadModal()) {
-        <app-download-modal
-          (close)="showDownloadModal.set(false)"
-          (confirm)="onDownloadConfirmed($event)"
-        ></app-download-modal>
-      }
-
       @if (offlineService.downloadProgress().status) {
         <div class="download-toast">
           {{ offlineService.downloadProgress().status }}

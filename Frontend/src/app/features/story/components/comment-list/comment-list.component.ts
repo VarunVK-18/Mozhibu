@@ -47,7 +47,7 @@ import { RouterModule } from '@angular/router';
               }
             </div>
           }
-          <div style="margin-top: 12px; text-align: left;">
+          <div class="toggle-btn-container toggle-ratings">
             <button class="comments-text-toggle-btn" (click)="toggleComments('ratings')">
               {{ showCommentsList && activeTab === 'ratings' ? 'Hide' : 'View' }} Reviews ({{ ratingOnlyReviews.length }})
             </button>
@@ -93,7 +93,7 @@ import { RouterModule } from '@angular/router';
               </div>
             </div>
           }
-          <div style="margin-top: 12px; text-align: left; margin-left: 56px;">
+          <div class="toggle-btn-container toggle-comments">
             <button class="comments-text-toggle-btn" (click)="toggleComments('comments')">
               {{ showCommentsList && activeTab === 'comments' ? 'Hide' : 'View' }} Comments ({{ textComments.length }})
             </button>
@@ -101,7 +101,7 @@ import { RouterModule } from '@angular/router';
         </div>
       </div>
 
-      <div class="comments-list-section" [class.show]="showCommentsList" style="margin-top: 32px;">
+      <div class="comments-list-section" [class.show]="showCommentsList" style="margin-top: 32px; max-width: 900px; margin-left: auto; margin-right: auto;">
 
       <!-- Comment Thread Template -->
       <ng-template #commentThread let-comment>
@@ -651,7 +651,7 @@ import { RouterModule } from '@angular/router';
 
       <!-- Reviews List -->
       <div class="reviews-list-container">
-        <div class="comments-list" style="max-width: 800px;">
+        <div class="comments-list" style="max-width: 100%;">
           @for (comment of displayedComments; track comment.id) {
             <ng-container
               *ngTemplateOutlet="
@@ -730,16 +730,45 @@ import { RouterModule } from '@angular/router';
         text-decoration: underline;
       }
 
+      .toggle-btn-container {
+        margin-top: 12px;
+      }
+      .toggle-ratings {
+        text-align: left;
+      }
+      .toggle-comments {
+        text-align: left;
+        margin-left: 56px;
+      }
+
       @media (max-width: 768px) {
         .review-submission-row {
           flex-direction: column;
+          gap: 16px;
         }
-        .quick-rate-col {
+        .quick-rate-col, .write-review-col {
           width: 100%;
           text-align: center;
         }
         .quick-rate-box {
           align-items: center;
+        }
+        .toggle-ratings, .toggle-comments {
+          text-align: center;
+          margin-left: 0;
+        }
+        .write-review-box {
+          margin-top: 8px;
+        }
+        .reviews-tabs {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+        .tabs-buttons {
+          width: 100%;
+          overflow-x: auto;
+          white-space: nowrap;
         }
       }
       .comments-section {

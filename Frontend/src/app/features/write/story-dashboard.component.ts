@@ -852,7 +852,8 @@ export class StoryDashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to update chapter publish status', err);
-        this.showAlert('Failed to update chapter status');
+        const errorMessage = err.error?.msg || 'Failed to update chapter status';
+        this.showAlert(errorMessage);
       }
     });
   }
