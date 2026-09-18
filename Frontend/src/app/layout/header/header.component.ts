@@ -233,7 +233,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       } else {
         this._subActive.set(false);
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit() {

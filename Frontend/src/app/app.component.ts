@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd, NavigationStart, NavigationCancel, NavigationError, Event as RouterEvent } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
@@ -9,6 +9,7 @@ import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { ConfirmModalComponent } from './shared/components/confirm-modal/confirm-modal.component';
 import { OnboardingComponent } from './features/auth/onboarding/onboarding.component';
+import { SplashLoaderComponent } from './shared/components/splash-loader/splash-loader.component';
 
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 
@@ -22,6 +23,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
     CommonModule,
     ConfirmModalComponent,
     OnboardingComponent,
+    SplashLoaderComponent,
   ],
   template: `
     <!-- Update Available Banner -->
@@ -32,6 +34,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
         <button class="dismiss-btn" (click)="showUpdateBanner.set(false)">✕</button>
       </div>
     }
+    <app-splash-loader [show]="loadingService.loading()"></app-splash-loader>
     @if (!isStandaloneRoute) {
       <app-header></app-header>
     }
@@ -143,9 +146,20 @@ export class AppComponent {
   showUpdateBanner = signal(false);
 
   constructor() {
-    this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
+    this.router.events.subscribe((event: RouterEvent) => {
+      // Toggle loader on navigation events
+      if (event instanceof NavigationStart) {
+        this.loadingService.show();
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.loadingService.hide();
+      }
+
+      // Handle specific NavigationEnd logic
+      if (event instanceof NavigationEnd) {
         const url = event.urlAfterRedirects;
         this.currentUrl = url;
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -173,7 +187,8 @@ export class AppComponent {
         if (this.swUpdate.isEnabled) {
           this.swUpdate.checkForUpdate().catch(() => {});
         }
-      });
+      }
+    });
 
     if (this.swUpdate.isEnabled) {
       this.swUpdate.versionUpdates

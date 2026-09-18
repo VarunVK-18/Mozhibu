@@ -6,12 +6,17 @@ import { Injectable, signal } from '@angular/core';
 export class LoadingService {
   private _loading = signal(false);
   private _activeRequests = 0;
+  private _hideTimeout: any;
 
   get loading() {
     return this._loading.asReadonly();
   }
 
   show() {
+    if (this._hideTimeout) {
+      clearTimeout(this._hideTimeout);
+      this._hideTimeout = null;
+    }
     if (this._activeRequests === 0) {
       this._loading.set(true);
     }
@@ -22,7 +27,9 @@ export class LoadingService {
     this._activeRequests--;
     if (this._activeRequests <= 0) {
       this._activeRequests = 0;
-      this._loading.set(false);
+      this._hideTimeout = setTimeout(() => {
+        this._loading.set(false);
+      }, 500); // Wait 500ms before hiding to prevent flicker between requests/renders
     }
   }
 }
