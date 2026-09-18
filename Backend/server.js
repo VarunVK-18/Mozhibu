@@ -34,11 +34,11 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    const normalizedOrigin = origin.replace(/\/$/, '');
+    const normalizedOrigin = origin.trim().replace(/\/$/, '');
     if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
-    console.error(`CORS Blocked: Origin '${origin}' does not match allowed origins: ${allowedOrigins.join(', ')}`);
+    console.error(`CORS Blocked: Origin '${origin}' (length: ${origin.length}) does not match allowed origins: ${JSON.stringify(allowedOrigins)}`);
     return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
   },
   credentials: true,
