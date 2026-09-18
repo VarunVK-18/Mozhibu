@@ -19,10 +19,10 @@ const app = express();
 const server = http.createServer(app);
 const corsOptions = {
   origin: function (origin, callback) {
-    const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
+    const frontendUrls = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, '')) : [];
     const localUrls = process.env.LOCAL_FRONTEND_URLS ? process.env.LOCAL_FRONTEND_URLS.split(',').map(url => url.trim().replace(/\/$/, '')) : [];
     
-    const allowedOrigins = [frontendUrl, ...localUrls].filter(Boolean);
+    const allowedOrigins = [...frontendUrls, ...localUrls].filter(Boolean);
     
     if (!origin) {
       console.warn(`CORS: No Origin header provided (allowed for server-to-server or local scripts)`);
