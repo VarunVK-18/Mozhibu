@@ -160,6 +160,9 @@ export class AppComponent {
 
       // Handle specific NavigationEnd logic
       if (event instanceof NavigationEnd) {
+        // Once the first navigation finishes, never show the splash screen again
+        this.loadingService.setInitialLoadComplete(true);
+        
         const url = event.urlAfterRedirects;
         this.currentUrl = url;
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });

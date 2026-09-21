@@ -12,10 +12,8 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req.clone({ headers }));
   }
 
-  setTimeout(() => loadingService.show(), 0);
-  return next(req).pipe(
-    finalize(() => {
-      setTimeout(() => loadingService.hide(), 0);
-    }),
-  );
+  // We removed the global loadingService.show() here because it causes the 
+  // full-screen splash loader to appear on background requests (like checking pen name availability).
+  // Now, individual components are responsible for showing their own skeleton loaders or spinners.
+  return next(req);
 };

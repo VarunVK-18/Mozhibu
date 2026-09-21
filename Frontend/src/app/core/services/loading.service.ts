@@ -1,15 +1,24 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LoadingService {
   private _loading = signal(false);
+  private _initialLoadComplete = signal(false);
   private _activeRequests = 0;
   private _hideTimeout: any;
 
-  get loading() {
-    return this._loading.asReadonly();
+  // Use a computed signal so it remains reactive and callable in the template
+  public loading = computed(() => {
+    if (this._initialLoadComplete()) {
+      return false;
+    }
+    return this._loading();
+  });
+
+  setInitialLoadComplete(status: boolean) {
+    this._initialLoadComplete.set(status);
   }
 
   show() {
