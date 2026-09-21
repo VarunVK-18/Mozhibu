@@ -147,20 +147,9 @@ export class AppComponent {
 
   constructor() {
     this.router.events.subscribe((event: RouterEvent) => {
-      // Toggle loader on navigation events
-      if (event instanceof NavigationStart) {
-        this.loadingService.show();
-      } else if (
-        event instanceof NavigationEnd ||
-        event instanceof NavigationCancel ||
-        event instanceof NavigationError
-      ) {
-        this.loadingService.hide();
-      }
-
       // Handle specific NavigationEnd logic
       if (event instanceof NavigationEnd) {
-        // Once the first navigation finishes, never show the splash screen again
+        // Hide the splash screen permanently after the first route loads
         this.loadingService.setInitialLoadComplete(true);
         
         const url = event.urlAfterRedirects;

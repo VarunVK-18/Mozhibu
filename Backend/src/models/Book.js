@@ -54,4 +54,12 @@ const BookSchema = new mongoose.Schema(
   },
 );
 
+// Performance Indexes
+BookSchema.index({ author: 1 });
+BookSchema.index({ genre: 1, status: 1 });
+BookSchema.index({ status: 1, createdAt: -1 });
+BookSchema.index({ views: -1 });
+BookSchema.index({ likesCount: -1 });
+BookSchema.index({ competitionTag: 1 });
+
 module.exports = mongoose.model("Book", BookSchema);

@@ -24,4 +24,8 @@ const ChapterSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Performance Indexes
+ChapterSchema.index({ book: 1, order: 1 });
+ChapterSchema.index({ book: 1, status: 1 });
+
 module.exports = mongoose.model("Chapter", ChapterSchema);

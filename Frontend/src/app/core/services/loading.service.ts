@@ -4,7 +4,7 @@ import { Injectable, signal, computed } from '@angular/core';
   providedIn: 'root',
 })
 export class LoadingService {
-  private _loading = signal(false);
+  private _loading = signal(true);
   private _initialLoadComplete = signal(false);
   private _activeRequests = 0;
   private _hideTimeout: any;
