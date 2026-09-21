@@ -84,10 +84,12 @@ app.use(cors(corsOptions)); // CORS must be before rate limiters so they include
 const csrfProtection = require("./src/middleware/csrf");
 app.use(csrfProtection);
 
+const isLoadTesting = process.env.LOAD_TESTING === 'true';
+
 // Global Rate Limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs
+  max: isLoadTesting ? 50000 : 1000, 
   message: {
     msg: "Too many requests from this IP, please try again after 15 minutes",
   },
@@ -96,23 +98,21 @@ const globalLimiter = rateLimit({
 });
 app.use("/api/", globalLimiter);
 
-// Auth Rate Limiting — raised to 500 to support shared IPs (offices, colleges, hotspots)
-// Real brute-force protection is handled per-account in the login route below
+// Auth Rate Limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Allow 500 auth requests per IP per 15 min (handles shared office/college networks)
+  max: isLoadTesting ? 10000 : 500, 
   message: { msg: "Too many authentication attempts from this network, please try again later" },
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use("/api/auth", authLimiter);
 
-// Strict brute-force limiter — only triggers on repeated FAILURES from same IP
-// Limits to 10 failed attempts per 15 min before hard-blocking
+// Strict brute-force limiter 
 const bruteForceLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
-  skipSuccessfulRequests: true, // ← Only counts FAILED logins (4xx/5xx responses)
+  max: isLoadTesting ? 10000 : 10,
+  skipSuccessfulRequests: true, 
   message: { msg: "Too many failed login attempts. Please wait 15 minutes before trying again." },
   standardHeaders: true,
   legacyHeaders: false,
