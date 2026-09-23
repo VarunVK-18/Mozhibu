@@ -215,7 +215,7 @@ router.get("/", async (req, res) => {
 
 // @route GET /api/books/:id
 // @desc Get a single published book (or unpublished if requested by author)
-router.get("/:id", protectOptional, async (req, res) => {
+router.get("/:id", protect, async (req, res) => {
   try {
     const book = await Book.findById(req.params.id)
       .populate("author", "username avatar status isPremium")

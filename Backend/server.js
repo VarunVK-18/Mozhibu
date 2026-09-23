@@ -25,7 +25,7 @@ const corsOptions = {
     const allowedOrigins = [...frontendUrls, ...localUrls].filter(Boolean);
     
     if (!origin) {
-      console.warn(`CORS: No Origin header provided (allowed for server-to-server or local scripts)`);
+      // console.warn(`CORS: No Origin header provided (allowed for server-to-server or local scripts)`);
       return callback(null, true);
     }
     
@@ -73,6 +73,9 @@ io.on("connection", (socket) => {
 app.set("io", io);
 app.set("userSockets", userSockets);
 const PORT = process.env.PORT || 5000;
+
+// Trust the reverse proxy to get correct IP for rate limiters
+app.set("trust proxy", 1);
 
 // Middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } })); // Security headers
